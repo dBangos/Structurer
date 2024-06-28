@@ -1,4 +1,5 @@
-use eframe::egui;
+use crate::egui::{popup_below_widget, ComboBox, Id};
+use eframe::egui::{self, viewport};
 use rfd::MessageDialogResult;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
@@ -13,6 +14,9 @@ struct Structurer {
     current_title: String,
     current_title_id: String,
     age: i32,
+
+    show_confirm_delete_popup: bool,
+    point_requesting_deletion: String,
 }
 
 impl Default for Structurer {
@@ -24,6 +28,8 @@ impl Default for Structurer {
             current_title: String::new(),
             current_title_id: String::new(),
             age: 40,
+            show_confirm_delete_popup: false,
+            point_requesting_deletion: String::new(),
         }
     }
 }
@@ -50,8 +56,6 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("My egui Application");
-
             //Button Line
             ui.horizontal(|ui| {
                 if ui.button("Set Project Directory").clicked() {
@@ -95,12 +99,6 @@ impl eframe::App for Structurer {
             ui.horizontal(|ui| {
                 //Titles layout ==========================================================
                 ui.vertical(|ui| {
-                    if ui.button("Filler").clicked() {
-                        self.age += 1;
-                    }
-                    if ui.button("Filler").clicked() {
-                        self.age += 1;
-                    }
                     //Making sure tha data is clean
                     let temp_file_path_for_check: PathBuf =
                         [self.project_directory.clone(), PathBuf::from("Library.txt")]
@@ -170,31 +168,85 @@ impl eframe::App for Structurer {
                     for point in self.current_points.iter_mut() {
                         // Container for elements of each point
                         ui.horizontal(|ui| {
-                            if ui.button("Delete").clicked() {
-                                let message_dialog_result = rfd::MessageDialog::new()
-                                    .set_title(
-                                        "Are you sure you want to permanently delete this point?",
-                                    )
-                                    .set_buttons(rfd::MessageButtons::YesNo)
-                                    .show();
-                                if message_dialog_result == MessageDialogResult::Yes {
-                                    delete_point(self.project_directory.clone(), point.0.clone());
-                                    self.titles_points =
-                                        load_from_library(self.project_directory.clone());
-                                    ctx.request_repaint();
+                            ui.vertical(|ui| {
+                                if ui.button("Delete").clicked() {
+                                    self.point_requesting_deletion = point.0.clone();
+                                    self.show_confirm_delete_popup = true;
                                 }
-                            }
+                                if ui.button("Add to:").clicked() {
+                                    //spawnpopup
+                                }
+                            });
                             ui.text_edit_multiline(&mut point.1);
                         });
                     }
                 });
             });
 
+            // UI element examples that might be usefult later
+
+            let response = ui.button("Open");
+            let popup_id = Id::new("popup_id");
+
+            if response.clicked() {
+                ui.memory_mut(|mem| mem.toggle_popup(popup_id));
+            }
+
+            popup_below_widget(ui, popup_id, &response, |ui| {
+                ui.set_min_width(300.0);
+                ui.label("This popup will be open even if you click the checkbox");
+            });
+
+            ComboBox::from_label("ComboBox")
+                .selected_text(format!("{}", self.age))
+                .show_ui(ui, |ui| {
+                    for num in 0..10 {
+                        ui.selectable_value(&mut self.age, num, format!("{num}"));
+                    }
+                });
             ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
             if ui.button("Increment").clicked() {
                 self.age += 1;
             }
         });
+        if self.show_confirm_delete_popup {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("immediate_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Confirm Deletion")
+                    .with_inner_size([300.0, 100.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Are you sure you want to permanently delete this point?");
+                        ui.horizontal(|ui| {
+                            if ui.button("Yes").clicked() {
+                                delete_point(
+                                    self.project_directory.clone(),
+                                    self.point_requesting_deletion.clone(),
+                                );
+                                self.titles_points =
+                                    load_from_library(self.project_directory.clone());
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                ctx.request_repaint();
+                            }
+
+                            if ui.button("No").clicked() {
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                        });
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_confirm_delete_popup = false;
+                    }
+                },
+            );
+        }
     }
 }
 
