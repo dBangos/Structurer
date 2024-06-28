@@ -54,7 +54,10 @@ fn main() -> Result<(), eframe::Error> {
                     titles_points = load_from_library(project_directory.clone());
                 }
                 if ui.button("Add Title").clicked() {
-                    //titles_points.push(value)
+                    add_title(project_directory.clone());
+                }
+                if ui.button("Delete Title").clicked() {
+                    delete_title();
                 }
                 if ui.button("Save Page As:").clicked() {
                     age += 1;
@@ -259,6 +262,7 @@ fn add_point_to_library(project_dir: PathBuf, title_id: String, point_id: String
         content.join("\n"),
     );
 }
+
 //Adds a point to the current page/title, creates the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
 fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
@@ -349,3 +353,26 @@ fn change_title_name(project_dir: PathBuf, title_id: String, new_title: String) 
         content.join("\n"),
     );
 }
+
+//Adds a title to library and creates the corresponding file
+fn add_title(project_dir: PathBuf) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let new_id = Uuid::new_v4();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
+    let file = File::open(&file_path).expect("Error while opening file from add_title");
+    for line in BufReader::new(file).lines() {
+        content.push(line.expect("Error while reading lines in add_title"));
+    }
+    content.push(new_id.to_string() + "@New title");
+    save_to_filename(
+        project_dir.clone(),
+        "Library".to_string(),
+        content.join("\n"),
+    );
+    let content = "New title".to_string();
+    save_to_filename(project_dir.clone(), new_id.to_string(), content);
+}
+fn delete_title() -> () {}
