@@ -5,6 +5,29 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
+
+struct Structurer {
+    project_directory: PathBuf,
+    titles_points: Vec<(String, String, Vec<String>)>, //Titles_points(title, title_id ,corresponding_points)
+    current_points: Vec<(String, String)>,             //Current_point(point_id,point_content)
+    current_title: String,
+    current_title_id: String,
+    age: i32,
+}
+
+impl Default for Structurer {
+    fn default() -> Self {
+        Self {
+            project_directory: Default::default(),
+            titles_points: Vec::new(), //Titles_points(title, title_id ,corresponding_points)
+            current_points: Vec::new(), //Current_point(point_id,point_content)
+            current_title: String::new(),
+            current_title_id: String::new(),
+            age: 40,
+        }
+    }
+}
+
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -12,16 +35,20 @@ fn main() -> Result<(), eframe::Error> {
         viewport: egui::ViewportBuilder::default().with_inner_size([1000.0, 1000.0]),
         ..Default::default()
     };
+    eframe::run_native(
+        "My egui App",
+        options,
+        Box::new(|cc| {
+            // This gives us image support:
+            egui_extras::install_image_loaders(&cc.egui_ctx);
 
-    //Application state:
-    let mut project_directory: PathBuf = Default::default();
-    let mut titles_points: Vec<(String, String, Vec<String>)> = Vec::new(); //Titles_points(title, title_id ,corresponding_points)
-    let mut current_points: Vec<(String, String)> = Vec::new(); //Current_point(point_id,point_content)
-    let mut current_title: String = String::new();
-    let mut current_title_id: String = String::new();
-    let mut age = 42;
+            Box::<Structurer>::default()
+        }),
+    )
+}
 
-    eframe::run_simple_native("Structurer", options, move |ctx, _frame| {
+impl eframe::App for Structurer {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("My egui Application");
 
@@ -29,38 +56,38 @@ fn main() -> Result<(), eframe::Error> {
             ui.horizontal(|ui| {
                 if ui.button("Set Project Directory").clicked() {
                     if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
-                        project_directory = dir_path;
+                        self.project_directory = dir_path;
                     }
-                    titles_points = load_from_library(project_directory.clone());
+                    self.titles_points = load_from_library(self.project_directory.clone());
                 }
                 if ui.button("Save").clicked() {
                     change_title_name(
-                        project_directory.clone(),
-                        current_title_id.clone(),
-                        current_title.clone(),
+                        self.project_directory.clone(),
+                        self.current_title_id.clone(),
+                        self.current_title.clone(),
                     );
-                    for (id, content) in current_points.clone().into_iter() {
-                        save_to_filename(project_directory.clone(), id, content);
+                    for (id, content) in self.current_points.clone().into_iter() {
+                        save_to_filename(self.project_directory.clone(), id, content);
                     }
                 }
                 if ui.button("New").clicked() {
-                    age += 1;
+                    self.age += 1;
                 }
                 if ui.button("Add Point").clicked() {
-                    current_points.push(add_point(
-                        project_directory.clone(),
-                        current_title_id.clone(),
+                    self.current_points.push(add_point(
+                        self.project_directory.clone(),
+                        self.current_title_id.clone(),
                     ));
-                    titles_points = load_from_library(project_directory.clone());
+                    self.titles_points = load_from_library(self.project_directory.clone());
                 }
                 if ui.button("Add Title").clicked() {
-                    add_title(project_directory.clone());
+                    add_title(self.project_directory.clone());
                 }
                 if ui.button("Delete Title").clicked() {
                     delete_title();
                 }
                 if ui.button("Save Page As:").clicked() {
-                    age += 1;
+                    self.age += 1;
                 }
             });
 
@@ -69,51 +96,51 @@ fn main() -> Result<(), eframe::Error> {
                 //Titles layout ==========================================================
                 ui.vertical(|ui| {
                     if ui.button("Filler").clicked() {
-                        age += 1;
+                        self.age += 1;
                     }
                     if ui.button("Filler").clicked() {
-                        age += 1;
+                        self.age += 1;
                     }
                     //Making sure tha data is clean
                     let temp_file_path_for_check: PathBuf =
-                        [project_directory.clone(), PathBuf::from("Library.txt")]
+                        [self.project_directory.clone(), PathBuf::from("Library.txt")]
                             .iter()
                             .collect();
                     if temp_file_path_for_check.exists() {
-                        titles_points = load_from_library(project_directory.clone());
+                        self.titles_points = load_from_library(self.project_directory.clone());
                     }
                     //Binding each title button to loading the corresponding points
-                    for (title_id, title, t_points) in titles_points.iter_mut() {
+                    for (title_id, title, t_points) in self.titles_points.iter_mut() {
                         if ui.button(title.clone()).clicked() {
                             //Saving the title of the curent page before switching
                             //First checking if the file exists
                             let temp_file_path_for_check: PathBuf = [
-                                project_directory.clone(),
-                                PathBuf::from(current_title_id.clone() + ".txt"),
+                                self.project_directory.clone(),
+                                PathBuf::from(self.current_title_id.clone() + ".txt"),
                             ]
                             .iter()
                             .collect();
                             if temp_file_path_for_check.exists() {
                                 change_title_name(
-                                    project_directory.clone(),
-                                    current_title_id.clone(),
-                                    current_title.clone(),
+                                    self.project_directory.clone(),
+                                    self.current_title_id.clone(),
+                                    self.current_title.clone(),
                                 );
                             }
                             //Setting the title field
-                            current_title = title.clone();
-                            current_title_id = title_id.clone();
+                            self.current_title = title.clone();
+                            self.current_title_id = title_id.clone();
                             //Save old points => Remove old points => Add new points
-                            for (id, content) in current_points.clone().into_iter() {
-                                save_to_filename(project_directory.clone(), id, content);
+                            for (id, content) in self.current_points.clone().into_iter() {
+                                save_to_filename(self.project_directory.clone(), id, content);
                             }
-                            current_points = Vec::new();
+                            self.current_points = Vec::new();
                             for new_point in t_points.into_iter() {
-                                current_points.push((
+                                self.current_points.push((
                                     new_point.to_string(),
                                     load_from_filename(
                                         new_point.to_string(),
-                                        project_directory.clone(),
+                                        self.project_directory.clone(),
                                     ),
                                 ));
                             }
@@ -125,22 +152,22 @@ fn main() -> Result<(), eframe::Error> {
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         let name_label = ui.label("Your name: ");
-                        ui.text_edit_singleline(&mut current_title)
+                        ui.text_edit_singleline(&mut self.current_title)
                             .labelled_by(name_label.id);
                     });
                     //Updates the current_points variable, this is how point deletions get updated
                     //and shown on the ui
                     let temp_file_path_for_check: PathBuf =
-                        [project_directory.clone(), PathBuf::from("Library.txt")]
+                        [self.project_directory.clone(), PathBuf::from("Library.txt")]
                             .iter()
                             .collect();
                     if temp_file_path_for_check.exists() {
-                        current_points = load_points_from_title_id(
-                            project_directory.clone(),
-                            current_title_id.clone(),
+                        self.current_points = load_points_from_title_id(
+                            self.project_directory.clone(),
+                            self.current_title_id.clone(),
                         );
                     }
-                    for point in current_points.iter_mut() {
+                    for point in self.current_points.iter_mut() {
                         // Container for elements of each point
                         ui.horizontal(|ui| {
                             if ui.button("Delete").clicked() {
@@ -151,8 +178,9 @@ fn main() -> Result<(), eframe::Error> {
                                     .set_buttons(rfd::MessageButtons::YesNo)
                                     .show();
                                 if message_dialog_result == MessageDialogResult::Yes {
-                                    delete_point(project_directory.clone(), point.0.clone());
-                                    titles_points = load_from_library(project_directory.clone());
+                                    delete_point(self.project_directory.clone(), point.0.clone());
+                                    self.titles_points =
+                                        load_from_library(self.project_directory.clone());
                                     ctx.request_repaint();
                                 }
                             }
@@ -162,13 +190,12 @@ fn main() -> Result<(), eframe::Error> {
                 });
             });
 
-            ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
+            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
             if ui.button("Increment").clicked() {
-                age += 1;
+                self.age += 1;
             }
-            ui.label(format!("Hello '{current_title}', age {age}"));
         });
-    })
+    }
 }
 
 //Gets a title_id, loads the corresponding point_ids and point_content
