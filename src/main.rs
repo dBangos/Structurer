@@ -34,8 +34,13 @@ fn main() -> Result<(), eframe::Error> {
                     titles_points = load_from_library(project_directory.clone());
                 }
                 if ui.button("Save").clicked() {
-                    for (title, content) in current_points.clone().into_iter() {
-                        save_to_filename(project_directory.clone(), title, content);
+                    change_title_name(
+                        project_directory.clone(),
+                        current_title_id.clone(),
+                        current_title.clone(),
+                    );
+                    for (id, content) in current_points.clone().into_iter() {
+                        save_to_filename(project_directory.clone(), id, content);
                     }
                 }
                 if ui.button("New").clicked() {
@@ -58,7 +63,7 @@ fn main() -> Result<(), eframe::Error> {
 
             //Main layout, contains titles layout and points layout
             ui.horizontal(|ui| {
-                //Titles layout
+                //Titles layout ==========================================================
                 ui.vertical(|ui| {
                     if ui.button("Filler").clicked() {
                         age += 1;
@@ -66,9 +71,32 @@ fn main() -> Result<(), eframe::Error> {
                     if ui.button("Filler").clicked() {
                         age += 1;
                     }
+                    //Making sure tha data is clean
+                    let temp_file_path_for_check: PathBuf =
+                        [project_directory.clone(), PathBuf::from("Library.txt")]
+                            .iter()
+                            .collect();
+                    if temp_file_path_for_check.exists() {
+                        titles_points = load_from_library(project_directory.clone());
+                    }
                     //Binding each title button to loading the corresponding points
                     for (title_id, title, t_points) in titles_points.iter_mut() {
                         if ui.button(title.clone()).clicked() {
+                            //Saving the title of the curent page before switching
+                            //First checking if the file exists
+                            let temp_file_path_for_check: PathBuf = [
+                                project_directory.clone(),
+                                PathBuf::from(current_title_id.clone() + ".txt"),
+                            ]
+                            .iter()
+                            .collect();
+                            if temp_file_path_for_check.exists() {
+                                change_title_name(
+                                    project_directory.clone(),
+                                    current_title_id.clone(),
+                                    current_title.clone(),
+                                );
+                            }
                             //Setting the title field
                             current_title = title.clone();
                             current_title_id = title_id.clone();
@@ -90,7 +118,7 @@ fn main() -> Result<(), eframe::Error> {
                     }
                 });
 
-                //All points layout
+                //All points layout==========================================
                 ui.vertical(|ui| {
                     ui.horizontal(|ui| {
                         let name_label = ui.label("Your name: ");
@@ -147,10 +175,8 @@ fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(Str
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
         .iter()
         .collect();
-    let file = match File::open(&file_path) {
-        Err(why) => panic!("Error while opening {}: {}", file_path.display(), why),
-        Ok(file) => file,
-    };
+    let file =
+        File::open(&file_path).expect("Error while opening file from load_points_from_title_id");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
         if split_line[0] == title_id {
@@ -168,16 +194,14 @@ fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(Str
 }
 //Gets the filename of a txt file, returns its content.
 fn load_from_filename(title: String, project_dir: PathBuf) -> String {
-    let project_dir: PathBuf = [project_dir, PathBuf::from(title + ".txt")]
+    let file_path: PathBuf = [project_dir, PathBuf::from(title + ".txt")]
         .iter()
         .collect();
-    let mut file = match File::open(&project_dir) {
-        Err(why) => panic!("Error while opening {}: {}", project_dir.display(), why),
-        Ok(file) => file,
-    };
+    let mut file =
+        File::open(&file_path).expect("Error while opening file from load_from_filename");
     let mut s = String::new();
     match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read {}: {}", project_dir.display(), why),
+        Err(why) => panic!("couldn't read {}: {}", file_path.display(), why),
         Ok(_) => return s,
     }
 }
@@ -188,10 +212,7 @@ fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 //followed by the "@" symbol befgre each point.
 fn load_from_library(project_dir: PathBuf) -> Vec<(String, String, Vec<String>)> {
     let file_path: PathBuf = [project_dir, PathBuf::from("Library.txt")].iter().collect();
-    let file = match File::open(&file_path) {
-        Err(why) => panic!("Error while opening {}: {}", file_path.display(), why),
-        Ok(file) => file,
-    };
+    let file = File::open(&file_path).expect("Error while opening file from load_from_library");
     let mut result: Vec<(String, String, Vec<String>)> = Vec::new();
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
@@ -212,10 +233,8 @@ fn load_from_library(project_dir: PathBuf) -> Vec<(String, String, Vec<String>)>
 //Gets a file name and path, saves content to it.
 fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> () {
     let file_path: PathBuf = [project_dir, PathBuf::from(id + ".txt")].iter().collect();
-    let mut file = match File::create(&file_path) {
-        Err(why) => panic!("Error while creating {}: {}", file_path.display(), why),
-        Ok(file) => file,
-    };
+    let mut file =
+        File::create(&file_path).expect("Error while creating file from save_to_filename");
     let _ = file.write_all(content.as_bytes());
 }
 
@@ -226,10 +245,7 @@ fn add_point_to_library(project_dir: PathBuf, title_id: String, point_id: String
         .iter()
         .collect();
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = match File::open(&file_path) {
-        Err(why) => panic!("Error while opening {}: {}", file_path.display(), why),
-        Ok(file) => file,
-    };
+    let file = File::open(&file_path).expect("Error while opening file from add_point_to_library");
     for line in BufReader::new(file).lines() {
         let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
         if split_line[0] == title_id {
@@ -259,10 +275,8 @@ fn delete_point_from_library(project_dir: PathBuf, point_id: String) -> () {
         .iter()
         .collect();
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = match File::open(&file_path) {
-        Err(why) => panic!("Error while opening {}: {}", file_path.display(), why),
-        Ok(file) => file,
-    };
+    let file =
+        File::open(&file_path).expect("Error while opening file from delete_point_from_library");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line
             .unwrap()
@@ -290,4 +304,48 @@ fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     .collect();
     remove_file(file_path);
     delete_point_from_library(project_dir.clone(), point_id.clone());
+}
+
+//Changes the title in a title_id file. The title is always in the first line, so the first line
+//just gets overwritten
+fn change_title_name(project_dir: PathBuf, title_id: String, new_title: String) -> () {
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(title_id.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+
+    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
+    let file = File::open(&file_path).expect("Error while opening file from change_title_name");
+    let mut first_line: bool = true;
+    let mut content: Vec<String> = Vec::new();
+    for line in BufReader::new(file).lines() {
+        if first_line == true {
+            content.push(new_title.to_string());
+            first_line = false;
+        } else {
+            content.push(line.expect("Error while reading a title file."));
+        }
+    }
+    save_to_filename(project_dir.clone(), title_id.clone(), content.join("\n"));
+    //Updating the library file
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path)
+        .expect("Error while opening the library file form change_title_name");
+    for line in BufReader::new(file).lines() {
+        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == title_id {
+            split_line[1] = new_title.clone();
+        }
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        "Library".to_string(),
+        content.join("\n"),
+    );
 }
