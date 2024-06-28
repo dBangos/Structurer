@@ -97,7 +97,18 @@ fn main() -> Result<(), eframe::Error> {
                         ui.text_edit_singleline(&mut current_title)
                             .labelled_by(name_label.id);
                     });
-
+                    //Updates the current_points variable, this is how point deletions get updated
+                    //and shown on the ui
+                    let temp_file_path_for_check: PathBuf =
+                        [project_directory.clone(), PathBuf::from("Library.txt")]
+                            .iter()
+                            .collect();
+                    if temp_file_path_for_check.exists() {
+                        current_points = load_points_from_title_id(
+                            project_directory.clone(),
+                            current_title_id.clone(),
+                        );
+                    }
                     for point in current_points.iter_mut() {
                         // Container for elements of each point
                         ui.horizontal(|ui| {
@@ -111,6 +122,7 @@ fn main() -> Result<(), eframe::Error> {
                                 if message_dialog_result == MessageDialogResult::Yes {
                                     delete_point(project_directory.clone(), point.0.clone());
                                     titles_points = load_from_library(project_directory.clone());
+                                    ctx.request_repaint();
                                 }
                             }
                             ui.text_edit_multiline(&mut point.1);
@@ -128,6 +140,32 @@ fn main() -> Result<(), eframe::Error> {
     })
 }
 
+//Gets a title_id, loads the corresponding point_ids and point_content
+fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(String, String)> {
+    let mut result: Vec<(String, String)> = Vec::new();
+    let mut library_line: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    let file = match File::open(&file_path) {
+        Err(why) => panic!("Error while opening {}: {}", file_path.display(), why),
+        Ok(file) => file,
+    };
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == title_id {
+            library_line = split_line[2..].to_vec();
+            break;
+        }
+    }
+    for point in library_line.into_iter() {
+        result.push((
+            point.clone(),
+            load_from_filename(point.clone(), project_dir.clone()),
+        ));
+    }
+    return result;
+}
 //Gets the filename of a txt file, returns its content.
 fn load_from_filename(title: String, project_dir: PathBuf) -> String {
     let project_dir: PathBuf = [project_dir, PathBuf::from(title + ".txt")]
@@ -147,7 +185,7 @@ fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 //Loading the titles and corresponding points from the Libary.txt file.
 //This file has a title_id being the first word of each line
 //the title being the second word,
-//followed by the "~" symbol befgre each point.
+//followed by the "@" symbol befgre each point.
 fn load_from_library(project_dir: PathBuf) -> Vec<(String, String, Vec<String>)> {
     let file_path: PathBuf = [project_dir, PathBuf::from("Library.txt")].iter().collect();
     let file = match File::open(&file_path) {
@@ -214,6 +252,7 @@ fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
     return (id.to_string(), "New point".to_string());
 }
 
+//Deletes all mentions of point_id from the library file
 fn delete_point_from_library(project_dir: PathBuf, point_id: String) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -240,6 +279,7 @@ fn delete_point_from_library(project_dir: PathBuf, point_id: String) -> () {
     );
 }
 
+//Gets a point id, deletes the corresponding file and all library mentions
 fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     println!("Delete with pointid{}", point_id.clone());
     let file_path: PathBuf = [
