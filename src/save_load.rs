@@ -4,6 +4,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
 
+const VERSION: i32 = 1;
 //Gets a title_id, loads the corresponding point_ids and point_content
 pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(String, String)> {
     let mut result: Vec<(String, String)> = Vec::new();
@@ -200,8 +201,10 @@ pub fn add_title(project_dir: PathBuf) -> () {
         "Library".to_string(),
         content.join("\n"),
     );
-    let content = "New title".to_string();
-    save_to_filename(project_dir.clone(), new_id.to_string(), content);
+    let mut content: Vec<String> = Vec::new();
+    content.push("New title".to_string());
+    content.push("Version:".to_string() + &VERSION.to_string());
+    save_to_filename(project_dir.clone(), new_id.to_string(), content.join("\n"));
 }
 //Gets a title_id. It deletes the library mention.
 //Then it looks if any of the points in that line were only on that line

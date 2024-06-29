@@ -7,6 +7,9 @@ use crate::save_load::{
 use eframe::egui::{self};
 use std::path::PathBuf;
 mod save_load;
+
+const VERSION: i32 = 1;
+
 struct Structurer {
     project_directory: PathBuf,
     titles_points: Vec<(String, String, Vec<String>)>, //Titles_points(title_id, title ,corresponding_points)
@@ -21,6 +24,8 @@ struct Structurer {
     show_share_point_popup: bool,
     point_requesting_sharing: String,
     titles_receiving_shared_point: Vec<(String, String, bool)>, //(title_id,title,is_shared_or_not)
+
+    show_title_delete_popup: bool,
 }
 
 impl Default for Structurer {
@@ -37,6 +42,7 @@ impl Default for Structurer {
             show_share_point_popup: false,
             point_requesting_sharing: String::new(),
             titles_receiving_shared_point: Vec::new(),
+            show_title_delete_popup: false,
         }
     }
 }
@@ -92,23 +98,7 @@ impl eframe::App for Structurer {
                     add_title(self.project_directory.clone());
                 }
                 if ui.button("Delete Title").clicked() {
-                    delete_title(
-                        self.project_directory.clone(),
-                        self.current_title_id.clone(),
-                    );
-                    //Reseting the state and showing the first title
-                    self.titles_points = load_from_library(self.project_directory.clone());
-                    (self.current_title_id, self.current_title, _) = self.titles_points[0].clone();
-                    self.current_points = Vec::new();
-                    for new_point in self.titles_points[0].2.clone().into_iter() {
-                        self.current_points.push((
-                            new_point.to_string(),
-                            load_from_filename(
-                                new_point.to_string(),
-                                self.project_directory.clone(),
-                            ),
-                        ));
-                    }
+                    self.show_title_delete_popup = true;
                 }
                 if ui.button("Save Page As:").clicked() {
                     self.age += 1;
@@ -319,6 +309,57 @@ impl eframe::App for Structurer {
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
                         self.show_share_point_popup = false;
+                    }
+                },
+            );
+        }
+        if self.show_title_delete_popup {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("immediate_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Confirm Deletion")
+                    .with_inner_size([300.0, 100.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Are you sure you want to permanently delete this title?");
+                        ui.horizontal(|ui| {
+                            if ui.button("Yes").clicked() {
+                                delete_title(
+                                    self.project_directory.clone(),
+                                    self.current_title_id.clone(),
+                                );
+                                //Reseting the state and showing the first title
+                                self.titles_points =
+                                    load_from_library(self.project_directory.clone());
+                                (self.current_title_id, self.current_title, _) =
+                                    self.titles_points[0].clone();
+                                self.current_points = Vec::new();
+                                for new_point in self.titles_points[0].2.clone().into_iter() {
+                                    self.current_points.push((
+                                        new_point.to_string(),
+                                        load_from_filename(
+                                            new_point.to_string(),
+                                            self.project_directory.clone(),
+                                        ),
+                                    ));
+                                }
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                ctx.request_repaint();
+                            }
+
+                            if ui.button("No").clicked() {
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                        });
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_title_delete_popup = false;
                     }
                 },
             );
