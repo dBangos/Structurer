@@ -276,6 +276,18 @@ impl eframe::App for Structurer {
                                     self.point_requesting_sharing.clone(),
                                     self.titles_receiving_shared_point.clone(),
                                 );
+                                if self
+                                    .titles_receiving_shared_point
+                                    .iter()
+                                    .all(|(_a, _b, c)| *c == false)
+                                //If the point is not shared
+                                //with any titles, delete it
+                                {
+                                    delete_point(
+                                        self.project_directory.clone(),
+                                        self.point_requesting_sharing.clone(),
+                                    );
+                                }
                                 self.titles_points =
                                     load_from_library(self.project_directory.clone());
                                 self.current_points = load_points_from_title_id(
