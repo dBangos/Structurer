@@ -1,10 +1,10 @@
-//Gets a title_id, loads the corresponding point_ids and point_content
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
 
+//Gets a title_id, loads the corresponding point_ids and point_content
 pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(String, String)> {
     let mut result: Vec<(String, String)> = Vec::new();
     let mut library_line: Vec<String> = Vec::new();
@@ -60,11 +60,6 @@ pub fn load_from_library(project_dir: PathBuf) -> Vec<(String, String, Vec<Strin
     }
     return result;
 }
-
-//Gets a title_id, returns tags and field information
-//fn load_from_title_id(project_dir: PathBuf, title:String)->Vec<String>{
-//
-//}
 
 //Gets a file name and path, saves content to it.
 pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> () {
