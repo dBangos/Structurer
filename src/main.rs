@@ -159,18 +159,6 @@ impl eframe::App for Structurer {
                         ui.text_edit_singleline(&mut self.current_title)
                             .labelled_by(name_label.id);
                     });
-                    //Updates the current_points variable, this is how point deletions get updated
-                    //and shown on the ui
-                    let temp_file_path_for_check: PathBuf =
-                        [self.project_directory.clone(), PathBuf::from("Library.txt")]
-                            .iter()
-                            .collect();
-                    if temp_file_path_for_check.exists() {
-                        self.current_points = load_points_from_title_id(
-                            self.project_directory.clone(),
-                            self.current_title_id.clone(),
-                        );
-                    }
                     for point in self.current_points.iter_mut() {
                         // Container for elements of each point
                         ui.horizontal(|ui| {
@@ -242,6 +230,11 @@ impl eframe::App for Structurer {
                                 );
                                 self.titles_points =
                                     load_from_library(self.project_directory.clone());
+
+                                self.current_points = load_points_from_title_id(
+                                    self.project_directory.clone(),
+                                    self.current_title_id.clone(),
+                                );
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                                 ctx.request_repaint();
                             }
@@ -285,6 +278,10 @@ impl eframe::App for Structurer {
                                 );
                                 self.titles_points =
                                     load_from_library(self.project_directory.clone());
+                                self.current_points = load_points_from_title_id(
+                                    self.project_directory.clone(),
+                                    self.current_title_id.clone(),
+                                );
                                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                                 ctx.request_repaint();
                             }
