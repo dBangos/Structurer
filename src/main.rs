@@ -80,9 +80,6 @@ impl eframe::App for Structurer {
                         save_to_filename(self.project_directory.clone(), id, content);
                     }
                 }
-                if ui.button("New").clicked() {
-                    self.age += 1;
-                }
                 if ui.button("Add Point").clicked() {
                     self.current_points.push(add_point(
                         self.project_directory.clone(),
@@ -94,7 +91,23 @@ impl eframe::App for Structurer {
                     add_title(self.project_directory.clone());
                 }
                 if ui.button("Delete Title").clicked() {
-                    delete_title();
+                    delete_title(
+                        self.project_directory.clone(),
+                        self.current_title_id.clone(),
+                    );
+                    //Reseting the state and showing the first title
+                    self.titles_points = load_from_library(self.project_directory.clone());
+                    (self.current_title_id, self.current_title, _) = self.titles_points[0].clone();
+                    self.current_points = Vec::new();
+                    for new_point in self.titles_points[0].2.clone().into_iter() {
+                        self.current_points.push((
+                            new_point.to_string(),
+                            load_from_filename(
+                                new_point.to_string(),
+                                self.project_directory.clone(),
+                            ),
+                        ));
+                    }
                 }
                 if ui.button("Save Page As:").clicked() {
                     self.age += 1;
@@ -256,7 +269,7 @@ impl eframe::App for Structurer {
                 egui::ViewportId::from_hash_of("immediate_viewport"),
                 egui::ViewportBuilder::default()
                     .with_title("Confirm Deletion")
-                    .with_inner_size([300.0, 100.0]),
+                    .with_inner_size([200.0, 300.0]),
                 |ctx, class| {
                     assert!(
                         class == egui::ViewportClass::Immediate,
@@ -276,12 +289,11 @@ impl eframe::App for Structurer {
                                     self.point_requesting_sharing.clone(),
                                     self.titles_receiving_shared_point.clone(),
                                 );
+                                //If the point is not shared to any titles, delete it
                                 if self
                                     .titles_receiving_shared_point
                                     .iter()
                                     .all(|(_a, _b, c)| *c == false)
-                                //If the point is not shared
-                                //with any titles, delete it
                                 {
                                     delete_point(
                                         self.project_directory.clone(),
@@ -517,7 +529,61 @@ fn add_title(project_dir: PathBuf) -> () {
     let content = "New title".to_string();
     save_to_filename(project_dir.clone(), new_id.to_string(), content);
 }
-fn delete_title() -> () {}
+//Gets a title_id. It deletes the library mention.
+//Then it looks if any of the points in that line were only on that line
+//if so it deletes them as well and finally it deletes the title file
+fn delete_title(project_dir: PathBuf, title_id: String) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let mut deleted_line: Vec<(String, bool)> = Vec::new();
+    let mut file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path).expect("Error while opening file from delete_title");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] != title_id {
+            content.push(split_line.join("@"));
+        } else {
+            for item in &split_line[2..] {
+                deleted_line.push((item.to_string(), false));
+            }
+        }
+    }
+    save_to_filename(
+        project_dir.clone(),
+        "Library".to_string(),
+        content.join("\n"),
+    );
+    let file = File::open(&file_path).expect("Error while opening file from delete_title");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        for (point_id, is_shared) in deleted_line.iter_mut() {
+            if *is_shared == false {
+                if split_line.contains(&point_id) {
+                    *is_shared = true;
+                }
+            }
+        }
+    }
+    for (point_id, is_shared) in deleted_line {
+        if !is_shared {
+            file_path = [
+                project_dir.clone(),
+                PathBuf::from(point_id.clone() + ".txt"),
+            ]
+            .iter()
+            .collect();
+            let _ = remove_file(file_path);
+        }
+    }
+    file_path = [
+        project_dir.clone(),
+        PathBuf::from(title_id.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let _ = remove_file(file_path);
+}
 
 //Gets a point_id and a list of titles and bools. If the bool is true it adds the point/confirms it is
 //there. If it is false it removes it/confirms the point isn't there.
