@@ -1,6 +1,5 @@
 use crate::egui::{popup_below_widget, ComboBox, Id};
-use eframe::egui::{self, viewport};
-use rfd::MessageDialogResult;
+use eframe::egui::{self};
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -9,7 +8,7 @@ use uuid::Uuid;
 
 struct Structurer {
     project_directory: PathBuf,
-    titles_points: Vec<(String, String, Vec<String>)>, //Titles_points(title, title_id ,corresponding_points)
+    titles_points: Vec<(String, String, Vec<String>)>, //Titles_points(title_id, title ,corresponding_points)
     current_points: Vec<(String, String)>,             //Current_point(point_id,point_content)
     current_title: String,
     current_title_id: String,
@@ -17,19 +16,26 @@ struct Structurer {
 
     show_confirm_delete_popup: bool,
     point_requesting_deletion: String,
+
+    show_share_point_popup: bool,
+    point_requesting_sharing: String,
+    titles_receiving_shared_point: Vec<(String, String, bool)>, //(title_id,title,is_shared_or_not)
 }
 
 impl Default for Structurer {
     fn default() -> Self {
         Self {
             project_directory: Default::default(),
-            titles_points: Vec::new(), //Titles_points(title, title_id ,corresponding_points)
+            titles_points: Vec::new(), //Titles_points(title_id, title ,corresponding_points)
             current_points: Vec::new(), //Current_point(point_id,point_content)
             current_title: String::new(),
             current_title_id: String::new(),
             age: 40,
             show_confirm_delete_popup: false,
             point_requesting_deletion: String::new(),
+            show_share_point_popup: false,
+            point_requesting_sharing: String::new(),
+            titles_receiving_shared_point: Vec::new(),
         }
     }
 }
@@ -42,7 +48,7 @@ fn main() -> Result<(), eframe::Error> {
         ..Default::default()
     };
     eframe::run_native(
-        "My egui App",
+        "Structurer",
         options,
         Box::new(|cc| {
             // This gives us image support:
@@ -174,7 +180,12 @@ impl eframe::App for Structurer {
                                     self.show_confirm_delete_popup = true;
                                 }
                                 if ui.button("Add to:").clicked() {
-                                    //spawnpopup
+                                    self.titles_receiving_shared_point = point_is_shared_with(
+                                        self.project_directory.clone(),
+                                        point.0.clone(),
+                                    );
+                                    self.point_requesting_sharing = point.0.clone();
+                                    self.show_share_point_popup = true;
                                 }
                             });
                             ui.text_edit_multiline(&mut point.1);
@@ -243,6 +254,49 @@ impl eframe::App for Structurer {
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
                         self.show_confirm_delete_popup = false;
+                    }
+                },
+            );
+        }
+        if self.show_share_point_popup {
+            ctx.show_viewport_immediate(
+                egui::ViewportId::from_hash_of("immediate_viewport"),
+                egui::ViewportBuilder::default()
+                    .with_title("Confirm Deletion")
+                    .with_inner_size([300.0, 100.0]),
+                |ctx, class| {
+                    assert!(
+                        class == egui::ViewportClass::Immediate,
+                        "This egui backend doesn't support multiple viewports"
+                    );
+                    egui::CentralPanel::default().show(ctx, |ui| {
+                        ui.label("Share point:");
+                        ui.vertical(|ui| {
+                            for line in self.titles_receiving_shared_point.iter_mut() {
+                                ui.checkbox(&mut line.2, line.1.clone());
+                            }
+                        });
+                        ui.horizontal(|ui| {
+                            if ui.button("Ok").clicked() {
+                                share_unshare_point(
+                                    self.project_directory.clone(),
+                                    self.point_requesting_sharing.clone(),
+                                    self.titles_receiving_shared_point.clone(),
+                                );
+                                self.titles_points =
+                                    load_from_library(self.project_directory.clone());
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                ctx.request_repaint();
+                            }
+
+                            if ui.button("Cancel").clicked() {
+                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                        });
+                    });
+                    if ctx.input(|i| i.viewport().close_requested()) {
+                        // Tell parent viewport that we should not show next frame:
+                        self.show_share_point_popup = false;
                     }
                 },
             );
@@ -320,7 +374,7 @@ fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> () {
     let _ = file.write_all(content.as_bytes());
 }
 
-//Adds a point to the proper place in the Library.txt file
+//Adds a point to the passed title in the Library.txt file
 fn add_point_to_library(project_dir: PathBuf, title_id: String, point_id: String) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -385,7 +439,7 @@ fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     ]
     .iter()
     .collect();
-    remove_file(file_path);
+    let _ = remove_file(file_path);
     delete_point_from_library(project_dir.clone(), point_id.clone());
 }
 
@@ -418,7 +472,7 @@ fn change_title_name(project_dir: PathBuf, title_id: String, new_title: String) 
         .iter()
         .collect();
     let file = File::open(&file_path)
-        .expect("Error while opening the library file form change_title_name");
+        .expect("Error while opening the library file from change_title_name");
     for line in BufReader::new(file).lines() {
         let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
         if split_line[0] == title_id {
@@ -455,3 +509,62 @@ fn add_title(project_dir: PathBuf) -> () {
     save_to_filename(project_dir.clone(), new_id.to_string(), content);
 }
 fn delete_title() -> () {}
+
+//Gets a point_id and a list of titles and bools. If the bool is true it adds the point/confirms it is
+//there. If it is false it removes it/confirms the point isn't there.
+fn share_unshare_point(
+    project_dir: PathBuf,
+    point_id: String,
+    checklist: Vec<(String, String, bool)>,
+) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path)
+        .expect("Error while opening the library file from point_is_shared_with");
+    for (line_read, (title_id, _title, is_shared)) in BufReader::new(file)
+        .lines()
+        .into_iter()
+        .zip(checklist.into_iter())
+    {
+        let mut split_line: Vec<String> = line_read
+            .unwrap()
+            .split("@")
+            .map(|s| s.to_string())
+            .collect();
+        assert_eq!(split_line[0], title_id); //Each line should be referring to a title in the same order
+        if is_shared && !split_line.contains(&point_id) {
+            split_line.push(point_id.clone());
+        } else if !is_shared && split_line.contains(&point_id) {
+            split_line.retain(|value| *value != point_id);
+        }
+
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        "Library".to_string(),
+        content.join("\n"),
+    );
+}
+
+//Gets a point_id, returns a list with all the titles and if it is shared with them or not
+fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<(String, String, bool)> {
+    let mut result: Vec<(String, String, bool)> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+
+    let file = File::open(&file_path)
+        .expect("Error while opening the library file from point_is_shared_with");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        result.push((
+            split_line[0].clone(),
+            split_line[1].clone(),
+            split_line.contains(&point_id),
+        ));
+    }
+    return result;
+}
