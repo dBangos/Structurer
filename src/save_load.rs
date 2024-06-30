@@ -71,34 +71,17 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
     let _ = file.write_all(content.as_bytes());
 }
 
-//Adds a point to the passed title in the Library.txt file
-pub fn add_point_to_library(project_dir: PathBuf, title_id: String, point_id: String) -> () {
-    let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
-        .iter()
-        .collect();
-    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = File::open(&file_path).expect("Error while opening file from add_point_to_library");
-    for line in BufReader::new(file).lines() {
-        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == title_id {
-            split_line.push(point_id.to_string());
-        }
-        content.push(split_line.join("@"));
-    }
-    let _ = save_to_filename(
-        project_dir.clone(),
-        "Library".to_string(),
-        content.join("\n"),
-    );
-}
-
 //Adds a point to the current page/title, creates the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
 pub fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
     let id = Uuid::new_v4();
     save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
-    add_point_to_library(project_dir.clone(), title_id, id.to_string());
+    add_element_to_line(
+        project_dir.clone(),
+        title_id,
+        id.to_string(),
+        "Library".to_string(),
+    );
     return (id.to_string(), "New point".to_string());
 }
 
@@ -186,27 +169,17 @@ pub fn change_title_name(project_dir: PathBuf, title_id: String, new_title: Stri
 
 //Adds a title to library and creates the corresponding file
 pub fn add_title(project_dir: PathBuf) -> () {
-    let mut content: Vec<String> = Vec::new();
     let new_id = Uuid::new_v4();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
-        .iter()
-        .collect();
-    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = File::open(&file_path).expect("Error while opening file from add_title");
-    for line in BufReader::new(file).lines() {
-        content.push(line.expect("Error while reading lines in add_title"));
-    }
-    content.push(new_id.to_string() + "@New title");
-    save_to_filename(
+    add_line_to_file(
         project_dir.clone(),
+        new_id.to_string() + "@New title",
         "Library".to_string(),
-        content.join("\n"),
     );
     let mut content: Vec<String> = Vec::new();
     content.push("New title".to_string());
     content.push("Version:".to_string() + &VERSION.to_string());
     save_to_filename(project_dir.clone(), new_id.to_string(), content.join("\n"));
-    add_title_to_links(project_dir.clone(), new_id.to_string());
+    add_line_to_file(project_dir.clone(), new_id.to_string(), "Links".to_string());
 }
 //Gets a title_id. It deletes the library mention.
 //Then it looks if any of the points in that line were only on that line
@@ -233,7 +206,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
         "Library".to_string(),
         content.join("\n"),
     );
-    delete_title_from_links(project_dir.clone(), title_id.clone());
+    delete_line_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
@@ -322,30 +295,76 @@ pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<bool>
     return result;
 }
 
-pub fn add_title_to_links(project_dir: PathBuf, title_id: String) -> () {
+//Gets a line and a file, adds line to the end of the file
+pub fn add_line_to_file(project_dir: PathBuf, identifier: String, file_name: String) -> () {
     let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
-        .iter()
-        .collect();
-    let file = File::open(&file_path).expect("Error while opening file from add_title_to_links");
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let file = File::open(&file_path).expect("Error while opening file from add_line_to_file");
     for line in BufReader::new(file).lines() {
-        content.push(line.expect("Error while reading lines in add_title_to_links"));
+        content.push(line.expect("Error while reading lines in add_line_to_file"));
     }
-    content.push(title_id.to_string());
-    save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));
+    content.push(identifier.to_string());
+    save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
 }
 
-pub fn delete_title_from_links(project_dir: PathBuf, title_id: String) -> () {
+//Gets a line and a file, deletes line starting with identifier from file
+pub fn delete_line_from_file(project_dir: PathBuf, identifier: String, file_name: String) {
     let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
-        .iter()
-        .collect();
-    let file = File::open(&file_path).expect("Error while opening file from add_title_to_links");
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let file = File::open(&file_path).expect("Error while opening file from delete_line_from_file");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0].to_string() != title_id {
+        if split_line[0].to_string() != identifier {
             content.push(split_line.join("@"));
         }
     }
-    save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));
+    save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
+}
+
+//Gets file, line and element. Appends element to the line
+pub fn add_element_to_line(
+    project_dir: PathBuf,
+    line_identifier: String,
+    element: String,
+    file_name: String,
+) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
+    let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
+    for line in BufReader::new(file).lines() {
+        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == line_identifier {
+            split_line.push(element.to_string());
+        }
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
 }

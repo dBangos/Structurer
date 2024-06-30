@@ -1,8 +1,8 @@
 use crate::egui::{popup_below_widget, ComboBox, Id};
 use crate::save_load::{
-    add_point, add_point_to_library, add_title, change_title_name, delete_point,
-    delete_point_from_library, delete_title, load_from_filename, load_from_library,
-    load_points_from_title_id, point_is_shared_with, save_to_filename, share_unshare_point,
+    add_point, add_title, change_title_name, delete_point, delete_title, load_from_filename,
+    load_from_library, load_points_from_title_id, point_is_shared_with, save_to_filename,
+    share_unshare_point,
 };
 use eframe::egui::{self};
 use std::path::PathBuf;
@@ -106,6 +106,9 @@ impl eframe::App for Structurer {
                 }
                 if ui.button("Save Page As:").clicked() {
                     self.age += 1;
+                }
+                if ui.button("Link Title").clicked() {
+                    //
                 }
             });
 
