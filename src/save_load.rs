@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use uuid::Uuid;
 
 const VERSION: i32 = 1;
+
 //Gets a title_id, loads the corresponding point_ids and point_content
 pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(String, String)> {
     let mut result: Vec<(String, String)> = Vec::new();
@@ -47,19 +48,19 @@ pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 //This file has a title_id being the first word of each line
 //the title being the second word,
 //followed by the "@" symbol befgre each point.
-pub fn load_from_library(project_dir: PathBuf) -> Vec<(String, String, Vec<String>)> {
+pub fn load_from_library(project_dir: PathBuf) -> (Vec<String>, Vec<String>, Vec<Vec<String>>) {
     let file_path: PathBuf = [project_dir, PathBuf::from("Library.txt")].iter().collect();
     let file = File::open(&file_path).expect("Error while opening file from load_from_library");
-    let mut result: Vec<(String, String, Vec<String>)> = Vec::new();
+    let mut result_title_id: Vec<String> = Vec::new();
+    let mut result_title: Vec<String> = Vec::new();
+    let mut result_title_points: Vec<Vec<String>> = Vec::new();
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        result.push((
-            split_line[0].clone(),
-            split_line[1].clone(),
-            split_line[2..].to_vec(),
-        ));
+        result_title_id.push(split_line[0].clone());
+        result_title.push(split_line[1].clone());
+        result_title_points.push(split_line[2..].to_vec());
     }
-    return result;
+    return (result_title_id, result_title, result_title_points);
 }
 
 //Gets a file name and path, saves content to it.
@@ -205,6 +206,7 @@ pub fn add_title(project_dir: PathBuf) -> () {
     content.push("New title".to_string());
     content.push("Version:".to_string() + &VERSION.to_string());
     save_to_filename(project_dir.clone(), new_id.to_string(), content.join("\n"));
+    add_title_to_links(project_dir.clone(), new_id.to_string());
 }
 //Gets a title_id. It deletes the library mention.
 //Then it looks if any of the points in that line were only on that line
@@ -231,6 +233,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
         "Library".to_string(),
         content.join("\n"),
     );
+    delete_title_from_links(project_dir.clone(), title_id.clone());
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
@@ -267,7 +270,8 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
 pub fn share_unshare_point(
     project_dir: PathBuf,
     point_id: String,
-    checklist: Vec<(String, String, bool)>,
+    checklist: Vec<bool>,
+    title_ids_list: Vec<String>,
 ) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -275,10 +279,12 @@ pub fn share_unshare_point(
         .collect();
     let file = File::open(&file_path)
         .expect("Error while opening the library file from point_is_shared_with");
-    for (line_read, (title_id, _title, is_shared)) in BufReader::new(file)
+    for (line_read, is_shared, title_id) in BufReader::new(file)
         .lines()
         .into_iter()
         .zip(checklist.into_iter())
+        .zip(title_ids_list.into_iter())
+        .map(|((x, y), z)| (x, y, z))
     {
         let mut split_line: Vec<String> = line_read
             .unwrap()
@@ -301,22 +307,45 @@ pub fn share_unshare_point(
     );
 }
 
-//Gets a point_id, returns a list with all the titles and if it is shared with them or not
-pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<(String, String, bool)> {
-    let mut result: Vec<(String, String, bool)> = Vec::new();
+//Gets a point_id, returns a list with all the bools if it is shared with them or not
+pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<bool> {
+    let mut result: Vec<bool> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
         .iter()
         .collect();
-
     let file = File::open(&file_path)
         .expect("Error while opening the library file from point_is_shared_with");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        result.push((
-            split_line[0].clone(),
-            split_line[1].clone(),
-            split_line.contains(&point_id),
-        ));
+        result.push(split_line.contains(&point_id));
     }
     return result;
+}
+
+pub fn add_title_to_links(project_dir: PathBuf, title_id: String) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path).expect("Error while opening file from add_title_to_links");
+    for line in BufReader::new(file).lines() {
+        content.push(line.expect("Error while reading lines in add_title_to_links"));
+    }
+    content.push(title_id.to_string());
+    save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));
+}
+
+pub fn delete_title_from_links(project_dir: PathBuf, title_id: String) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path).expect("Error while opening file from add_title_to_links");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0].to_string() != title_id {
+            content.push(split_line.join("@"));
+        }
+    }
+    save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));
 }

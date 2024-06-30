@@ -8,12 +8,12 @@ use eframe::egui::{self};
 use std::path::PathBuf;
 mod save_load;
 
-const VERSION: i32 = 1;
-
 struct Structurer {
     project_directory: PathBuf,
-    titles_points: Vec<(String, String, Vec<String>)>, //Titles_points(title_id, title ,corresponding_points)
-    current_points: Vec<(String, String)>,             //Current_point(point_id,point_content)
+    titles: Vec<String>,
+    title_ids: Vec<String>,
+    points_of_title: Vec<Vec<String>>,
+    current_points: Vec<(String, String)>, //Current_point(point_id,point_content)
     current_title: String,
     current_title_id: String,
     age: i32,
@@ -23,7 +23,7 @@ struct Structurer {
 
     show_share_point_popup: bool,
     point_requesting_sharing: String,
-    titles_receiving_shared_point: Vec<(String, String, bool)>, //(title_id,title,is_shared_or_not)
+    titles_receiving_shared_point: Vec<bool>, //(title_id,title,is_shared_or_not)
 
     show_title_delete_popup: bool,
 }
@@ -32,7 +32,9 @@ impl Default for Structurer {
     fn default() -> Self {
         Self {
             project_directory: Default::default(),
-            titles_points: Vec::new(), //Titles_points(title_id, title ,corresponding_points)
+            titles: Vec::new(),
+            title_ids: Vec::new(),
+            points_of_title: Vec::new(),
             current_points: Vec::new(), //Current_point(point_id,point_content)
             current_title: String::new(),
             current_title_id: String::new(),
@@ -51,7 +53,7 @@ fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1000.0, 1000.0]),
+        viewport: egui::ViewportBuilder::default().with_inner_size([1820.0, 1000.0]),
         ..Default::default()
     };
     eframe::run_native(
@@ -75,7 +77,8 @@ impl eframe::App for Structurer {
                     if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
                         self.project_directory = dir_path;
                     }
-                    self.titles_points = load_from_library(self.project_directory.clone());
+                    (self.title_ids, self.titles, self.points_of_title) =
+                        load_from_library(self.project_directory.clone());
                 }
                 if ui.button("Save").clicked() {
                     change_title_name(
@@ -92,7 +95,8 @@ impl eframe::App for Structurer {
                         self.project_directory.clone(),
                         self.current_title_id.clone(),
                     ));
-                    self.titles_points = load_from_library(self.project_directory.clone());
+                    (self.title_ids, self.titles, self.points_of_title) =
+                        load_from_library(self.project_directory.clone());
                 }
                 if ui.button("Add Title").clicked() {
                     add_title(self.project_directory.clone());
@@ -109,16 +113,25 @@ impl eframe::App for Structurer {
             ui.horizontal(|ui| {
                 //Titles layout ==========================================================
                 ui.vertical(|ui| {
+                    ui.label("All Titles");
                     //Making sure tha data is clean
                     let temp_file_path_for_check: PathBuf =
                         [self.project_directory.clone(), PathBuf::from("Library.txt")]
                             .iter()
                             .collect();
                     if temp_file_path_for_check.exists() {
-                        self.titles_points = load_from_library(self.project_directory.clone());
+                        (self.title_ids, self.titles, self.points_of_title) =
+                            load_from_library(self.project_directory.clone());
                     }
                     //Binding each title button to loading the corresponding points
-                    for (title_id, title, t_points) in self.titles_points.iter_mut() {
+                    for (title_id, title, t_points) in self
+                        .title_ids
+                        .clone()
+                        .into_iter()
+                        .zip(self.titles.clone().into_iter())
+                        .zip(self.points_of_title.clone().into_iter())
+                        .map(|((x, y), z)| (x, y, z))
+                    {
                         if ui.button(title.clone()).clicked() {
                             //Saving the title of the curent page before switching
                             //First checking if the file exists
@@ -232,9 +245,8 @@ impl eframe::App for Structurer {
                                     self.project_directory.clone(),
                                     self.point_requesting_deletion.clone(),
                                 );
-                                self.titles_points =
+                                (self.title_ids, self.titles, self.points_of_title) =
                                     load_from_library(self.project_directory.clone());
-
                                 self.current_points = load_points_from_title_id(
                                     self.project_directory.clone(),
                                     self.current_title_id.clone(),
@@ -269,8 +281,12 @@ impl eframe::App for Structurer {
                     egui::CentralPanel::default().show(ctx, |ui| {
                         ui.label("Share point:");
                         ui.vertical(|ui| {
-                            for line in self.titles_receiving_shared_point.iter_mut() {
-                                ui.checkbox(&mut line.2, line.1.clone());
+                            for (is_shared, title) in self
+                                .titles_receiving_shared_point
+                                .iter_mut()
+                                .zip(self.titles.clone())
+                            {
+                                ui.checkbox(is_shared, title.clone());
                             }
                         });
                         ui.horizontal(|ui| {
@@ -279,19 +295,20 @@ impl eframe::App for Structurer {
                                     self.project_directory.clone(),
                                     self.point_requesting_sharing.clone(),
                                     self.titles_receiving_shared_point.clone(),
+                                    self.title_ids.clone(),
                                 );
                                 //If the point is not shared to any titles, delete it
                                 if self
                                     .titles_receiving_shared_point
                                     .iter()
-                                    .all(|(_a, _b, c)| *c == false)
+                                    .all(|c| *c == false)
                                 {
                                     delete_point(
                                         self.project_directory.clone(),
                                         self.point_requesting_sharing.clone(),
                                     );
                                 }
-                                self.titles_points =
+                                (self.title_ids, self.titles, self.points_of_title) =
                                     load_from_library(self.project_directory.clone());
                                 self.current_points = load_points_from_title_id(
                                     self.project_directory.clone(),
@@ -334,12 +351,12 @@ impl eframe::App for Structurer {
                                     self.current_title_id.clone(),
                                 );
                                 //Reseting the state and showing the first title
-                                self.titles_points =
+                                (self.title_ids, self.titles, self.points_of_title) =
                                     load_from_library(self.project_directory.clone());
-                                (self.current_title_id, self.current_title, _) =
-                                    self.titles_points[0].clone();
+                                (self.current_title_id, self.current_title) =
+                                    (self.title_ids[0].clone(), self.titles[0].clone());
                                 self.current_points = Vec::new();
-                                for new_point in self.titles_points[0].2.clone().into_iter() {
+                                for new_point in self.points_of_title[0].clone().into_iter() {
                                     self.current_points.push((
                                         new_point.to_string(),
                                         load_from_filename(
