@@ -368,3 +368,74 @@ pub fn add_element_to_line(
         content.join("\n"),
     );
 }
+
+// Gets a title, a list of titles and bools. Writes or deletes links from Links.txt according to
+// bools.
+pub fn link_unlink_title(
+    project_dir: PathBuf,
+    curr_title_id: String,
+    checklist: Vec<bool>,
+    title_ids_list: Vec<String>,
+) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path)
+        .expect("Error while opening the library file from point_is_shared_with");
+    for (line_read, is_shared, title_id) in BufReader::new(file)
+        .lines()
+        .into_iter()
+        .zip(checklist.clone().into_iter())
+        .zip(title_ids_list.clone().into_iter())
+        .map(|((x, y), z)| (x, y, z))
+    {
+        let mut split_line: Vec<String> = line_read
+            .unwrap()
+            .split("@")
+            .map(|s| s.to_string())
+            .collect();
+        assert_eq!(split_line[0], title_id); //Each line should be referring to a title in the same order
+                                             // On the title line add the ones that should be added, remove the ones that should be
+                                             // removed
+        if split_line[0] == curr_title_id {
+            for (local_is_shared, local_title_id) in checklist
+                .clone()
+                .into_iter()
+                .zip(title_ids_list.clone().into_iter())
+            {
+                if local_title_id == curr_title_id {
+                    //Ignore the current title so it can't uncheck
+                    //itself
+                    continue;
+                } else if local_is_shared && !split_line.contains(&local_title_id) {
+                    split_line.push(local_title_id.clone());
+                } else if !local_is_shared && split_line.contains(&local_title_id) {
+                    split_line.retain(|value| *value != local_title_id);
+                }
+            }
+        } else if is_shared && !split_line.contains(&curr_title_id) {
+            split_line.push(curr_title_id.clone());
+        } else if !is_shared && split_line.contains(&curr_title_id) {
+            split_line.retain(|value| *value != curr_title_id);
+        }
+
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));
+}
+
+//Gets a title_id, returns a list with all the bools if it is linked with them or not
+pub fn title_is_linked_with(project_dir: PathBuf, title_id: String) -> Vec<bool> {
+    let mut result: Vec<bool> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path)
+        .expect("Error while opening the links file from title_is_linked_with");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        result.push(split_line.contains(&title_id));
+    }
+    return result;
+}

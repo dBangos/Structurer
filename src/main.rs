@@ -5,6 +5,7 @@ use crate::save_load::{
     share_unshare_point,
 };
 use eframe::egui::{self};
+use save_load::{link_unlink_title, title_is_linked_with};
 use std::path::PathBuf;
 mod save_load;
 
@@ -26,6 +27,8 @@ struct Structurer {
     titles_receiving_shared_point: Vec<bool>, //(title_id,title,is_shared_or_not)
 
     show_title_delete_popup: bool,
+    show_link_title_popup: bool,
+    titles_linked_to_current: Vec<bool>,
 }
 
 impl Default for Structurer {
@@ -45,6 +48,8 @@ impl Default for Structurer {
             point_requesting_sharing: String::new(),
             titles_receiving_shared_point: Vec::new(),
             show_title_delete_popup: false,
+            show_link_title_popup: false,
+            titles_linked_to_current: Vec::new(),
         }
     }
 }
@@ -108,7 +113,11 @@ impl eframe::App for Structurer {
                     self.age += 1;
                 }
                 if ui.button("Link Title").clicked() {
-                    //
+                    self.titles_linked_to_current = title_is_linked_with(
+                        self.project_directory.clone(),
+                        self.current_title_id.clone(),
+                    );
+                    self.show_link_title_popup = true;
                 }
             });
 
@@ -117,59 +126,125 @@ impl eframe::App for Structurer {
                 //Titles layout ==========================================================
                 ui.vertical(|ui| {
                     ui.label("All Titles");
-                    //Making sure tha data is clean
-                    let temp_file_path_for_check: PathBuf =
-                        [self.project_directory.clone(), PathBuf::from("Library.txt")]
-                            .iter()
-                            .collect();
-                    if temp_file_path_for_check.exists() {
-                        (self.title_ids, self.titles, self.points_of_title) =
-                            load_from_library(self.project_directory.clone());
-                    }
-                    //Binding each title button to loading the corresponding points
-                    for (title_id, title, t_points) in self
-                        .title_ids
-                        .clone()
-                        .into_iter()
-                        .zip(self.titles.clone().into_iter())
-                        .zip(self.points_of_title.clone().into_iter())
-                        .map(|((x, y), z)| (x, y, z))
-                    {
-                        if ui.button(title.clone()).clicked() {
-                            //Saving the title of the curent page before switching
-                            //First checking if the file exists
-                            let temp_file_path_for_check: PathBuf = [
-                                self.project_directory.clone(),
-                                PathBuf::from(self.current_title_id.clone() + ".txt"),
-                            ]
-                            .iter()
-                            .collect();
-                            if temp_file_path_for_check.exists() {
-                                change_title_name(
+                    ui.vertical(|ui| {
+                        //Making sure tha data is clean
+                        let temp_file_path_for_check: PathBuf =
+                            [self.project_directory.clone(), PathBuf::from("Library.txt")]
+                                .iter()
+                                .collect();
+                        if temp_file_path_for_check.exists() {
+                            (self.title_ids, self.titles, self.points_of_title) =
+                                load_from_library(self.project_directory.clone());
+                        }
+                        //Binding each title button to loading the corresponding points
+                        for (title_id, title, t_points) in self
+                            .title_ids
+                            .clone()
+                            .into_iter()
+                            .zip(self.titles.clone().into_iter())
+                            .zip(self.points_of_title.clone().into_iter())
+                            .map(|((x, y), z)| (x, y, z))
+                        {
+                            if ui.button(title.clone()).clicked() {
+                                //Saving the title of the curent page before switching
+                                //First checking if the file exists
+                                let temp_file_path_for_check: PathBuf = [
+                                    self.project_directory.clone(),
+                                    PathBuf::from(self.current_title_id.clone() + ".txt"),
+                                ]
+                                .iter()
+                                .collect();
+                                if temp_file_path_for_check.exists() {
+                                    change_title_name(
+                                        self.project_directory.clone(),
+                                        self.current_title_id.clone(),
+                                        self.current_title.clone(),
+                                    );
+                                }
+                                //Setting the title field
+                                self.current_title = title.clone();
+                                self.current_title_id = title_id.clone();
+                                //Updating the links for the new title_id
+                                self.titles_linked_to_current = title_is_linked_with(
                                     self.project_directory.clone(),
                                     self.current_title_id.clone(),
-                                    self.current_title.clone(),
                                 );
-                            }
-                            //Setting the title field
-                            self.current_title = title.clone();
-                            self.current_title_id = title_id.clone();
-                            //Save old points => Remove old points => Add new points
-                            for (id, content) in self.current_points.clone().into_iter() {
-                                save_to_filename(self.project_directory.clone(), id, content);
-                            }
-                            self.current_points = Vec::new();
-                            for new_point in t_points.into_iter() {
-                                self.current_points.push((
-                                    new_point.to_string(),
-                                    load_from_filename(
+                                //Save old points => Remove old points => Add new points
+                                for (id, content) in self.current_points.clone().into_iter() {
+                                    save_to_filename(self.project_directory.clone(), id, content);
+                                }
+                                self.current_points = Vec::new();
+                                for new_point in t_points.into_iter() {
+                                    self.current_points.push((
                                         new_point.to_string(),
-                                        self.project_directory.clone(),
-                                    ),
-                                ));
+                                        load_from_filename(
+                                            new_point.to_string(),
+                                            self.project_directory.clone(),
+                                        ),
+                                    ));
+                                }
                             }
                         }
-                    }
+                    });
+                    ui.label("Linked With:");
+                    ui.vertical(|ui| {
+                        //Binding each title button to loading the corresponding points
+                        for (title_id, title, t_points, is_linked) in self
+                            .title_ids
+                            .clone()
+                            .into_iter()
+                            .zip(self.titles.clone().into_iter())
+                            .zip(self.points_of_title.clone().into_iter())
+                            .zip(self.titles_linked_to_current.clone().into_iter())
+                            .map(|(((x, y), z), a)| (x, y, z, a))
+                        {
+                            if is_linked {
+                                if ui.button(title.clone()).clicked() {
+                                    //Saving the title of the curent page before switching
+                                    //First checking if the file exists
+                                    let temp_file_path_for_check: PathBuf = [
+                                        self.project_directory.clone(),
+                                        PathBuf::from(self.current_title_id.clone() + ".txt"),
+                                    ]
+                                    .iter()
+                                    .collect();
+                                    if temp_file_path_for_check.exists() {
+                                        change_title_name(
+                                            self.project_directory.clone(),
+                                            self.current_title_id.clone(),
+                                            self.current_title.clone(),
+                                        );
+                                    }
+                                    //Setting the title field
+                                    self.current_title = title.clone();
+                                    self.current_title_id = title_id.clone();
+                                    //Updating the links for the new title_id
+                                    self.titles_linked_to_current = title_is_linked_with(
+                                        self.project_directory.clone(),
+                                        self.current_title_id.clone(),
+                                    );
+                                    //Save old points => Remove old points => Add new points
+                                    for (id, content) in self.current_points.clone().into_iter() {
+                                        save_to_filename(
+                                            self.project_directory.clone(),
+                                            id,
+                                            content,
+                                        );
+                                    }
+                                    self.current_points = Vec::new();
+                                    for new_point in t_points.into_iter() {
+                                        self.current_points.push((
+                                            new_point.to_string(),
+                                            load_from_filename(
+                                                new_point.to_string(),
+                                                self.project_directory.clone(),
+                                            ),
+                                        ));
+                                    }
+                                }
+                            }
+                        }
+                    });
                 });
 
                 //All points layout==========================================
@@ -270,7 +345,7 @@ impl eframe::App for Structurer {
                 },
             );
         }
-        if self.show_share_point_popup {
+        if self.show_share_point_popup || self.show_link_title_popup {
             ctx.show_viewport_immediate(
                 egui::ViewportId::from_hash_of("immediate_viewport"),
                 egui::ViewportBuilder::default()
@@ -282,53 +357,82 @@ impl eframe::App for Structurer {
                         "This egui backend doesn't support multiple viewports"
                     );
                     egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.label("Share point:");
-                        ui.vertical(|ui| {
-                            for (is_shared, title) in self
-                                .titles_receiving_shared_point
-                                .iter_mut()
-                                .zip(self.titles.clone())
-                            {
-                                ui.checkbox(is_shared, title.clone());
-                            }
-                        });
-                        ui.horizontal(|ui| {
-                            if ui.button("Ok").clicked() {
-                                share_unshare_point(
-                                    self.project_directory.clone(),
-                                    self.point_requesting_sharing.clone(),
-                                    self.titles_receiving_shared_point.clone(),
-                                    self.title_ids.clone(),
-                                );
-                                //If the point is not shared to any titles, delete it
-                                if self
+                        if self.show_share_point_popup {
+                            ui.label("Share point:");
+                            ui.vertical(|ui| {
+                                for (is_shared, title) in self
                                     .titles_receiving_shared_point
-                                    .iter()
-                                    .all(|c| *c == false)
+                                    .iter_mut()
+                                    .zip(self.titles.clone())
                                 {
-                                    delete_point(
+                                    ui.checkbox(is_shared, title.clone());
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                if ui.button("Ok").clicked() {
+                                    share_unshare_point(
                                         self.project_directory.clone(),
                                         self.point_requesting_sharing.clone(),
+                                        self.titles_receiving_shared_point.clone(),
+                                        self.title_ids.clone(),
                                     );
+                                    //If the point is not shared to any titles, delete it
+                                    if self
+                                        .titles_receiving_shared_point
+                                        .iter()
+                                        .all(|c| *c == false)
+                                    {
+                                        delete_point(
+                                            self.project_directory.clone(),
+                                            self.point_requesting_sharing.clone(),
+                                        );
+                                    }
+                                    (self.title_ids, self.titles, self.points_of_title) =
+                                        load_from_library(self.project_directory.clone());
+                                    self.current_points = load_points_from_title_id(
+                                        self.project_directory.clone(),
+                                        self.current_title_id.clone(),
+                                    );
+                                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                    ctx.request_repaint();
                                 }
-                                (self.title_ids, self.titles, self.points_of_title) =
-                                    load_from_library(self.project_directory.clone());
-                                self.current_points = load_points_from_title_id(
-                                    self.project_directory.clone(),
-                                    self.current_title_id.clone(),
-                                );
-                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                                ctx.request_repaint();
-                            }
 
-                            if ui.button("Cancel").clicked() {
-                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                            }
-                        });
+                                if ui.button("Cancel").clicked() {
+                                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                }
+                            });
+                        } else if self.show_link_title_popup {
+                            ui.label("Link Title:");
+                            ui.vertical(|ui| {
+                                for (is_linked, title) in self
+                                    .titles_linked_to_current
+                                    .iter_mut()
+                                    .zip(self.titles.clone())
+                                {
+                                    ui.checkbox(is_linked, title.clone());
+                                }
+                            });
+                            ui.horizontal(|ui| {
+                                if ui.button("Ok").clicked() {
+                                    link_unlink_title(
+                                        self.project_directory.clone(),
+                                        self.current_title_id.clone(),
+                                        self.titles_linked_to_current.clone(),
+                                        self.title_ids.clone(),
+                                    );
+                                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                    ctx.request_repaint();
+                                }
+
+                                if ui.button("Cancel").clicked() {
+                                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                                }
+                            });
+                        }
                     });
                     if ctx.input(|i| i.viewport().close_requested()) {
                         // Tell parent viewport that we should not show next frame:
-                        self.show_share_point_popup = false;
+                        self.show_link_title_popup = false;
                     }
                 },
             );
