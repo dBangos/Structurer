@@ -1,11 +1,10 @@
 use crate::egui::{popup_below_widget, ComboBox, Id};
 use crate::save_load::{
-    add_point, add_title, change_title_name, delete_point, delete_title, load_from_filename,
-    load_from_library, load_points_from_title_id, point_is_shared_with, save_to_filename,
-    share_unshare_point,
+    add_point, add_title, change_title_name, load_from_filename, load_from_library,
+    point_is_shared_with, save_to_filename,
 };
 use eframe::egui::{self};
-use save_load::{link_unlink_title, title_is_linked_with};
+use save_load::title_is_linked_with;
 use std::path::PathBuf;
 mod popup_windows;
 mod save_load;
@@ -315,34 +314,9 @@ impl eframe::App for Structurer {
                         class == egui::ViewportClass::Immediate,
                         "This egui backend doesn't support multiple viewports"
                     );
-
                     egui::CentralPanel::default().show(ctx, |ui| {
-                        ui.label("Are you sure you want to permanently delete this point?");
-                        ui.horizontal(|ui| {
-                            if ui.button("Yes").clicked() {
-                                delete_point(
-                                    self.project_directory.clone(),
-                                    self.point_requesting_deletion.clone(),
-                                );
-                                (self.title_ids, self.titles, self.points_of_title) =
-                                    load_from_library(self.project_directory.clone());
-                                self.current_points = load_points_from_title_id(
-                                    self.project_directory.clone(),
-                                    self.current_title_id.clone(),
-                                );
-                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                                ctx.request_repaint();
-                            }
-
-                            if ui.button("No").clicked() {
-                                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                            }
-                        });
+                        self.confirm_deletion_popup(ui);
                     });
-                    if ctx.input(|i| i.viewport().close_requested()) {
-                        // Tell parent viewport that we should not show next frame:
-                        self.show_confirm_delete_popup = false;
-                    }
                 },
             );
         }

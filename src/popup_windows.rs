@@ -118,4 +118,32 @@ impl Structurer {
             self.show_share_point_popup = false;
         }
     }
+
+    pub fn confirm_deletion_popup(&mut self, ui: &mut egui::Ui) {
+        ui.label("Are you sure you want to permanently delete this point?");
+        ui.horizontal(|ui| {
+            if ui.button("Yes").clicked() {
+                delete_point(
+                    self.project_directory.clone(),
+                    self.point_requesting_deletion.clone(),
+                );
+                (self.title_ids, self.titles, self.points_of_title) =
+                    load_from_library(self.project_directory.clone());
+                self.current_points = load_points_from_title_id(
+                    self.project_directory.clone(),
+                    self.current_title_id.clone(),
+                );
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                ui.ctx().request_repaint();
+            }
+
+            if ui.button("No").clicked() {
+                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+        });
+        if ui.ctx().input(|i| i.viewport().close_requested()) {
+            // Tell parent viewport that we should not show next frame:
+            self.show_confirm_delete_popup = false;
+        }
+    }
 }
