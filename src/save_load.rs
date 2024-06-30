@@ -1,9 +1,9 @@
+use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
-
 const VERSION: i32 = 1;
 
 //Gets a title_id, loads the corresponding point_ids and point_content
@@ -170,17 +170,30 @@ pub fn change_title_name(project_dir: PathBuf, title_id: String, new_title: Stri
 //Adds a title to library and creates the corresponding file
 pub fn add_title(project_dir: PathBuf) -> () {
     let new_id = Uuid::new_v4();
-    add_line_to_file(
-        project_dir.clone(),
-        new_id.to_string() + "@New title",
-        "Library".to_string(),
-    );
+    let mut file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+        .iter()
+        .collect();
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(file_path)
+        .expect("Error while opening library file from add_title");
+    file.write(("\n".to_string() + &new_id.to_string() + "@New title").as_bytes())
+        .expect("Error while writing to library file from add_title");
     let mut content: Vec<String> = Vec::new();
     content.push("New title".to_string());
     content.push("Version:".to_string() + &VERSION.to_string());
     save_to_filename(project_dir.clone(), new_id.to_string(), content.join("\n"));
-    add_line_to_file(project_dir.clone(), new_id.to_string(), "Links".to_string());
+    file_path = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(file_path)
+        .expect("Error while opening links file from add_title");
+    file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
+        .expect("Error while writing to links file from add_title");
 }
+
 //Gets a title_id. It deletes the library mention.
 //Then it looks if any of the points in that line were only on that line
 //if so it deletes them as well and finally it deletes the title file
@@ -293,27 +306,6 @@ pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<bool>
         result.push(split_line.contains(&point_id));
     }
     return result;
-}
-
-//Gets a line and a file, adds line to the end of the file
-pub fn add_line_to_file(project_dir: PathBuf, identifier: String, file_name: String) -> () {
-    let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [
-        project_dir.clone(),
-        PathBuf::from(file_name.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-    let file = File::open(&file_path).expect("Error while opening file from add_line_to_file");
-    for line in BufReader::new(file).lines() {
-        content.push(line.expect("Error while reading lines in add_line_to_file"));
-    }
-    content.push(identifier.to_string());
-    save_to_filename(
-        project_dir.clone(),
-        file_name.to_string(),
-        content.join("\n"),
-    );
 }
 
 //Gets a line and a file, deletes line starting with identifier from file
