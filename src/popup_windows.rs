@@ -1,10 +1,52 @@
 use crate::save_load::{
     delete_point, delete_title, link_unlink_title, load_from_filename, load_from_library,
-    load_points_from_title_id, share_unshare_point,
+    load_points_from_title_id, share_unshare_point, update_source,
 };
 use crate::Structurer;
 use eframe::egui::{self};
 impl Structurer {
+    pub fn point_source_popup(&mut self, ctx: &egui::Context) {
+        ctx.show_viewport_immediate(
+            egui::ViewportId::from_hash_of("immediate_viewport"),
+            egui::ViewportBuilder::default()
+                .with_title("Confirm Deletion")
+                .with_inner_size([400.0, 100.0]),
+            |ctx, class| {
+                assert!(
+                    class == egui::ViewportClass::Immediate,
+                    "This egui backend doesn't support multiple viewports"
+                );
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    ui.vertical(|ui| {
+                        //If it's like a link make it a hyperlink
+                        if self.point_source != "No source set yet."
+                            && (self.point_source.contains("www")
+                                || self.point_source.contains("https"))
+                        {
+                            ui.hyperlink(self.point_source.clone());
+                        } else {
+                            ui.label(self.point_source.clone());
+                        }
+                        ui.horizontal(|ui| {
+                            ui.text_edit_singleline(&mut self.point_source);
+                            if ui.button("Add source").clicked() {
+                                update_source(
+                                    self.project_directory.clone(),
+                                    self.point_requesting_source.clone(),
+                                    self.point_source.clone(),
+                                );
+                                ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+                            }
+                        });
+                    });
+                    if ui.ctx().input(|i| i.viewport().close_requested()) {
+                        self.show_source_popup = false;
+                    }
+                });
+            },
+        );
+    }
+
     pub fn title_delete_popup(&mut self, ctx: &egui::Context) {
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),
@@ -41,7 +83,6 @@ impl Structurer {
                                 ));
                             }
                             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-                            ui.ctx().request_repaint();
                         }
 
                         if ui.button("No").clicked() {
@@ -106,7 +147,6 @@ impl Structurer {
                                     self.current_title_id.clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-                                ui.ctx().request_repaint();
                             }
 
                             if ui.button("Cancel").clicked() {
@@ -133,7 +173,6 @@ impl Structurer {
                                     self.title_ids.clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-                                ui.ctx().request_repaint();
                             }
 
                             if ui.button("Cancel").clicked() {
@@ -177,7 +216,6 @@ impl Structurer {
                                 self.current_title_id.clone(),
                             );
                             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
-                            ui.ctx().request_repaint();
                         }
 
                         if ui.button("No").clicked() {

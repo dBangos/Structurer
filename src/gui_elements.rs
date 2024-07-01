@@ -1,6 +1,6 @@
 use crate::save_load::{
-    add_point, add_title, change_title_name, load_from_filename, load_from_library,
-    point_is_shared_with, save_to_filename, title_is_linked_with,
+    add_point, add_title, change_title_name, get_point_source, load_from_filename,
+    load_from_library, point_is_shared_with, save_to_filename, title_is_linked_with,
 };
 use crate::Structurer;
 use eframe::egui::{self};
@@ -167,6 +167,14 @@ impl Structurer {
                             );
                             self.point_requesting_sharing = point.0.clone();
                             self.show_share_point_popup = true;
+                        }
+                        if ui.button("Source").clicked() {
+                            self.point_requesting_source = point.0.clone();
+                            self.point_source = get_point_source(
+                                self.project_directory.clone(),
+                                self.point_requesting_source.clone(),
+                            );
+                            self.show_source_popup = true;
                         }
                     });
 

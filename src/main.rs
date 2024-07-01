@@ -24,6 +24,9 @@ struct Structurer {
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     titles_linked_to_current: Vec<bool>,
+    show_source_popup: bool,
+    point_requesting_source: String,
+    point_source: String,
 }
 
 impl Default for Structurer {
@@ -45,6 +48,9 @@ impl Default for Structurer {
             show_title_delete_popup: false,
             show_link_title_popup: false,
             titles_linked_to_current: Vec::new(),
+            show_source_popup: false,
+            point_requesting_source: String::new(),
+            point_source: String::new(),
         }
     }
 }
@@ -112,6 +118,9 @@ impl eframe::App for Structurer {
         }
         if self.show_title_delete_popup {
             self.title_delete_popup(ctx);
+        }
+        if self.show_source_popup {
+            self.point_source_popup(ctx);
         }
     }
 }
