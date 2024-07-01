@@ -113,56 +113,13 @@ impl eframe::App for Structurer {
             }
         });
         if self.show_confirm_delete_popup {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("immediate_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Confirm Deletion")
-                    .with_inner_size([300.0, 100.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        self.confirm_deletion_popup(ui);
-                    });
-                },
-            );
+            self.confirm_deletion_popup(ctx);
         }
         if self.show_share_point_popup || self.show_link_title_popup {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("immediate_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Confirm Deletion")
-                    .with_inner_size([200.0, 300.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        self.show_share_point_or_link_title_popup(ui);
-                    });
-                },
-            );
+            self.show_share_point_or_link_title_popup(ctx);
         }
         if self.show_title_delete_popup {
-            ctx.show_viewport_immediate(
-                egui::ViewportId::from_hash_of("immediate_viewport"),
-                egui::ViewportBuilder::default()
-                    .with_title("Confirm Deletion")
-                    .with_inner_size([300.0, 100.0]),
-                |ctx, class| {
-                    assert!(
-                        class == egui::ViewportClass::Immediate,
-                        "This egui backend doesn't support multiple viewports"
-                    );
-
-                    egui::CentralPanel::default().show(ctx, |ui| {
-                        self.title_delete_popup(ui);
-                    });
-                },
-            );
+            self.title_delete_popup(ctx);
         }
     }
 }
