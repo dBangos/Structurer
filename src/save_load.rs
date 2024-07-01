@@ -82,6 +82,16 @@ pub fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
         id.to_string(),
         "Library".to_string(),
     );
+
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
+        .iter()
+        .collect();
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(file_path)
+        .expect("Error while opening sources file from add_point");
+    file.write(("\n".to_string() + &id.to_string()).as_bytes())
+        .expect("Error while writing to sourcse file from add_point");
     return (id.to_string(), "New point".to_string());
 }
 
@@ -121,6 +131,7 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     .collect();
     let _ = remove_file(file_path);
     delete_point_from_library(project_dir.clone(), point_id.clone());
+    delete_line_from_file(project_dir.clone(), point_id.clone(), "Sources".to_string());
 }
 
 //Changes the title in a title_id file. The title is always in the first line, so the first line
@@ -430,4 +441,24 @@ pub fn title_is_linked_with(project_dir: PathBuf, title_id: String) -> Vec<bool>
         result.push(split_line.contains(&title_id));
     }
     return result;
+}
+
+pub fn update_source(project_dir: PathBuf, point_id: String, new_source: String) {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path).expect("Error while opening file from update_sources");
+    for line in BufReader::new(file).lines() {
+        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == point_id.clone() {
+            split_line = vec![point_id.clone(), new_source.clone()];
+        }
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        "Sources".to_string(),
+        content.join("\n"),
+    );
 }

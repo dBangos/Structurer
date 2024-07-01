@@ -6,6 +6,7 @@ use crate::Structurer;
 use eframe::egui::{self};
 use std::path::PathBuf;
 impl Structurer {
+    //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui.button("Set Project Directory").clicked() {
@@ -51,6 +52,8 @@ impl Structurer {
             }
         });
     }
+
+    //Contains the list of buttons leading to all the titles
     pub fn title_buttons(&mut self, ui: &mut egui::Ui) {
         ui.label("All Titles");
         ui.vertical(|ui| {
@@ -79,6 +82,7 @@ impl Structurer {
         });
     }
 
+    //Contians the buttons leading to the currently displayed title's links
     pub fn linked_titles_buttons(&mut self, ui: &mut egui::Ui) {
         ui.label("Linked With:");
         ui.vertical(|ui| {
@@ -100,6 +104,8 @@ impl Structurer {
             }
         });
     }
+
+    //Helper function that saves and updates state
     fn save_old_add_new_points(&mut self, title: String, t_points: Vec<String>, title_id: String) {
         //Saving the title of the curent page before switching
         //First checking if the file exists
@@ -136,12 +142,15 @@ impl Structurer {
             ));
         }
     }
+
+    //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                let name_label = ui.label("Your name: ");
-                ui.text_edit_singleline(&mut self.current_title)
-                    .labelled_by(name_label.id);
+                ui.add_sized(
+                    ui.available_size(),
+                    egui::TextEdit::singleline(&mut self.current_title),
+                )
             });
             for point in self.current_points.iter_mut() {
                 // Container for elements of each point
@@ -160,7 +169,8 @@ impl Structurer {
                             self.show_share_point_popup = true;
                         }
                     });
-                    ui.text_edit_multiline(&mut point.1);
+
+                    ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
                 });
             }
         });

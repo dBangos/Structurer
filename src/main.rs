@@ -1,4 +1,3 @@
-use crate::egui::{popup_below_widget, ComboBox, Id};
 use eframe::egui::{self};
 use std::path::PathBuf;
 mod gui_elements;
@@ -50,6 +49,22 @@ impl Default for Structurer {
     }
 }
 
+use egui::{FontFamily, FontId, TextStyle};
+
+fn configure_text_styles(ctx: &egui::Context) {
+    use FontFamily::{Monospace, Proportional};
+
+    let mut style = (*ctx.style()).clone();
+    style.text_styles = [
+        (TextStyle::Heading, FontId::new(25.0, Proportional)),
+        (TextStyle::Body, FontId::new(20.0, Proportional)),
+        (TextStyle::Monospace, FontId::new(12.0, Monospace)),
+        (TextStyle::Button, FontId::new(17.0, Proportional)),
+        (TextStyle::Small, FontId::new(8.0, Proportional)),
+    ]
+    .into();
+    ctx.set_style(style);
+}
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -63,7 +78,7 @@ fn main() -> Result<(), eframe::Error> {
         Box::new(|cc| {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
-
+            configure_text_styles(&cc.egui_ctx);
             Box::<Structurer>::default()
         }),
     )
@@ -72,45 +87,22 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            //Button Line
-            self.main_button_line(ui);
-            //Main layout, contains titles layout and points layout
-            ui.horizontal(|ui| {
-                //Titles layout ==========================================================
-                ui.vertical(|ui| {
-                    self.title_buttons(ui);
-                    self.linked_titles_buttons(ui);
+            //Main layout
+            ui.vertical(|ui| {
+                //Button Line
+                self.main_button_line(ui);
+                //Contains titles layout and points layout
+                ui.horizontal(|ui| {
+                    //Titles layout ==========================================================
+                    ui.vertical(|ui| {
+                        self.title_buttons(ui);
+                        self.linked_titles_buttons(ui);
+                    });
+
+                    //All points layout==========================================
+                    self.points_layout(ui);
                 });
-
-                //All points layout==========================================
-                self.points_layout(ui);
             });
-
-            // UI element examples that might be usefult later
-
-            let response = ui.button("Open");
-            let popup_id = Id::new("popup_id");
-
-            if response.clicked() {
-                ui.memory_mut(|mem| mem.toggle_popup(popup_id));
-            }
-
-            popup_below_widget(ui, popup_id, &response, |ui| {
-                ui.set_min_width(300.0);
-                ui.label("This popup will be open even if you click the checkbox");
-            });
-
-            ComboBox::from_label("ComboBox")
-                .selected_text(format!("{}", self.age))
-                .show_ui(ui, |ui| {
-                    for num in 0..10 {
-                        ui.selectable_value(&mut self.age, num, format!("{num}"));
-                    }
-                });
-            ui.add(egui::Slider::new(&mut self.age, 0..=120).text("age"));
-            if ui.button("Increment").clicked() {
-                self.age += 1;
-            }
         });
         if self.show_confirm_delete_popup {
             self.confirm_deletion_popup(ctx);
