@@ -31,7 +31,6 @@ struct Structurer {
     point_requesting_source: String,
     point_source: String,
 
-    node_view: bool,
     transform: TSTransform,
     drag_value: f32,
 }
@@ -59,7 +58,6 @@ impl Default for Structurer {
             point_requesting_source: String::new(),
             point_source: String::new(),
 
-            node_view: false,
             transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
             drag_value: 1.0,
         }
@@ -104,28 +102,47 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            //Main layout
-            ui.vertical(|ui| {
-                //Button Line
-                self.main_button_line(ui);
-                //Contains titles layout and points layout
-                ui.horizontal(|ui| {
-                    //Titles layout ==========================================================
-                    ui.vertical(|ui| {
-                        self.title_buttons(ui);
-                        self.linked_titles_buttons(ui);
+            egui::TopBottomPanel::top("top_panel")
+                .resizable(true)
+                .min_height(32.0)
+                .show_inside(ui, |ui| {
+                    ui.vertical_centered(|ui| {
+                        self.main_button_line(ui);
                     });
-
-                    //All points layout==========================================
-                    self.points_layout(ui);
-                    //ui.vertical(|ui| {
-                    //let mut temp: String = String::new();
-                    //ui.add_sized(ui.available_size(), egui::TextEdit::singleline(&mut temp));
-                    //let (id, rect) = ui.allocate_space(ui.available_size());
-                    //println!("height:{} width:{}", rect.height(), rect.width());
-                    //})
+                });
+            egui::SidePanel::left("left_panel")
+                .resizable(true)
+                .default_width(150.0)
+                .width_range(80.0..=400.0)
+                .show_inside(ui, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        ui.vertical(|ui| {
+                            self.title_buttons(ui);
+                            self.linked_titles_buttons(ui);
+                        });
+                    });
+                });
+            egui::SidePanel::right("right_panel")
+                .resizable(true)
+                .default_width(400.0)
+                .width_range(80.0..=600.0)
+                .show_inside(ui, |ui| {
+                    self.node_view(ui);
+                });
+            egui::CentralPanel::default().show_inside(ui, |ui| {
+                ui.vertical_centered(|ui| {
+                    ui.text_edit_singleline(&mut self.current_title);
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        self.points_layout(ui);
+                    });
                 });
             });
+            //ui.vertical(|ui| {
+            //let mut temp: String = String::new();
+            //ui.add_sized(ui.available_size(), egui::TextEdit::singleline(&mut temp));
+            //let (id, rect) = ui.allocate_space(ui.available_size());
+            //println!("height:{} width:{}", rect.height(), rect.width());
+            //})
         });
         if self.show_confirm_delete_popup {
             self.confirm_deletion_popup(ctx);
@@ -138,9 +155,6 @@ impl eframe::App for Structurer {
         }
         if self.show_source_popup {
             self.point_source_popup(ctx);
-        }
-        if self.node_view {
-            self.show_node_view(ctx);
         }
     }
 }
