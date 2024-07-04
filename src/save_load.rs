@@ -479,3 +479,22 @@ pub fn get_point_source(project_dir: PathBuf, point_id: String) -> String {
     }
     return "No source set yet.".to_string();
 }
+
+//Return a vector with each title_id and all links to it
+pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
+    let mut result: Vec<(String, Vec<String>)> = Vec::new();
+    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
+        .iter()
+        .collect();
+    let file = File::open(&file_path)
+        .expect("Error while opening the links file from title_is_linked_with");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line.len() > 1 {
+            result.push((split_line[0].to_string(), split_line[1..].to_vec()));
+        } else {
+            result.push((split_line[0].to_string(), vec![]));
+        }
+    }
+    return result;
+}

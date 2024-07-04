@@ -1,8 +1,11 @@
 use eframe::egui::{self};
 use std::path::PathBuf;
 mod gui_elements;
+mod node_view;
 mod popup_windows;
 mod save_load;
+use egui::emath::TSTransform;
+use egui::vec2;
 
 struct Structurer {
     project_directory: PathBuf,
@@ -27,6 +30,10 @@ struct Structurer {
     show_source_popup: bool,
     point_requesting_source: String,
     point_source: String,
+
+    node_view: bool,
+    transform: TSTransform,
+    drag_value: f32,
 }
 
 impl Default for Structurer {
@@ -51,6 +58,10 @@ impl Default for Structurer {
             show_source_popup: false,
             point_requesting_source: String::new(),
             point_source: String::new(),
+
+            node_view: false,
+            transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
+            drag_value: 1.0,
         }
     }
 }
@@ -85,7 +96,7 @@ fn main() -> Result<(), eframe::Error> {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
             configure_text_styles(&cc.egui_ctx);
-            Box::<Structurer>::default()
+            Ok(Box::<Structurer>::default())
         }),
     )
 }
@@ -107,6 +118,12 @@ impl eframe::App for Structurer {
 
                     //All points layout==========================================
                     self.points_layout(ui);
+                    //ui.vertical(|ui| {
+                    //let mut temp: String = String::new();
+                    //ui.add_sized(ui.available_size(), egui::TextEdit::singleline(&mut temp));
+                    //let (id, rect) = ui.allocate_space(ui.available_size());
+                    //println!("height:{} width:{}", rect.height(), rect.width());
+                    //})
                 });
             });
         });
@@ -121,6 +138,9 @@ impl eframe::App for Structurer {
         }
         if self.show_source_popup {
             self.point_source_popup(ctx);
+        }
+        if self.node_view {
+            self.show_node_view(ctx);
         }
     }
 }

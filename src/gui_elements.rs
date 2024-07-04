@@ -50,6 +50,9 @@ impl Structurer {
                 );
                 self.show_link_title_popup = true;
             }
+            if ui.button("Node View").clicked() {
+                self.node_view = true;
+            }
         });
     }
 
@@ -147,10 +150,10 @@ impl Structurer {
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
-                ui.add_sized(
-                    ui.available_size(),
-                    egui::TextEdit::singleline(&mut self.current_title),
-                )
+                //ui.add_sized(
+                //    ui.available_size(),
+                //    egui::TextEdit::singleline(&mut self.current_title),
+                ui.text_edit_singleline(&mut self.current_title);
             });
             for point in self.current_points.iter_mut() {
                 // Container for elements of each point
@@ -178,7 +181,8 @@ impl Structurer {
                         }
                     });
 
-                    ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
+                    //ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
+                    ui.text_edit_multiline(&mut point.1);
                 });
             }
         });
