@@ -50,7 +50,6 @@ pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 //the title being the second word,
 //followed by the "@" symbol befgre each point.
 pub fn load_from_library(project_dir: PathBuf) -> (Vec<String>, Vec<String>, Vec<Vec<String>>) {
-    println!("load_from_library called");
     let file_path: PathBuf = [project_dir, PathBuf::from("Library.txt")].iter().collect();
     let file = File::open(&file_path).expect("Error while opening file from load_from_library");
     let mut result_title_id: Vec<String> = Vec::new();

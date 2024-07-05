@@ -37,6 +37,8 @@ impl Structurer {
             }
             if ui.button("Add Title").clicked() {
                 add_title(self.project_directory.clone());
+                (self.title_ids, self.titles, self.points_of_title) =
+                    load_from_library(self.project_directory.clone());
             }
             if ui.button("Delete Title").clicked() {
                 self.show_title_delete_popup = true;
@@ -58,15 +60,6 @@ impl Structurer {
     pub fn title_buttons(&mut self, ui: &mut egui::Ui) {
         ui.label("All Titles");
         ui.vertical(|ui| {
-            //Making sure tha data is clean
-            let temp_file_path_for_check: PathBuf =
-                [self.project_directory.clone(), PathBuf::from("Library.txt")]
-                    .iter()
-                    .collect();
-            if temp_file_path_for_check.exists() {
-                (self.title_ids, self.titles, self.points_of_title) =
-                    load_from_library(self.project_directory.clone());
-            }
             //Binding each title button to loading the corresponding points
             for (title_id, title, t_points) in self
                 .title_ids

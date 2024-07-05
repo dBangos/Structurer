@@ -10,6 +10,7 @@ struct Config {
 }
 
 impl Structurer {
+    //Everything that needs to get the program ready at startup
     pub fn start_routine(&mut self) -> () {
         //Check if there is a Structurer directory and if so read the config
         //If not, create the directory and file
@@ -30,6 +31,8 @@ impl Structurer {
                 load_from_library(self.project_directory.clone());
         }
     }
+
+    //Saving stuff to the config file in the default OS location
     pub fn save_to_config(&mut self) -> Result<()> {
         let current_config = Config {
             project_directory: self.project_directory.clone(),
