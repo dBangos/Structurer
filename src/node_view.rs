@@ -52,7 +52,11 @@ impl Structurer {
                     let point_response_2 = ui.interact(point_rect, point_id, Sense::click());
 
                     if point_response_2.clicked() {
-                        println!("lol");
+                        self.save_old_add_new_points(
+                            self.titles[i].clone(),
+                            self.points_of_title[i].clone(),
+                            self.title_ids[i].clone(),
+                        );
                     }
                     //Updating the button after it has been dragged
                     let first_point: Pos2 =

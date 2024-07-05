@@ -103,7 +103,7 @@ impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::TopBottomPanel::top("top_panel")
-                .resizable(true)
+                .resizable(false)
                 .min_height(32.0)
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
@@ -111,7 +111,7 @@ impl eframe::App for Structurer {
                     });
                 });
             egui::SidePanel::left("left_panel")
-                .resizable(true)
+                .resizable(false)
                 .default_width(150.0)
                 .width_range(80.0..=400.0)
                 .show_inside(ui, |ui| {

@@ -106,7 +106,12 @@ impl Structurer {
     }
 
     //Helper function that saves and updates state
-    fn save_old_add_new_points(&mut self, title: String, t_points: Vec<String>, title_id: String) {
+    pub fn save_old_add_new_points(
+        &mut self,
+        title: String,
+        t_points: Vec<String>,
+        title_id: String,
+    ) {
         //Saving the title of the curent page before switching
         //First checking if the file exists
         let temp_file_path_for_check: PathBuf = [
@@ -145,7 +150,7 @@ impl Structurer {
 
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
+        ui.vertical_centered(|ui| {
             for point in self.current_points.iter_mut() {
                 // Container for elements of each point
                 ui.horizontal(|ui| {
@@ -172,8 +177,7 @@ impl Structurer {
                         }
                     });
 
-                    //ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
-                    ui.text_edit_multiline(&mut point.1);
+                    ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
                 });
             }
         });
