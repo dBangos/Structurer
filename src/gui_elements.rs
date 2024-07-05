@@ -12,6 +12,7 @@ impl Structurer {
             if ui.button("Set Project Directory").clicked() {
                 if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
                     self.project_directory = dir_path;
+                    let _ = self.save_to_config();
                 }
                 (self.title_ids, self.titles, self.points_of_title) =
                     load_from_library(self.project_directory.clone());

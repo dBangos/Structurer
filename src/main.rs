@@ -1,5 +1,6 @@
 use eframe::egui::{self};
 use std::path::PathBuf;
+mod config;
 mod gui_elements;
 mod node_view;
 mod popup_windows;
@@ -33,6 +34,7 @@ struct Structurer {
 
     transform: TSTransform,
     drag_value: f32,
+    initialized: bool,
 }
 
 impl Default for Structurer {
@@ -60,6 +62,7 @@ impl Default for Structurer {
 
             transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
             drag_value: 1.0,
+            initialized: false,
         }
     }
 }
@@ -80,6 +83,7 @@ fn configure_text_styles(ctx: &egui::Context) {
     .into();
     ctx.set_style(style);
 }
+
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
@@ -87,6 +91,7 @@ fn main() -> Result<(), eframe::Error> {
         viewport: egui::ViewportBuilder::default().with_inner_size([1820.0, 1000.0]),
         ..Default::default()
     };
+
     eframe::run_native(
         "Structurer",
         options,
@@ -101,6 +106,10 @@ fn main() -> Result<(), eframe::Error> {
 
 impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        if !self.initialized {
+            self.start_routine();
+            self.initialized = true;
+        }
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::TopBottomPanel::top("top_panel")
                 .resizable(false)
@@ -137,12 +146,6 @@ impl eframe::App for Structurer {
                     });
                 });
             });
-            //ui.vertical(|ui| {
-            //let mut temp: String = String::new();
-            //ui.add_sized(ui.available_size(), egui::TextEdit::singleline(&mut temp));
-            //let (id, rect) = ui.allocate_space(ui.available_size());
-            //println!("height:{} width:{}", rect.height(), rect.width());
-            //})
         });
         if self.show_confirm_delete_popup {
             self.confirm_deletion_popup(ctx);
