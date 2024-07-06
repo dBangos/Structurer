@@ -106,29 +106,32 @@ pub fn add_point(project_dir: PathBuf, title_id: String) -> Point {
     return new_point;
 }
 
-//Deletes all mentions of point_id from the library file
-pub fn delete_point_from_library(project_dir: PathBuf, point_id: String) -> () {
+//Deletes all mentions of string from the file
+pub fn delete_all_mentions_from_file(
+    project_dir: PathBuf,
+    identifier: String,
+    file_name: String,
+) -> () {
     let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
-        .iter()
-        .collect();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file =
-        File::open(&file_path).expect("Error while opening file from delete_point_from_library");
+    let file = File::open(&file_path)
+        .expect("Error while opening file from delete_all_mentions_from_file");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line
             .unwrap()
             .split("@")
             .map(|s| s.to_string())
-            .filter(|s| *s != point_id)
+            .filter(|s| *s != identifier)
             .collect();
         content.push(split_line.join("@"));
     }
-    let _ = save_to_filename(
-        project_dir.clone(),
-        "Library".to_string(),
-        content.join("\n"),
-    );
+    let _ = save_to_filename(project_dir.clone(), file_name, content.join("\n"));
 }
 
 //Gets a point id, deletes the corresponding file and all library mentions
@@ -141,7 +144,7 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     .iter()
     .collect();
     let _ = remove_file(file_path);
-    delete_point_from_library(project_dir.clone(), point_id.clone());
+    delete_all_mentions_from_file(project_dir.clone(), point_id.clone(), "Library".to_string());
     delete_line_from_file(project_dir.clone(), point_id.clone(), "Sources".to_string());
 }
 
@@ -212,7 +215,7 @@ pub fn add_title(project_dir: PathBuf) -> () {
         .append(true)
         .open(file_path)
         .expect("Error while opening links file from add_title");
-    file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
+    file.write((&new_id.to_string()).as_bytes())
         .expect("Error while writing to links file from add_title");
 }
 
@@ -242,6 +245,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
         content.join("\n"),
     );
     delete_line_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
+    delete_all_mentions_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();

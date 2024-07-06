@@ -63,7 +63,6 @@ impl Structurer {
                     rect_color,
                 ));
             }
-
             let mut points_in_screen: Vec<Pos2> = Vec::new();
             for title_id in &self.title_order {
                 points_in_screen.push(to_screen * self.titles[title_id].node_position);
@@ -89,12 +88,20 @@ impl Structurer {
             let title_link_pairs = self.get_linked_pairs();
             let mut title_lines: Vec<Shape> = Vec::new();
             for (title_1, title_2) in title_link_pairs {
-                //title_lines.push(Shape::LineSegment { points: (title_1.), stroke: () })
+                println!("{} {}", title_1, title_2);
+                let temp_array: [Pos2; 2] = [
+                    self.titles[&title_1].node_position,
+                    self.titles[&title_2].node_position,
+                ];
+                title_lines.push(Shape::LineSegment {
+                    points: (temp_array),
+                    stroke: (aux_stroke.into()),
+                })
             }
             painter.add(PathShape::line(points_in_screen, aux_stroke));
             painter.extend(title_node_shapes);
             painter.extend(titles_text);
-
+            painter.extend(title_lines);
             response
         });
     }
