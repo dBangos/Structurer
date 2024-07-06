@@ -62,7 +62,12 @@ impl Structurer {
             //Binding each title button to loading the corresponding points
             for title in self.titles.clone().into_iter() {
                 if ui.button(title.name.clone()).clicked() {
-                    self.save_old_add_new_points(title);
+                    (self.current_title, self.current_points) = save_old_add_new_points(
+                        self.project_directory.clone(),
+                        self.current_title.clone(),
+                        self.current_points.clone(),
+                        title,
+                    );
                 }
             }
         });
@@ -81,48 +86,16 @@ impl Structurer {
             {
                 if is_linked {
                     if ui.button(title.name.clone()).clicked() {
-                        self.save_old_add_new_points(title);
+                        (self.current_title, self.current_points) = save_old_add_new_points(
+                            self.project_directory.clone(),
+                            self.current_title.clone(),
+                            self.current_points.clone(),
+                            title,
+                        );
                     }
                 }
             }
         });
-    }
-
-    //Helper function that saves and updates state
-    pub fn save_old_add_new_points(&mut self, title: Title) {
-        //Saving the title of the curent page before switching
-        //First checking if the file exists
-        let temp_file_path_for_check: PathBuf = [
-            self.project_directory.clone(),
-            PathBuf::from(self.current_title.id.clone() + ".txt"),
-        ]
-        .iter()
-        .collect();
-        if temp_file_path_for_check.exists() {
-            change_title_name(
-                self.project_directory.clone(),
-                self.current_title.id.clone(),
-                self.current_title.name.clone(),
-            );
-        }
-        self.current_title = title.clone();
-        //Updating the links for the new title_id
-        self.current_title.links = title_is_linked_with(
-            self.project_directory.clone(),
-            self.current_title.id.clone(),
-        );
-        //Save old points => Remove old points => Add new points
-        for point in self.current_points.clone() {
-            save_to_filename(self.project_directory.clone(), point.id, point.content);
-        }
-        self.current_points = Vec::new();
-        for new_point_id in title.point_ids.into_iter() {
-            let mut new_point: Point = Point::default();
-            new_point.id = new_point_id.to_string();
-            new_point.content =
-                load_from_filename(new_point_id.to_string(), self.project_directory.clone());
-            self.current_points.push(new_point);
-        }
     }
 
     //Contains all the points and their buttons
@@ -161,4 +134,44 @@ impl Structurer {
             }
         });
     }
+}
+
+//Helper function that saves and updates state
+//Turned this into a function instead of a method on Structurerto avoid borrow conflicts
+pub fn save_old_add_new_points(
+    project_directory: PathBuf,
+    current_title: Title,
+    current_points: Vec<Point>,
+    new_title: Title,
+) -> (Title, Vec<Point>) {
+    //Saving the title of the curent page before switching
+    //First checking if the file exists
+    let temp_file_path_for_check: PathBuf = [
+        project_directory.clone(),
+        PathBuf::from(current_title.id.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    if temp_file_path_for_check.exists() {
+        change_title_name(
+            project_directory.clone(),
+            current_title.id.clone(),
+            current_title.name,
+        );
+    }
+    let mut return_current_points: Vec<Point> = Vec::new();
+    let mut return_title = new_title.clone();
+    //Updating the links for the new title_id
+    return_title.links = title_is_linked_with(project_directory.clone(), current_title.id);
+    //Save old points => Remove old points => Add new points
+    for point in current_points.clone() {
+        save_to_filename(project_directory.clone(), point.id, point.content);
+    }
+    for new_point_id in new_title.point_ids.into_iter() {
+        let mut new_point: Point = Point::default();
+        new_point.id = new_point_id.to_string();
+        new_point.content = load_from_filename(new_point_id.to_string(), project_directory.clone());
+        return_current_points.push(new_point);
+    }
+    return (return_title, return_current_points);
 }

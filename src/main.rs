@@ -30,7 +30,7 @@ struct Title {
     name: String,
     id: String,
     point_ids: Vec<String>,
-    links: Vec<bool>,
+    links: Vec<bool>, //A vectir of bools each correspondig to a title, if true it's linked
     node_position: Pos2,
 }
 impl Default for Title {
