@@ -22,7 +22,7 @@ impl Structurer {
             let aux_stroke = Stroke::new(1.0, Color32::RED.linear_multiply(0.25));
             let mut x = 0.0;
             let mut y = 0.0;
-            for title_id in self.title_ids.clone() {
+            for title_id in self.titles.clone() {
                 x += 50.0;
                 y += 50.0;
                 title_nodes.push(pos2(x, y));
@@ -52,11 +52,7 @@ impl Structurer {
                     let point_response_2 = ui.interact(point_rect, point_id, Sense::click());
 
                     if point_response_2.clicked() {
-                        self.save_old_add_new_points(
-                            self.titles[i].clone(),
-                            self.points_of_title[i].clone(),
-                            self.title_ids[i].clone(),
-                        );
+                        self.save_old_add_new_points(self.titles[i].clone());
                     }
                     //Updating the button after it has been dragged
                     let first_point: Pos2 =
@@ -81,7 +77,7 @@ impl Structurer {
                         f,
                         point_in_screen,
                         egui::Align2::CENTER_CENTER,
-                        title,
+                        title.name,
                         FontId::monospace(10.0),
                         Color32::WHITE,
                     ))

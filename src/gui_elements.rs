@@ -1,8 +1,9 @@
 use crate::save_load::{
     add_point, add_title, change_title_name, get_point_source, load_from_filename,
-    load_from_library, point_is_shared_with, save_to_filename, title_is_linked_with,
+    point_is_shared_with, save_to_filename, title_is_linked_with,
 };
 use crate::Structurer;
+use crate::Title;
 use eframe::egui::{self};
 use std::path::PathBuf;
 impl Structurer {
@@ -14,42 +15,40 @@ impl Structurer {
                     self.project_directory = dir_path;
                     let _ = self.save_to_config();
                 }
-                (self.title_ids, self.titles, self.points_of_title) =
-                    load_from_library(self.project_directory.clone());
+                self.load_from_library();
             }
             if ui.button("Save").clicked() {
                 change_title_name(
                     self.project_directory.clone(),
-                    self.current_title_id.clone(),
-                    self.current_title.clone(),
+                    self.current_title.id.clone(),
+                    self.current_title.name.clone(),
                 );
                 for (id, content) in self.current_points.clone().into_iter() {
                     save_to_filename(self.project_directory.clone(), id, content);
                 }
+                self.load_from_library();
             }
             if ui.button("Add Point").clicked() {
                 self.current_points.push(add_point(
                     self.project_directory.clone(),
-                    self.current_title_id.clone(),
+                    self.current_title.id.clone(),
                 ));
-                (self.title_ids, self.titles, self.points_of_title) =
-                    load_from_library(self.project_directory.clone());
+                self.load_from_library();
             }
             if ui.button("Add Title").clicked() {
                 add_title(self.project_directory.clone());
-                (self.title_ids, self.titles, self.points_of_title) =
-                    load_from_library(self.project_directory.clone());
+                self.load_from_library();
             }
             if ui.button("Delete Title").clicked() {
                 self.show_title_delete_popup = true;
             }
             if ui.button("Save Page As:").clicked() {
-                self.age += 1;
+                //
             }
             if ui.button("Link Title").clicked() {
-                self.titles_linked_to_current = title_is_linked_with(
+                self.current_title.links = title_is_linked_with(
                     self.project_directory.clone(),
-                    self.current_title_id.clone(),
+                    self.current_title.id.clone(),
                 );
                 self.show_link_title_popup = true;
             }
@@ -61,16 +60,9 @@ impl Structurer {
         ui.label("All Titles");
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for (title_id, title, t_points) in self
-                .title_ids
-                .clone()
-                .into_iter()
-                .zip(self.titles.clone().into_iter())
-                .zip(self.points_of_title.clone().into_iter())
-                .map(|((x, y), z)| (x, y, z))
-            {
-                if ui.button(title.clone()).clicked() {
-                    self.save_old_add_new_points(title, t_points, title_id);
+            for title in self.titles.clone().into_iter() {
+                if ui.button(title.name.clone()).clicked() {
+                    self.save_old_add_new_points(title);
                 }
             }
         });
@@ -81,18 +73,15 @@ impl Structurer {
         ui.label("Linked With:");
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for (title_id, title, t_points, is_linked) in self
-                .title_ids
+            for (title, is_linked) in self
+                .titles
                 .clone()
                 .into_iter()
-                .zip(self.titles.clone().into_iter())
-                .zip(self.points_of_title.clone().into_iter())
-                .zip(self.titles_linked_to_current.clone().into_iter())
-                .map(|(((x, y), z), a)| (x, y, z, a))
+                .zip(self.current_title.links.clone())
             {
                 if is_linked {
-                    if ui.button(title.clone()).clicked() {
-                        self.save_old_add_new_points(title, t_points, title_id);
+                    if ui.button(title.name.clone()).clicked() {
+                        self.save_old_add_new_points(title);
                     }
                 }
             }
@@ -100,41 +89,34 @@ impl Structurer {
     }
 
     //Helper function that saves and updates state
-    pub fn save_old_add_new_points(
-        &mut self,
-        title: String,
-        t_points: Vec<String>,
-        title_id: String,
-    ) {
+    pub fn save_old_add_new_points(&mut self, title: Title) {
         //Saving the title of the curent page before switching
         //First checking if the file exists
         let temp_file_path_for_check: PathBuf = [
             self.project_directory.clone(),
-            PathBuf::from(self.current_title_id.clone() + ".txt"),
+            PathBuf::from(self.current_title.id.clone() + ".txt"),
         ]
         .iter()
         .collect();
         if temp_file_path_for_check.exists() {
             change_title_name(
                 self.project_directory.clone(),
-                self.current_title_id.clone(),
-                self.current_title.clone(),
+                self.current_title.id.clone(),
+                self.current_title.name.clone(),
             );
         }
-        //Setting the title field
         self.current_title = title.clone();
-        self.current_title_id = title_id.clone();
         //Updating the links for the new title_id
-        self.titles_linked_to_current = title_is_linked_with(
+        self.current_title.links = title_is_linked_with(
             self.project_directory.clone(),
-            self.current_title_id.clone(),
+            self.current_title.id.clone(),
         );
         //Save old points => Remove old points => Add new points
         for (id, content) in self.current_points.clone().into_iter() {
             save_to_filename(self.project_directory.clone(), id, content);
         }
         self.current_points = Vec::new();
-        for new_point in t_points.into_iter() {
+        for new_point in title.point_ids.into_iter() {
             self.current_points.push((
                 new_point.to_string(),
                 load_from_filename(new_point.to_string(), self.project_directory.clone()),

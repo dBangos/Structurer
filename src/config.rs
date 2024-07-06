@@ -1,4 +1,3 @@
-use crate::save_load::load_from_library;
 use crate::Structurer;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -27,8 +26,7 @@ impl Structurer {
             file.read_to_string(&mut buff).unwrap();
             let new_config: Config = serde_json::from_str(&buff).unwrap();
             self.project_directory = new_config.project_directory;
-            (self.title_ids, self.titles, self.points_of_title) =
-                load_from_library(self.project_directory.clone());
+            self.load_from_library();
         }
     }
 

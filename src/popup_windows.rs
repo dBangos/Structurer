@@ -1,6 +1,6 @@
 use crate::save_load::{
-    delete_point, delete_title, link_unlink_title, load_from_filename, load_from_library,
-    load_points_from_title_id, share_unshare_point, update_source,
+    delete_point, delete_title, link_unlink_title, load_from_filename, load_points_from_title_id,
+    share_unshare_point, update_source,
 };
 use crate::Structurer;
 use eframe::egui::{self};
@@ -65,15 +65,13 @@ impl Structurer {
                         if ui.button("Yes").clicked() {
                             delete_title(
                                 self.project_directory.clone(),
-                                self.current_title_id.clone(),
+                                self.current_title.id.clone(),
                             );
                             //Reseting the state and showing the first title
-                            (self.title_ids, self.titles, self.points_of_title) =
-                                load_from_library(self.project_directory.clone());
-                            (self.current_title_id, self.current_title) =
-                                (self.title_ids[0].clone(), self.titles[0].clone());
+                            self.load_from_library();
+                            self.current_title = self.titles[0].clone();
                             self.current_points = Vec::new();
-                            for new_point in self.points_of_title[0].clone().into_iter() {
+                            for new_point in self.titles[0].point_ids.clone().into_iter() {
                                 self.current_points.push((
                                     new_point.to_string(),
                                     load_from_filename(
@@ -113,12 +111,12 @@ impl Structurer {
                     if self.show_share_point_popup {
                         ui.label("Share point:");
                         ui.vertical(|ui| {
-                            for (is_shared, title) in self
+                            for (is_shared, checkbox_title) in self
                                 .titles_receiving_shared_point
                                 .iter_mut()
                                 .zip(self.titles.clone())
                             {
-                                ui.checkbox(is_shared, title.clone());
+                                ui.checkbox(is_shared, checkbox_title.name.clone());
                             }
                         });
                         ui.horizontal(|ui| {
@@ -127,7 +125,7 @@ impl Structurer {
                                     self.project_directory.clone(),
                                     self.point_requesting_sharing.clone(),
                                     self.titles_receiving_shared_point.clone(),
-                                    self.title_ids.clone(),
+                                    self.titles.clone(),
                                 );
                                 //If the point is not shared to any titles, delete it
                                 if self
@@ -140,11 +138,10 @@ impl Structurer {
                                         self.point_requesting_sharing.clone(),
                                     );
                                 }
-                                (self.title_ids, self.titles, self.points_of_title) =
-                                    load_from_library(self.project_directory.clone());
+                                self.load_from_library();
                                 self.current_points = load_points_from_title_id(
                                     self.project_directory.clone(),
-                                    self.current_title_id.clone(),
+                                    self.current_title.id.clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                             }
@@ -156,21 +153,18 @@ impl Structurer {
                     } else if self.show_link_title_popup {
                         ui.label("Link Title:");
                         ui.vertical(|ui| {
-                            for (is_linked, title) in self
-                                .titles_linked_to_current
-                                .iter_mut()
-                                .zip(self.titles.clone())
+                            for (is_linked, title) in
+                                self.current_title.links.iter_mut().zip(self.titles.clone())
                             {
-                                ui.checkbox(is_linked, title.clone());
+                                ui.checkbox(is_linked, title.name);
                             }
                         });
                         ui.horizontal(|ui| {
                             if ui.button("Ok").clicked() {
                                 link_unlink_title(
                                     self.project_directory.clone(),
-                                    self.current_title_id.clone(),
-                                    self.titles_linked_to_current.clone(),
-                                    self.title_ids.clone(),
+                                    self.current_title.clone(),
+                                    self.titles.clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                             }
@@ -209,11 +203,10 @@ impl Structurer {
                                 self.project_directory.clone(),
                                 self.point_requesting_deletion.clone(),
                             );
-                            (self.title_ids, self.titles, self.points_of_title) =
-                                load_from_library(self.project_directory.clone());
+                            self.load_from_library();
                             self.current_points = load_points_from_title_id(
                                 self.project_directory.clone(),
-                                self.current_title_id.clone(),
+                                self.current_title.id.clone(),
                             );
                             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                         }

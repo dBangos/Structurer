@@ -6,17 +6,50 @@ mod node_view;
 mod popup_windows;
 mod save_load;
 use egui::emath::TSTransform;
-use egui::vec2;
+use egui::{vec2, Pos2};
+
+#[derive(Clone)]
+struct Point {
+    id: String,
+    content: String,
+    source: String,
+}
+
+impl Default for Point {
+    fn default() -> Self {
+        Self {
+            id: String::new(),
+            content: String::new(),
+            source: String::new(),
+        }
+    }
+}
+
+#[derive(Clone)]
+struct Title {
+    name: String,
+    id: String,
+    point_ids: Vec<String>,
+    links: Vec<bool>,
+    node_position: Pos2,
+}
+impl Default for Title {
+    fn default() -> Self {
+        Self {
+            name: String::new(),
+            id: String::new(),
+            point_ids: Vec::new(),
+            links: Vec::new(),
+            node_position: Pos2::new(0.0, 0.0),
+        }
+    }
+}
 
 struct Structurer {
     project_directory: PathBuf,
-    titles: Vec<String>,
-    title_ids: Vec<String>,
-    points_of_title: Vec<Vec<String>>,
+    titles: Vec<Title>,
     current_points: Vec<(String, String)>, //Current_point(point_id,point_content)
-    current_title: String,
-    current_title_id: String,
-    age: i32,
+    current_title: Title,
 
     show_confirm_delete_popup: bool,
     point_requesting_deletion: String,
@@ -27,11 +60,9 @@ struct Structurer {
 
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
-    titles_linked_to_current: Vec<bool>,
     show_source_popup: bool,
     point_requesting_source: String,
     point_source: String,
-
     transform: TSTransform,
     drag_value: f32,
     initialized: bool,
@@ -42,12 +73,8 @@ impl Default for Structurer {
         Self {
             project_directory: Default::default(),
             titles: Vec::new(),
-            title_ids: Vec::new(),
-            points_of_title: Vec::new(),
             current_points: Vec::new(), //Current_point(point_id,point_content)
-            current_title: String::new(),
-            current_title_id: String::new(),
-            age: 40,
+            current_title: Title::default(),
             show_confirm_delete_popup: false,
             point_requesting_deletion: String::new(),
             show_share_point_popup: false,
@@ -55,11 +82,9 @@ impl Default for Structurer {
             titles_receiving_shared_point: Vec::new(),
             show_title_delete_popup: false,
             show_link_title_popup: false,
-            titles_linked_to_current: Vec::new(),
             show_source_popup: false,
             point_requesting_source: String::new(),
             point_source: String::new(),
-
             transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
             drag_value: 1.0,
             initialized: false,
@@ -140,7 +165,7 @@ impl eframe::App for Structurer {
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
                 ui.vertical_centered(|ui| {
-                    ui.text_edit_singleline(&mut self.current_title);
+                    ui.text_edit_singleline(&mut self.current_title.name);
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         self.points_layout(ui);
                     });
