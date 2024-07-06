@@ -1,4 +1,5 @@
 use crate::{Point, Structurer, Title};
+use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
@@ -56,14 +57,17 @@ impl Structurer {
             .iter()
             .collect();
         let file = File::open(&file_path).expect("Error while opening file from load_from_library");
-        self.titles = Vec::new();
+        self.title_order = Vec::new();
+        self.titles = HashMap::new();
         for line in BufReader::new(file).lines() {
             let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
             let mut temp_title: Title = Title::default();
             temp_title.id = split_line[0].clone();
             temp_title.name = split_line[1].clone();
             temp_title.point_ids = split_line[2..].to_vec();
-            self.titles.push(temp_title);
+            self.title_order.push(temp_title.id.clone());
+            self.titles
+                .insert(temp_title.id.clone(), temp_title.clone());
         }
     }
 }
@@ -275,7 +279,7 @@ pub fn share_unshare_point(
     project_dir: PathBuf,
     point_id: String,
     checklist: Vec<bool>,
-    title_list: Vec<Title>,
+    title_list: Vec<String>,
 ) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -283,7 +287,7 @@ pub fn share_unshare_point(
         .collect();
     let file = File::open(&file_path)
         .expect("Error while opening the library file from point_is_shared_with");
-    for (line_read, is_shared, title) in BufReader::new(file)
+    for (line_read, is_shared, title_id) in BufReader::new(file)
         .lines()
         .into_iter()
         .zip(checklist.into_iter())
@@ -295,7 +299,7 @@ pub fn share_unshare_point(
             .split("@")
             .map(|s| s.to_string())
             .collect();
-        assert_eq!(split_line[0], title.id); //Each line should be referring to a title in the same order
+        assert_eq!(split_line[0], title_id); //Each line should be referring to a title in the same order
         if is_shared && !split_line.contains(&point_id) {
             split_line.push(point_id.clone());
         } else if !is_shared && split_line.contains(&point_id) {
@@ -381,18 +385,22 @@ pub fn add_element_to_line(
 
 // Gets a title, a list of titles and bools. Writes or deletes links from Links.txt according to
 // bools.
-pub fn link_unlink_title(project_dir: PathBuf, curr_title: Title, title_list: Vec<Title>) -> () {
+pub fn link_unlink_title(
+    project_dir: PathBuf,
+    curr_title: Title,
+    title_id_list: Vec<String>,
+) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
         .iter()
         .collect();
     let file = File::open(&file_path)
         .expect("Error while opening the library file from point_is_shared_with");
-    for (line_read, is_shared, title) in BufReader::new(file)
+    for (line_read, is_shared, title_id) in BufReader::new(file)
         .lines()
         .into_iter()
         .zip(curr_title.links.clone().into_iter())
-        .zip(title_list.clone().into_iter())
+        .zip(title_id_list.clone().into_iter())
         .map(|((x, y), z)| (x, y, z))
     {
         let mut split_line: Vec<String> = line_read
@@ -400,24 +408,24 @@ pub fn link_unlink_title(project_dir: PathBuf, curr_title: Title, title_list: Ve
             .split("@")
             .map(|s| s.to_string())
             .collect();
-        assert_eq!(split_line[0], title.id); //Each line should be referring to a title in the same order
+        assert_eq!(split_line[0], title_id); //Each line should be referring to a title in the same order
                                              // On the title line add the ones that should be added, remove the ones that should be
                                              // removed
         if split_line[0] == curr_title.id {
-            for (local_is_shared, local_title) in curr_title
+            for (local_is_shared, local_title_id) in curr_title
                 .links
                 .clone()
                 .into_iter()
-                .zip(title_list.clone().into_iter())
+                .zip(title_id_list.clone().into_iter())
             {
-                if local_title.id == curr_title.id {
+                if local_title_id == curr_title.id {
                     //Ignore the current title so it can't uncheck
                     //itself
                     continue;
-                } else if local_is_shared && !split_line.contains(&local_title.id) {
-                    split_line.push(local_title.id);
-                } else if !local_is_shared && split_line.contains(&local_title.id) {
-                    split_line.retain(|value| *value != local_title.id);
+                } else if local_is_shared && !split_line.contains(&local_title_id) {
+                    split_line.push(local_title_id);
+                } else if !local_is_shared && split_line.contains(&local_title_id) {
+                    split_line.retain(|value| *value != local_title_id);
                 }
             }
         } else if is_shared && !split_line.contains(&curr_title.id) {

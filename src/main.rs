@@ -7,7 +7,7 @@ mod popup_windows;
 mod save_load;
 use egui::emath::TSTransform;
 use egui::{vec2, Pos2};
-
+use std::collections::HashMap;
 #[derive(Clone)]
 struct Point {
     id: String,
@@ -33,6 +33,7 @@ struct Title {
     links: Vec<bool>, //A vectir of bools each correspondig to a title, if true it's linked
     node_position: Pos2,
 }
+
 impl Default for Title {
     fn default() -> Self {
         Self {
@@ -47,7 +48,8 @@ impl Default for Title {
 
 struct Structurer {
     project_directory: PathBuf,
-    titles: Vec<Title>,
+    titles: HashMap<String, Title>,
+    title_order: Vec<String>,
     current_points: Vec<Point>, //Current_point(point_id,point_content)
     current_title: Title,
 
@@ -68,7 +70,8 @@ impl Default for Structurer {
     fn default() -> Self {
         Self {
             project_directory: Default::default(),
-            titles: Vec::new(),
+            titles: HashMap::new(),
+            title_order: Vec::new(),
             current_points: Vec::new(), //Current_point(point_id,point_content)
             current_title: Title::default(),
             show_confirm_delete_popup: false,

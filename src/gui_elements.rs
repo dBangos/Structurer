@@ -60,13 +60,13 @@ impl Structurer {
         ui.label("All Titles");
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for title in self.titles.clone().into_iter() {
-                if ui.button(title.name.clone()).clicked() {
+            for title_id in self.title_order.clone().into_iter() {
+                if ui.button(self.titles[&title_id].name.clone()).clicked() {
                     (self.current_title, self.current_points) = save_old_add_new_points(
                         self.project_directory.clone(),
                         self.current_title.clone(),
                         self.current_points.clone(),
-                        title,
+                        self.titles[&title_id].clone(),
                     );
                 }
             }
@@ -78,19 +78,19 @@ impl Structurer {
         ui.label("Linked With:");
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for (title, is_linked) in self
-                .titles
+            for (title_id, is_linked) in self
+                .title_order
                 .clone()
                 .into_iter()
                 .zip(self.current_title.links.clone())
             {
                 if is_linked {
-                    if ui.button(title.name.clone()).clicked() {
+                    if ui.button(self.titles[&title_id].name.clone()).clicked() {
                         (self.current_title, self.current_points) = save_old_add_new_points(
                             self.project_directory.clone(),
                             self.current_title.clone(),
                             self.current_points.clone(),
-                            title,
+                            self.titles[&title_id].clone(),
                         );
                     }
                 }

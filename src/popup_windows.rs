@@ -89,9 +89,10 @@ impl Structurer {
                             );
                             //Reseting the state and showing the first title
                             self.load_from_library();
-                            self.current_title = self.titles[0].clone();
+                            self.current_title = self.titles[&self.title_order[0]].clone();
                             self.current_points = Vec::new();
-                            for new_point_id in self.titles[0].point_ids.clone() {
+                            for new_point_id in self.titles[&self.title_order[0]].point_ids.clone()
+                            {
                                 let mut new_point: Point = Point::default();
                                 new_point.id = new_point_id.to_string();
                                 new_point.content = load_from_filename(
@@ -132,12 +133,15 @@ impl Structurer {
                     if self.show_share_point_popup {
                         ui.label("Share point:");
                         ui.vertical(|ui| {
-                            for (is_shared, checkbox_title) in self
+                            for (is_shared, checkbox_title_id) in self
                                 .titles_receiving_shared_point
                                 .iter_mut()
-                                .zip(self.titles.clone())
+                                .zip(self.title_order.clone())
                             {
-                                ui.checkbox(is_shared, checkbox_title.name.clone());
+                                ui.checkbox(
+                                    is_shared,
+                                    self.titles[&checkbox_title_id].name.clone(),
+                                );
                             }
                         });
                         ui.horizontal(|ui| {
@@ -148,7 +152,7 @@ impl Structurer {
                                         .id
                                         .clone(),
                                     self.titles_receiving_shared_point.clone(),
-                                    self.titles.clone(),
+                                    self.title_order.clone(),
                                 );
                                 //If the point is not shared to any titles, delete it
                                 if self
@@ -178,10 +182,13 @@ impl Structurer {
                     } else if self.show_link_title_popup {
                         ui.label("Link Title:");
                         ui.vertical(|ui| {
-                            for (is_linked, title) in
-                                self.current_title.links.iter_mut().zip(self.titles.clone())
+                            for (is_linked, title_id) in self
+                                .current_title
+                                .links
+                                .iter_mut()
+                                .zip(self.title_order.clone())
                             {
-                                ui.checkbox(is_linked, title.name);
+                                ui.checkbox(is_linked, self.titles[&title_id].name.clone());
                             }
                         });
                         ui.horizontal(|ui| {
@@ -189,7 +196,7 @@ impl Structurer {
                                 link_unlink_title(
                                     self.project_directory.clone(),
                                     self.current_title.clone(),
-                                    self.titles.clone(),
+                                    self.title_order.clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                             }

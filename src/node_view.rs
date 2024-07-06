@@ -5,7 +5,6 @@ use eframe::egui::{self, Pos2};
 use egui::emath::TSTransform;
 use egui::epaint::PathShape;
 use egui::*;
-use std::borrow::BorrowMut;
 
 impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
@@ -24,9 +23,9 @@ impl Structurer {
             let half_x: f32 = 50.0;
             let half_y: f32 = 15.0;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
-            for (index, title) in self.titles.iter_mut().enumerate() {
+            for (index, title_id) in self.title_order.iter_mut().enumerate() {
                 //
-                let point_in_screen = to_screen.transform_pos(title.node_position);
+                let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
                 let first_point: Pos2 =
                     (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
                 let second_point: Pos2 =
@@ -35,9 +34,11 @@ impl Structurer {
                 //Getting the drag interaction and updating the point
                 let point_id = response.id.with(index);
                 let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
-                title.node_position += point_response_1.drag_delta();
-                title.node_position = to_screen.from().clamp(title.node_position);
-                let point_in_screen = to_screen.transform_pos(title.node_position);
+                self.titles.get_mut(title_id).unwrap().node_position +=
+                    point_response_1.drag_delta();
+                self.titles.get_mut(title_id).unwrap().node_position =
+                    to_screen.from().clamp(self.titles[title_id].node_position);
+                let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
                 //Colouring the button
                 let rect_color = ui.style().interact(&point_response_1).bg_fill;
                 //Adding the click interaction
@@ -47,7 +48,7 @@ impl Structurer {
                         self.project_directory.clone(),
                         self.current_title.clone(),
                         self.current_points.clone(),
-                        title.clone(),
+                        self.titles[title_id].clone(),
                     );
                 }
                 //Updating the button after it has been dragged
@@ -64,13 +65,12 @@ impl Structurer {
             }
 
             let mut points_in_screen: Vec<Pos2> = Vec::new();
-            for title in &self.titles {
-                points_in_screen.push(to_screen * title.node_position);
+            for title_id in &self.title_order {
+                points_in_screen.push(to_screen * self.titles[title_id].node_position);
             }
-            //let points_in_screen: Vec<Pos2> = title_nodes.iter().map(|p| to_screen * *p).collect();
             let mut titles_text: Vec<Shape> = Vec::new();
-            for (title, point_in_screen) in self
-                .titles
+            for (title_id, point_in_screen) in self
+                .title_order
                 .clone()
                 .into_iter()
                 .zip(points_in_screen.clone())
@@ -80,11 +80,16 @@ impl Structurer {
                         f,
                         point_in_screen,
                         egui::Align2::CENTER_CENTER,
-                        title.name,
+                        self.titles[&title_id].name.clone(),
                         FontId::monospace(10.0),
                         Color32::WHITE,
                     ))
                 })
+            }
+            let title_link_pairs = self.get_linked_pairs();
+            let mut title_lines: Vec<Shape> = Vec::new();
+            for (title_1, title_2) in title_link_pairs {
+                //title_lines.push(Shape::LineSegment { points: (title_1.), stroke: () })
             }
             painter.add(PathShape::line(points_in_screen, aux_stroke));
             painter.extend(title_node_shapes);
@@ -94,21 +99,19 @@ impl Structurer {
         });
     }
 
-    //Returns a tuple:
-    //First element is a vector of all titles in insertion order and their positions
-    //Second element is a vector of all Pos2 pairs for the linking lines
-    pub fn get_node_positions(
-        &mut self,
-    ) -> (Vec<(String, egui::Pos2)>, Vec<(egui::Pos2, egui::Pos2)>) {
-        let completed: Vec<String> = Vec::new();
-        let titles_positions: Vec<(String, egui::Pos2)> = Vec::new();
-        let line_positions: Vec<(egui::Pos2, egui::Pos2)> = Vec::new();
-        let links = all_titles_links(self.project_directory.clone());
-        for (title_id, links_to_title_id) in links {
-            if !completed.contains(&title_id) && links_to_title_id.len() > 0 {
-                //
+    //Returns a vector with all the linked title pairs by index
+    fn get_linked_pairs(&mut self) -> Vec<(String, String)> {
+        let mut result: Vec<(String, String)> = Vec::new();
+        let all_links = all_titles_links(self.project_directory.clone());
+        for (title, links) in all_links {
+            for link in links {
+                if !(result.contains(&(title.clone(), link.clone()))
+                    || result.contains(&(link.clone(), title.clone())))
+                {
+                    result.push((title.clone(), link.clone()));
+                }
             }
         }
-        return (titles_positions, line_positions);
+        return result;
     }
 }
