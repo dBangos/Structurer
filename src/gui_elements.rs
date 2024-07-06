@@ -2,8 +2,8 @@ use crate::save_load::{
     add_point, add_title, change_title_name, get_point_source, load_from_filename,
     point_is_shared_with, save_to_filename, title_is_linked_with,
 };
-use crate::Structurer;
 use crate::Title;
+use crate::{Point, Structurer};
 use eframe::egui::{self};
 use std::path::PathBuf;
 impl Structurer {
@@ -23,8 +23,8 @@ impl Structurer {
                     self.current_title.id.clone(),
                     self.current_title.name.clone(),
                 );
-                for (id, content) in self.current_points.clone().into_iter() {
-                    save_to_filename(self.project_directory.clone(), id, content);
+                for point in self.current_points.clone() {
+                    save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
                 self.load_from_library();
             }
@@ -112,48 +112,51 @@ impl Structurer {
             self.current_title.id.clone(),
         );
         //Save old points => Remove old points => Add new points
-        for (id, content) in self.current_points.clone().into_iter() {
-            save_to_filename(self.project_directory.clone(), id, content);
+        for point in self.current_points.clone() {
+            save_to_filename(self.project_directory.clone(), point.id, point.content);
         }
         self.current_points = Vec::new();
-        for new_point in title.point_ids.into_iter() {
-            self.current_points.push((
-                new_point.to_string(),
-                load_from_filename(new_point.to_string(), self.project_directory.clone()),
-            ));
+        for new_point_id in title.point_ids.into_iter() {
+            let mut new_point: Point = Point::default();
+            new_point.id = new_point_id.to_string();
+            new_point.content =
+                load_from_filename(new_point_id.to_string(), self.project_directory.clone());
+            self.current_points.push(new_point);
         }
     }
 
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         ui.vertical_centered(|ui| {
-            for point in self.current_points.iter_mut() {
+            for (index, point) in self.current_points.iter_mut().enumerate() {
                 // Container for elements of each point
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
                         if ui.button("Delete").clicked() {
-                            self.point_requesting_deletion = point.0.clone();
+                            self.point_requesting_action_index = index;
                             self.show_confirm_delete_popup = true;
                         }
                         if ui.button("Add to:").clicked() {
                             self.titles_receiving_shared_point = point_is_shared_with(
                                 self.project_directory.clone(),
-                                point.0.clone(),
+                                point.id.clone(),
                             );
-                            self.point_requesting_sharing = point.0.clone();
+                            self.point_requesting_action_index = index;
                             self.show_share_point_popup = true;
                         }
                         if ui.button("Source").clicked() {
-                            self.point_requesting_source = point.0.clone();
-                            self.point_source = get_point_source(
-                                self.project_directory.clone(),
-                                self.point_requesting_source.clone(),
-                            );
+                            self.point_requesting_action_index = index;
+
+                            point.source =
+                                get_point_source(self.project_directory.clone(), point.id.clone());
                             self.show_source_popup = true;
                         }
                     });
 
-                    ui.add_sized(ui.available_size(), egui::TextEdit::multiline(&mut point.1));
+                    ui.add_sized(
+                        ui.available_size(),
+                        egui::TextEdit::multiline(&mut point.content),
+                    );
                 });
             }
         });

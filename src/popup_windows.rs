@@ -2,10 +2,11 @@ use crate::save_load::{
     delete_point, delete_title, link_unlink_title, load_from_filename, load_points_from_title_id,
     share_unshare_point, update_source,
 };
-use crate::Structurer;
+use crate::{Point, Structurer};
 use eframe::egui::{self};
 impl Structurer {
     pub fn point_source_popup(&mut self, ctx: &egui::Context) {
+        assert!(self.current_points.len() >= self.point_requesting_action_index);
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),
             egui::ViewportBuilder::default()
@@ -19,21 +20,40 @@ impl Structurer {
                 egui::CentralPanel::default().show(ctx, |ui| {
                     ui.vertical(|ui| {
                         //If it's like a link make it a hyperlink
-                        if self.point_source != "No source set yet."
-                            && (self.point_source.contains("www")
-                                || self.point_source.contains("https"))
+                        if self.current_points[self.point_requesting_action_index].source
+                            != "No source set yet."
+                            && (self.current_points[self.point_requesting_action_index]
+                                .source
+                                .contains("www")
+                                || self.current_points[self.point_requesting_action_index]
+                                    .source
+                                    .contains("https"))
                         {
-                            ui.hyperlink(self.point_source.clone());
+                            ui.hyperlink(
+                                self.current_points[self.point_requesting_action_index]
+                                    .source
+                                    .clone(),
+                            );
                         } else {
-                            ui.label(self.point_source.clone());
+                            ui.label(
+                                self.current_points[self.point_requesting_action_index]
+                                    .source
+                                    .clone(),
+                            );
                         }
                         ui.horizontal(|ui| {
-                            ui.text_edit_singleline(&mut self.point_source);
+                            ui.text_edit_singleline(
+                                &mut self.current_points[self.point_requesting_action_index].source,
+                            );
                             if ui.button("Add source").clicked() {
                                 update_source(
                                     self.project_directory.clone(),
-                                    self.point_requesting_source.clone(),
-                                    self.point_source.clone(),
+                                    self.current_points[self.point_requesting_action_index]
+                                        .id
+                                        .clone(),
+                                    self.current_points[self.point_requesting_action_index]
+                                        .source
+                                        .clone(),
                                 );
                                 ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                             }
@@ -71,14 +91,14 @@ impl Structurer {
                             self.load_from_library();
                             self.current_title = self.titles[0].clone();
                             self.current_points = Vec::new();
-                            for new_point in self.titles[0].point_ids.clone().into_iter() {
-                                self.current_points.push((
-                                    new_point.to_string(),
-                                    load_from_filename(
-                                        new_point.to_string(),
-                                        self.project_directory.clone(),
-                                    ),
-                                ));
+                            for new_point_id in self.titles[0].point_ids.clone() {
+                                let mut new_point: Point = Point::default();
+                                new_point.id = new_point_id.to_string();
+                                new_point.content = load_from_filename(
+                                    new_point_id.to_string(),
+                                    self.project_directory.clone(),
+                                );
+                                self.current_points.push(new_point);
                             }
                             ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
                         }
@@ -97,6 +117,7 @@ impl Structurer {
     }
 
     pub fn show_share_point_or_link_title_popup(&mut self, ctx: &egui::Context) {
+        assert!(self.current_points.len() >= self.point_requesting_action_index);
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),
             egui::ViewportBuilder::default()
@@ -123,7 +144,9 @@ impl Structurer {
                             if ui.button("Ok").clicked() {
                                 share_unshare_point(
                                     self.project_directory.clone(),
-                                    self.point_requesting_sharing.clone(),
+                                    self.current_points[self.point_requesting_action_index]
+                                        .id
+                                        .clone(),
                                     self.titles_receiving_shared_point.clone(),
                                     self.titles.clone(),
                                 );
@@ -135,7 +158,9 @@ impl Structurer {
                                 {
                                     delete_point(
                                         self.project_directory.clone(),
-                                        self.point_requesting_sharing.clone(),
+                                        self.current_points[self.point_requesting_action_index]
+                                            .id
+                                            .clone(),
                                     );
                                 }
                                 self.load_from_library();
@@ -185,6 +210,7 @@ impl Structurer {
     }
 
     pub fn confirm_deletion_popup(&mut self, ctx: &egui::Context) {
+        assert!(self.current_points.len() >= self.point_requesting_action_index);
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),
             egui::ViewportBuilder::default()
@@ -201,7 +227,9 @@ impl Structurer {
                         if ui.button("Yes").clicked() {
                             delete_point(
                                 self.project_directory.clone(),
-                                self.point_requesting_deletion.clone(),
+                                self.current_points[self.point_requesting_action_index]
+                                    .id
+                                    .clone(),
                             );
                             self.load_from_library();
                             self.current_points = load_points_from_title_id(

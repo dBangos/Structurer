@@ -1,16 +1,15 @@
+use crate::{Point, Structurer, Title};
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
-
-use crate::{Structurer, Title};
 const VERSION: i32 = 1;
 
 //Gets a title_id, loads the corresponding point_ids and point_content
-pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<(String, String)> {
-    let mut result: Vec<(String, String)> = Vec::new();
+pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<Point> {
+    let mut result: Vec<Point> = Vec::new();
     let mut library_line: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
         .iter()
@@ -25,10 +24,10 @@ pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<
         }
     }
     for point in library_line.into_iter() {
-        result.push((
-            point.clone(),
-            load_from_filename(point.clone(), project_dir.clone()),
-        ));
+        let mut new_point: Point = Point::default();
+        new_point.id = point.clone();
+        new_point.content = load_from_filename(point, project_dir.clone());
+        result.push(new_point);
     }
     return result;
 }
@@ -78,7 +77,7 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
 
 //Adds a point to the current page/title, creates the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
-pub fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
+pub fn add_point(project_dir: PathBuf, title_id: String) -> Point {
     let id = Uuid::new_v4();
     save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
     add_element_to_line(
@@ -97,7 +96,10 @@ pub fn add_point(project_dir: PathBuf, title_id: String) -> (String, String) {
         .expect("Error while opening sources file from add_point");
     file.write(("\n".to_string() + &id.to_string()).as_bytes())
         .expect("Error while writing to sourcse file from add_point");
-    return (id.to_string(), "New point".to_string());
+    let mut new_point: Point = Point::default();
+    new_point.id = id.to_string();
+    new_point.content = "New point".to_string();
+    return new_point;
 }
 
 //Deletes all mentions of point_id from the library file

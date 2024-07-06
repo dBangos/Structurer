@@ -48,21 +48,17 @@ impl Default for Title {
 struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
-    current_points: Vec<(String, String)>, //Current_point(point_id,point_content)
+    current_points: Vec<Point>, //Current_point(point_id,point_content)
     current_title: Title,
 
     show_confirm_delete_popup: bool,
-    point_requesting_deletion: String,
-
+    point_requesting_action_index: usize, //The index of the point in current_points
     show_share_point_popup: bool,
-    point_requesting_sharing: String,
     titles_receiving_shared_point: Vec<bool>, //(title_id,title,is_shared_or_not)
 
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
-    point_requesting_source: String,
-    point_source: String,
     transform: TSTransform,
     drag_value: f32,
     initialized: bool,
@@ -76,15 +72,12 @@ impl Default for Structurer {
             current_points: Vec::new(), //Current_point(point_id,point_content)
             current_title: Title::default(),
             show_confirm_delete_popup: false,
-            point_requesting_deletion: String::new(),
+            point_requesting_action_index: 0,
             show_share_point_popup: false,
-            point_requesting_sharing: String::new(),
             titles_receiving_shared_point: Vec::new(),
             show_title_delete_popup: false,
             show_link_title_popup: false,
             show_source_popup: false,
-            point_requesting_source: String::new(),
-            point_source: String::new(),
             transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
             drag_value: 1.0,
             initialized: false,
