@@ -7,6 +7,14 @@ use egui::*;
 
 impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if ui.button("+").clicked() {
+                self.view_scale = self.view_scale * 2.0;
+            }
+            if ui.button("-").clicked() {
+                self.view_scale = self.view_scale / 2.0;
+            }
+        });
         Frame::canvas(ui.style()).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(
                 Vec2::new(ui.available_width(), ui.available_height()),
@@ -18,8 +26,8 @@ impl Structurer {
                 response.rect,
             );
 
-            let half_x: f32 = 50.0;
-            let half_y: f32 = 15.0;
+            let half_x: f32 = 50.0 * self.view_scale;
+            let half_y: f32 = 15.0 * self.view_scale;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
             for (index, title_id) in self.title_order.iter_mut().enumerate() {
                 let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
@@ -60,6 +68,7 @@ impl Structurer {
                     rect_color,
                 ));
             }
+            //Pushing the text shapes to be drawn
             let mut points_in_screen: Vec<Pos2> = Vec::new();
             for title_id in &self.title_order {
                 points_in_screen.push(to_screen * self.titles[title_id].node_position);
@@ -77,20 +86,57 @@ impl Structurer {
                         point_in_screen,
                         egui::Align2::CENTER_CENTER,
                         self.titles[&title_id].name.clone(),
-                        FontId::monospace(10.0),
+                        FontId::monospace(10.0 * self.view_scale),
                         Color32::WHITE,
                     ))
                 })
             }
             let line_stroke = Stroke::new(1.0, Color32::RED);
             let title_link_pairs = self.get_linked_pairs();
+
+            //Pushing the line shapes to be drawn
             let mut title_lines: Vec<Shape> = Vec::new();
-            for (title_1, title_2) in title_link_pairs {
+            for (title_1, title_2) in title_link_pairs.clone() {
                 let temp_array: [Pos2; 2] = [
                     to_screen * self.titles[&title_1].node_position,
                     to_screen * self.titles[&title_2].node_position,
                 ];
                 title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
+            }
+            //Loop spreading out nodes
+            for title_1 in self.title_order.clone() {
+                for title_2 in self.title_order.clone() {
+                    if self.titles[&title_1].id == self.titles[&title_2].id {
+                        continue;
+                    } else {
+                        if (self.titles[&title_1].node_position
+                            - self.titles[&title_2].node_position)
+                            .length()
+                            < 100.0
+                        {
+                            self.titles.get_mut(&title_1).unwrap().node_position =
+                                move_point_in_line(
+                                    self.titles[&title_1].node_position,
+                                    self.titles[&title_2].node_position,
+                                    false,
+                                    10.0,
+                                );
+                        }
+                    }
+                }
+            }
+
+            //Loop pulling in links
+            for (title_1, title_2) in title_link_pairs {
+                let distance = self.titles[&title_1]
+                    .node_position
+                    .distance(self.titles[&title_2].node_position);
+                if distance > 200.0 {
+                    let first_point = self.titles[&title_1].node_position;
+                    let second_point = self.titles[&title_2].node_position;
+                    self.titles.get_mut(&title_1).unwrap().node_position =
+                        move_point_in_line(first_point, second_point, true, 10.0);
+                }
             }
             painter.extend(title_lines);
             painter.extend(title_node_shapes);
@@ -114,4 +160,45 @@ impl Structurer {
         }
         return result;
     }
+}
+
+fn move_point_in_line(
+    first_point: Pos2,
+    second_point: Pos2,
+    closer: bool,
+    move_distance_fraction: f32,
+) -> Pos2 {
+    let mut result: Pos2 = Default::default();
+    if closer {
+        if first_point.x > second_point.x {
+            result.x = first_point.x - (first_point.x - second_point.x) / move_distance_fraction;
+        } else if first_point.x == second_point.x {
+            result.x = first_point.x;
+        } else {
+            result.x = first_point.x + (second_point.x - first_point.x) / move_distance_fraction;
+        }
+        if first_point.y > second_point.y {
+            result.y = first_point.y - (first_point.y - second_point.y) / move_distance_fraction;
+        } else if first_point.y == second_point.y {
+            result.y = first_point.y;
+        } else {
+            result.y = first_point.y + (second_point.y - first_point.y) / move_distance_fraction;
+        }
+    } else {
+        if first_point.x > second_point.x {
+            result.x = first_point.x + (first_point.x - second_point.x) / move_distance_fraction;
+        } else if first_point.x == second_point.x {
+            result.x = first_point.x;
+        } else {
+            result.x = first_point.x - (second_point.x - first_point.x) / move_distance_fraction;
+        }
+        if first_point.y > second_point.y {
+            result.y = first_point.y + (first_point.y - second_point.y) / move_distance_fraction;
+        } else if first_point.y == second_point.y {
+            result.y = first_point.y;
+        } else {
+            result.y = first_point.y - (second_point.y - first_point.y) / move_distance_fraction;
+        }
+    }
+    return result;
 }

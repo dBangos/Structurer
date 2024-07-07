@@ -64,6 +64,7 @@ struct Structurer {
     transform: TSTransform,
     drag_value: f32,
     initialized: bool,
+    view_scale: f32,
 }
 
 impl Default for Structurer {
@@ -84,6 +85,7 @@ impl Default for Structurer {
             transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
             drag_value: 1.0,
             initialized: false,
+            view_scale: 1.0,
         }
     }
 }
