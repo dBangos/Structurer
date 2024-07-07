@@ -3,7 +3,6 @@ use crate::save_load::all_titles_links;
 use crate::Structurer;
 use eframe::egui::{self, Pos2};
 use egui::emath::TSTransform;
-use egui::epaint::PathShape;
 use egui::*;
 
 impl Structurer {
@@ -19,12 +18,10 @@ impl Structurer {
                 response.rect,
             );
 
-            let aux_stroke = Stroke::new(1.0, Color32::RED.linear_multiply(0.25));
             let half_x: f32 = 50.0;
             let half_y: f32 = 15.0;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
             for (index, title_id) in self.title_order.iter_mut().enumerate() {
-                //
                 let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
                 let first_point: Pos2 =
                     (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
@@ -85,23 +82,19 @@ impl Structurer {
                     ))
                 })
             }
+            let line_stroke = Stroke::new(1.0, Color32::RED);
             let title_link_pairs = self.get_linked_pairs();
             let mut title_lines: Vec<Shape> = Vec::new();
             for (title_1, title_2) in title_link_pairs {
-                println!("{} {}", title_1, title_2);
                 let temp_array: [Pos2; 2] = [
-                    self.titles[&title_1].node_position,
-                    self.titles[&title_2].node_position,
+                    to_screen * self.titles[&title_1].node_position,
+                    to_screen * self.titles[&title_2].node_position,
                 ];
-                title_lines.push(Shape::LineSegment {
-                    points: (temp_array),
-                    stroke: (aux_stroke.into()),
-                })
+                title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
             }
-            painter.add(PathShape::line(points_in_screen, aux_stroke));
+            painter.extend(title_lines);
             painter.extend(title_node_shapes);
             painter.extend(titles_text);
-            painter.extend(title_lines);
             response
         });
     }

@@ -215,7 +215,7 @@ pub fn add_title(project_dir: PathBuf) -> () {
         .append(true)
         .open(file_path)
         .expect("Error while opening links file from add_title");
-    file.write((&new_id.to_string()).as_bytes())
+    file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
         .expect("Error while writing to links file from add_title");
 }
 
@@ -247,6 +247,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
     delete_line_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
     delete_all_mentions_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
+    //Checking for points only on this title
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
         for (point_id, is_shared) in deleted_line.iter_mut() {
@@ -257,6 +258,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
             }
         }
     }
+    //Deleting points only on this title
     for (point_id, is_shared) in deleted_line {
         if !is_shared {
             file_path = [
