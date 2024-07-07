@@ -10,17 +10,34 @@ impl Structurer {
         ui.horizontal(|ui| {
             if ui.button("+").clicked() {
                 self.view_scale = self.view_scale * 2.0;
+                for title_id in self.title_order.clone() {
+                    self.titles.get_mut(&title_id).unwrap().node_position =
+                        self.titles[&title_id].node_position * self.view_scale;
+                }
             }
             if ui.button("-").clicked() {
                 self.view_scale = self.view_scale / 2.0;
+                for title_id in self.title_order.clone() {
+                    self.titles.get_mut(&title_id).unwrap().node_position =
+                        self.titles[&title_id].node_position * self.view_scale;
+                }
             }
         });
         Frame::canvas(ui.style()).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(
                 Vec2::new(ui.available_width(), ui.available_height()),
-                Sense::hover(),
+                Sense::click_and_drag(),
             );
-
+            // Allow dragging the background
+            if response.dragged() {
+                self.drag_distance = response.drag_delta();
+                println!("{} {}", self.drag_distance.x, self.drag_distance.y);
+                for title_id in self.title_order.clone() {
+                    self.titles.get_mut(&title_id).unwrap().node_position =
+                        self.titles[&title_id].node_position + self.drag_distance;
+                }
+            }
+            //Translate points to screen coordinates
             let to_screen = emath::RectTransform::from_to(
                 Rect::from_min_size(Pos2::ZERO, response.rect.size()),
                 response.rect,
@@ -103,41 +120,41 @@ impl Structurer {
                 ];
                 title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
             }
-            //Loop spreading out nodes
-            for title_1 in self.title_order.clone() {
-                for title_2 in self.title_order.clone() {
-                    if self.titles[&title_1].id == self.titles[&title_2].id {
-                        continue;
-                    } else {
-                        if (self.titles[&title_1].node_position
-                            - self.titles[&title_2].node_position)
-                            .length()
-                            < 100.0
-                        {
-                            self.titles.get_mut(&title_1).unwrap().node_position =
-                                move_point_in_line(
-                                    self.titles[&title_1].node_position,
-                                    self.titles[&title_2].node_position,
-                                    false,
-                                    10.0,
-                                );
-                        }
-                    }
-                }
-            }
-
-            //Loop pulling in links
-            for (title_1, title_2) in title_link_pairs {
-                let distance = self.titles[&title_1]
-                    .node_position
-                    .distance(self.titles[&title_2].node_position);
-                if distance > 200.0 {
-                    let first_point = self.titles[&title_1].node_position;
-                    let second_point = self.titles[&title_2].node_position;
-                    self.titles.get_mut(&title_1).unwrap().node_position =
-                        move_point_in_line(first_point, second_point, true, 10.0);
-                }
-            }
+            ////Loop spreading out nodes
+            //for title_1 in self.title_order.clone() {
+            //    for title_2 in self.title_order.clone() {
+            //        if self.titles[&title_1].id == self.titles[&title_2].id {
+            //            continue;
+            //        } else {
+            //            if (self.titles[&title_1].node_position
+            //                - self.titles[&title_2].node_position)
+            //                .length()
+            //                < 100.0
+            //            {
+            //                self.titles.get_mut(&title_1).unwrap().node_position =
+            //                    move_point_in_line(
+            //                        self.titles[&title_1].node_position,
+            //                        self.titles[&title_2].node_position,
+            //                        false,
+            //                        10.0,
+            //                    );
+            //            }
+            //        }
+            //    }
+            //}
+            //
+            ////Loop pulling in links
+            //for (title_1, title_2) in title_link_pairs {
+            //    let distance = self.titles[&title_1]
+            //        .node_position
+            //        .distance(self.titles[&title_2].node_position);
+            //    if distance > 200.0 {
+            //        let first_point = self.titles[&title_1].node_position;
+            //        let second_point = self.titles[&title_2].node_position;
+            //        self.titles.get_mut(&title_1).unwrap().node_position =
+            //            move_point_in_line(first_point, second_point, true, 10.0);
+            //    }
+            //}
             painter.extend(title_lines);
             painter.extend(title_node_shapes);
             painter.extend(titles_text);

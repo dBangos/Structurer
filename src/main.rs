@@ -6,7 +6,7 @@ mod node_view;
 mod popup_windows;
 mod save_load;
 use egui::emath::TSTransform;
-use egui::{vec2, Pos2};
+use egui::{Pos2, Vec2};
 use std::collections::HashMap;
 #[derive(Clone)]
 struct Point {
@@ -61,8 +61,7 @@ struct Structurer {
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
-    transform: TSTransform,
-    drag_value: f32,
+    drag_distance: Vec2,
     initialized: bool,
     view_scale: f32,
 }
@@ -82,8 +81,7 @@ impl Default for Structurer {
             show_title_delete_popup: false,
             show_link_title_popup: false,
             show_source_popup: false,
-            transform: TSTransform::new(vec2(2.0, 3.0), 2.0),
-            drag_value: 1.0,
+            drag_distance: Vec2 { x: 0.0, y: 0.0 },
             initialized: false,
             view_scale: 1.0,
         }
