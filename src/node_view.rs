@@ -2,9 +2,8 @@ use crate::gui_elements::save_old_add_new_points;
 use crate::save_load::all_titles_links;
 use crate::Structurer;
 use eframe::egui::{self, Pos2};
-use egui::emath::TSTransform;
-use egui::*;
-
+use egui::emath::RectTransform;
+use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
 impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -31,14 +30,13 @@ impl Structurer {
             // Allow dragging the background
             if response.dragged() {
                 self.drag_distance = response.drag_delta();
-                println!("{} {}", self.drag_distance.x, self.drag_distance.y);
                 for title_id in self.title_order.clone() {
                     self.titles.get_mut(&title_id).unwrap().node_position =
                         self.titles[&title_id].node_position + self.drag_distance;
                 }
             }
             //Translate points to screen coordinates
-            let to_screen = emath::RectTransform::from_to(
+            let to_screen = RectTransform::from_to(
                 Rect::from_min_size(Pos2::ZERO, response.rect.size()),
                 response.rect,
             );

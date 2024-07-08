@@ -38,6 +38,22 @@ impl Structurer {
             if ui.button("Add Title").clicked() {
                 add_title(self.project_directory.clone());
                 self.load_from_library();
+                (self.current_title, self.current_points) = save_old_add_new_points(
+                    self.project_directory.clone(),
+                    self.current_title.clone(),
+                    self.current_points.clone(),
+                    self.titles[self
+                        .title_order
+                        .last()
+                        .expect("Error while accesing last title")]
+                    .clone(),
+                );
+
+                self.current_points.push(add_point(
+                    self.project_directory.clone(),
+                    self.current_title.id.clone(),
+                ));
+                self.load_from_library();
             }
             if ui.button("Delete Title").clicked() {
                 self.show_title_delete_popup = true;
