@@ -87,8 +87,11 @@ impl Structurer {
                                 self.project_directory.clone(),
                                 self.current_title.id.clone(),
                             );
-                            //Reseting the state and showing the first title
-                            self.load_from_library();
+                            //Removing the title from state
+                            self.titles.remove(&self.current_title.id.clone());
+                            self.title_order
+                                .retain(|x| *x != self.current_title.id.clone());
+                            //Showing the first title
                             self.current_title = self.titles[&self.title_order[0]].clone();
                             self.current_points = Vec::new();
                             for new_point_id in self.titles[&self.title_order[0]].point_ids.clone()
@@ -154,6 +157,45 @@ impl Structurer {
                                     self.titles_receiving_shared_point.clone(),
                                     self.title_order.clone(),
                                 );
+                                //Adding the point to shared in state, removing from unshared in
+                                //state
+                                for (title_id, is_shared) in self
+                                    .title_order
+                                    .clone()
+                                    .into_iter()
+                                    .zip(self.titles_receiving_shared_point.clone())
+                                {
+                                    if is_shared
+                                        && !self.titles[&title_id].point_ids.contains(
+                                            &self.current_points
+                                                [self.point_requesting_action_index]
+                                                .id
+                                                .clone(),
+                                        )
+                                    {
+                                        self.titles.get_mut(&title_id).unwrap().point_ids.push(
+                                            self.current_points[self.point_requesting_action_index]
+                                                .id
+                                                .clone(),
+                                        );
+                                    } else if !is_shared
+                                        && self.titles[&title_id].point_ids.contains(
+                                            &self.current_points
+                                                [self.point_requesting_action_index]
+                                                .id
+                                                .clone(),
+                                        )
+                                    {
+                                        self.titles.get_mut(&title_id).unwrap().point_ids.retain(
+                                            |x| {
+                                                *x != self.current_points
+                                                    [self.point_requesting_action_index]
+                                                    .id
+                                                    .clone()
+                                            },
+                                        );
+                                    }
+                                }
                                 //If the point is not shared to any titles, delete it
                                 if self
                                     .titles_receiving_shared_point
@@ -166,8 +208,18 @@ impl Structurer {
                                             .id
                                             .clone(),
                                     );
+                                    //Removing the point from all titles in state
+                                    for title_id in self.title_order.clone() {
+                                        self.titles.get_mut(&title_id).unwrap().point_ids.retain(
+                                            |x| {
+                                                *x != self.current_points
+                                                    [self.point_requesting_action_index]
+                                                    .id
+                                                    .clone()
+                                            },
+                                        )
+                                    }
                                 }
-                                self.load_from_library();
                                 self.current_points = load_points_from_title_id(
                                     self.project_directory.clone(),
                                     self.current_title.id.clone(),
@@ -238,7 +290,20 @@ impl Structurer {
                                     .id
                                     .clone(),
                             );
-                            self.load_from_library();
+                            //Removing the point from all titles in state
+                            for title_id in self.title_order.clone() {
+                                self.titles
+                                    .get_mut(&title_id)
+                                    .unwrap()
+                                    .point_ids
+                                    .retain(|x| {
+                                        *x != self.current_points
+                                            [self.point_requesting_action_index]
+                                            .id
+                                            .clone()
+                                    })
+                            }
+                            //Loading the remaining points
                             self.current_points = load_points_from_title_id(
                                 self.project_directory.clone(),
                                 self.current_title.id.clone(),

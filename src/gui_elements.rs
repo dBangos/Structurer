@@ -26,18 +26,30 @@ impl Structurer {
                 for point in self.current_points.clone() {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
-                self.load_from_library();
             }
             if ui.button("Add Point").clicked() {
-                self.current_points.push(add_point(
+                let temp_point = add_point(
                     self.project_directory.clone(),
                     self.current_title.id.clone(),
-                ));
-                self.load_from_library();
+                );
+                self.current_points.push(temp_point.clone());
+                self.titles
+                    .get_mut(&self.current_title.id)
+                    .unwrap()
+                    .point_ids
+                    .push(temp_point.id);
             }
             if ui.button("Add Title").clicked() {
-                add_title(self.project_directory.clone());
-                self.load_from_library();
+                //Create new title files
+                let new_title_id = add_title(self.project_directory.clone());
+                //Add new title to state
+                self.title_order.push(new_title_id.clone());
+                let mut temp_title: Title = Title::default();
+                temp_title.id = new_title_id.clone();
+                temp_title.name = "New title".to_string();
+                self.titles
+                    .insert(temp_title.id.clone(), temp_title.clone());
+                //Switch focus to the new title page
                 (self.current_title, self.current_points) = save_old_add_new_points(
                     self.project_directory.clone(),
                     self.current_title.clone(),
@@ -48,12 +60,17 @@ impl Structurer {
                         .expect("Error while accesing last title")]
                     .clone(),
                 );
-
+                //Add point to the new title
                 self.current_points.push(add_point(
                     self.project_directory.clone(),
                     self.current_title.id.clone(),
                 ));
-                self.load_from_library();
+                //Add new point to state
+                self.titles
+                    .get_mut(&new_title_id)
+                    .unwrap()
+                    .point_ids
+                    .push(self.current_points[0].id.clone());
             }
             if ui.button("Delete Title").clicked() {
                 self.show_title_delete_popup = true;

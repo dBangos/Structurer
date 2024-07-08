@@ -136,7 +136,6 @@ pub fn delete_all_mentions_from_file(
 
 //Gets a point id, deletes the corresponding file and all library mentions
 pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
-    println!("Delete with pointid{}", point_id.clone());
     let file_path: PathBuf = [
         project_dir.clone(),
         PathBuf::from(point_id.clone() + ".txt"),
@@ -193,7 +192,8 @@ pub fn change_title_name(project_dir: PathBuf, title_id: String, new_title: Stri
 }
 
 //Adds a title to library and creates the corresponding file
-pub fn add_title(project_dir: PathBuf) -> () {
+//Returns the new title_id
+pub fn add_title(project_dir: PathBuf) -> String {
     let new_id = Uuid::new_v4();
     let mut file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
         .iter()
@@ -217,6 +217,7 @@ pub fn add_title(project_dir: PathBuf) -> () {
         .expect("Error while opening links file from add_title");
     file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
         .expect("Error while writing to links file from add_title");
+    return new_id.to_string();
 }
 
 //Gets a title_id. It deletes the library mention.
