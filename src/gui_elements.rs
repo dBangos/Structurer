@@ -5,6 +5,7 @@ use crate::save_load::{
 use crate::Title;
 use crate::{Point, Structurer};
 use eframe::egui::{self};
+use std::collections::HashMap;
 use std::path::PathBuf;
 impl Structurer {
     //Button line that contains most basic functions
@@ -12,8 +13,16 @@ impl Structurer {
         ui.horizontal(|ui| {
             if ui.button("Set Project Directory").clicked() {
                 if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
+                    //Resetting state in case old values don't get overwritten, in the absence of a
+                    //previous library
+                    self.titles = HashMap::new();
+                    self.title_order = Vec::new();
+                    self.current_points = Vec::new();
+                    self.current_title = Title::default();
+                    self.view_scale = 1.0;
                     self.project_directory = dir_path;
                     let _ = self.save_to_config();
+                    self.create_library_links();
                 }
                 self.load_from_library();
             }

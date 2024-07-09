@@ -1,3 +1,4 @@
+use crate::save_load::save_to_filename;
 use crate::Structurer;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -42,9 +43,33 @@ impl Structurer {
         .iter()
         .collect();
         let file_content = serde_json::to_string_pretty(&current_config)?;
-
         let _ = fs::write(dir_path, file_content);
 
         Ok(())
+    }
+
+    pub fn create_library_links(&mut self) {
+        //Creating a library file if there isn't one
+        let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Library.txt")]
+            .iter()
+            .collect();
+        if !file_path.exists() {
+            save_to_filename(
+                self.project_directory.clone(),
+                "Library".to_string(),
+                "".to_string(),
+            )
+        }
+        //Creating a links file if there isn't one
+        let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Links.txt")]
+            .iter()
+            .collect();
+        if !file_path.exists() {
+            save_to_filename(
+                self.project_directory.clone(),
+                "Links".to_string(),
+                "".to_string(),
+            )
+        }
     }
 }

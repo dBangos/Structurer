@@ -56,18 +56,22 @@ impl Structurer {
         let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Library.txt")]
             .iter()
             .collect();
-        let file = File::open(&file_path).expect("Error while opening file from load_from_library");
-        self.title_order = Vec::new();
-        self.titles = HashMap::new();
-        for line in BufReader::new(file).lines() {
-            let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-            let mut temp_title: Title = Title::default();
-            temp_title.id = split_line[0].clone();
-            temp_title.name = split_line[1].clone();
-            temp_title.point_ids = split_line[2..].to_vec();
-            self.title_order.push(temp_title.id.clone());
-            self.titles
-                .insert(temp_title.id.clone(), temp_title.clone());
+        if file_path.exists() {
+            let file =
+                File::open(&file_path).expect("Error while opening file from load_from_library");
+            self.title_order = Vec::new();
+            self.titles = HashMap::new();
+            for line in BufReader::new(file).lines() {
+                let split_line: Vec<String> =
+                    line.unwrap().split("@").map(|s| s.to_string()).collect();
+                let mut temp_title: Title = Title::default();
+                temp_title.id = split_line[0].clone();
+                temp_title.name = split_line[1].clone();
+                temp_title.point_ids = split_line[2..].to_vec();
+                self.title_order.push(temp_title.id.clone());
+                self.titles
+                    .insert(temp_title.id.clone(), temp_title.clone());
+            }
         }
     }
 }
@@ -503,14 +507,16 @@ pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Links.txt")]
         .iter()
         .collect();
-    let file = File::open(&file_path)
-        .expect("Error while opening the links file from title_is_linked_with");
-    for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line.len() > 1 {
-            result.push((split_line[0].to_string(), split_line[1..].to_vec()));
-        } else {
-            result.push((split_line[0].to_string(), vec![]));
+    if file_path.exists() {
+        let file = File::open(&file_path)
+            .expect("Error while opening the links file from title_is_linked_with");
+        for line in BufReader::new(file).lines() {
+            let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+            if split_line.len() > 1 {
+                result.push((split_line[0].to_string(), split_line[1..].to_vec()));
+            } else {
+                result.push((split_line[0].to_string(), vec![]));
+            }
         }
     }
     return result;
