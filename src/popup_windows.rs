@@ -126,7 +126,7 @@ impl Structurer {
             egui::ViewportId::from_hash_of("immediate_viewport"),
             egui::ViewportBuilder::default()
                 .with_title("Confirm Deletion")
-                .with_inner_size([200.0, 300.0]),
+                .with_inner_size([200.0, 350.0]),
             |ctx, class| {
                 assert!(
                     class == egui::ViewportClass::Immediate,
@@ -135,17 +135,19 @@ impl Structurer {
                 egui::CentralPanel::default().show(ctx, |ui| {
                     if self.show_share_point_popup {
                         ui.label("Share point:");
-                        ui.vertical(|ui| {
-                            for (is_shared, checkbox_title_id) in self
-                                .titles_receiving_shared_point
-                                .iter_mut()
-                                .zip(self.title_order.clone())
-                            {
-                                ui.checkbox(
-                                    is_shared,
-                                    self.titles[&checkbox_title_id].name.clone(),
-                                );
-                            }
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            ui.vertical_centered(|ui| {
+                                for (is_shared, checkbox_title_id) in self
+                                    .titles_receiving_shared_point
+                                    .iter_mut()
+                                    .zip(self.title_order.clone())
+                                {
+                                    ui.checkbox(
+                                        is_shared,
+                                        self.titles[&checkbox_title_id].name.clone(),
+                                    );
+                                }
+                            });
                         });
                         ui.horizontal(|ui| {
                             if ui.button("Ok").clicked() {
@@ -234,14 +236,18 @@ impl Structurer {
                     } else if self.show_link_title_popup {
                         ui.label("Link Title:");
                         ui.vertical(|ui| {
-                            for (is_linked, title_id) in self
-                                .current_title
-                                .links
-                                .iter_mut()
-                                .zip(self.title_order.clone())
-                            {
-                                ui.checkbox(is_linked, self.titles[&title_id].name.clone());
-                            }
+                            egui::ScrollArea::vertical().show(ui, |ui| {
+                                ui.vertical_centered(|ui| {
+                                    for (is_linked, title_id) in self
+                                        .current_title
+                                        .links
+                                        .iter_mut()
+                                        .zip(self.title_order.clone())
+                                    {
+                                        ui.checkbox(is_linked, self.titles[&title_id].name.clone());
+                                    }
+                                });
+                            });
                         });
                         ui.horizontal(|ui| {
                             if ui.button("Ok").clicked() {

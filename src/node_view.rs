@@ -6,20 +6,16 @@ use egui::emath::RectTransform;
 use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
 impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
+        //Flags for the buttons, kinda ugly but I want the buttons outside the canvas
+        //But I need to be inside the canvas to calculate the centering offset
+        let mut plus_pressed = false;
+        let mut minus_pressed = false;
         ui.horizontal(|ui| {
             if ui.button("+").clicked() {
-                self.view_scale = self.view_scale * 2.0;
-                for title_id in self.title_order.clone() {
-                    self.titles.get_mut(&title_id).unwrap().node_position =
-                        self.titles[&title_id].node_position * self.view_scale;
-                }
+                plus_pressed = true;
             }
             if ui.button("-").clicked() {
-                self.view_scale = self.view_scale / 2.0;
-                for title_id in self.title_order.clone() {
-                    self.titles.get_mut(&title_id).unwrap().node_position =
-                        self.titles[&title_id].node_position * self.view_scale;
-                }
+                minus_pressed = true;
             }
         });
         Frame::canvas(ui.style()).show(ui, |ui| {
@@ -27,6 +23,27 @@ impl Structurer {
                 Vec2::new(ui.available_width(), ui.available_height()),
                 Sense::click_and_drag(),
             );
+            let scale_factor = 1.1;
+            if plus_pressed {
+                self.view_scale = self.view_scale * scale_factor;
+                let offset_center_view: Vec2 = (response.rect.max - response.rect.min) * 0.05;
+                println!("{}", offset_center_view);
+                for title_id in self.title_order.clone() {
+                    self.titles.get_mut(&title_id).unwrap().node_position =
+                        (self.titles[&title_id].node_position - offset_center_view)
+                            * self.view_scale;
+                }
+                plus_pressed = false;
+            } else if minus_pressed {
+                self.view_scale = self.view_scale / scale_factor;
+                let offset_center_view: Vec2 = (response.rect.max - response.rect.min) / 8.0;
+                for title_id in self.title_order.clone() {
+                    self.titles.get_mut(&title_id).unwrap().node_position =
+                        (self.titles[&title_id].node_position + offset_center_view)
+                            * self.view_scale;
+                }
+                minus_pressed = false;
+            }
             // Allow dragging the background
             if response.dragged() {
                 self.drag_distance = response.drag_delta();
@@ -46,65 +63,61 @@ impl Structurer {
             let mut title_node_shapes: Vec<Shape> = Vec::new();
             for (index, title_id) in self.title_order.iter_mut().enumerate() {
                 let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
-                let first_point: Pos2 =
-                    (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
-                let second_point: Pos2 =
-                    (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
-                let point_rect = Rect::from_two_pos(first_point, second_point);
-                //Getting the drag interaction and updating the point
-                let point_id = response.id.with(index);
-                let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
-                self.titles.get_mut(title_id).unwrap().node_position +=
-                    point_response_1.drag_delta();
-                self.titles.get_mut(title_id).unwrap().node_position =
-                    to_screen.from().clamp(self.titles[title_id].node_position);
-                let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
-                //Colouring the button
-                let rect_color = ui.style().interact(&point_response_1).bg_fill;
-                //Adding the click interaction
-                let point_response_2 = ui.interact(point_rect, point_id, Sense::click());
-                if point_response_2.clicked() {
-                    (self.current_title, self.current_points) = save_old_add_new_points(
-                        self.project_directory.clone(),
-                        self.current_title.clone(),
-                        self.current_points.clone(),
-                        self.titles[title_id].clone(),
-                    );
+                //If the point should be visible draw it
+                if point_in_screen.x < response.rect.max.x
+                    && point_in_screen.x > response.rect.min.x
+                    && point_in_screen.y < response.rect.max.y
+                    && point_in_screen.y > response.rect.min.y
+                {
+                    let first_point: Pos2 =
+                        (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
+                    let second_point: Pos2 =
+                        (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
+                    let point_rect = Rect::from_two_pos(first_point, second_point);
+                    //Getting the drag interaction and updating the point
+                    let point_id = response.id.with(index);
+                    let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
+                    self.titles.get_mut(title_id).unwrap().node_position +=
+                        point_response_1.drag_delta();
+                    self.titles.get_mut(title_id).unwrap().node_position =
+                        to_screen.from().clamp(self.titles[title_id].node_position);
+                    let point_in_screen =
+                        to_screen.transform_pos(self.titles[title_id].node_position);
+                    //Colouring the button
+                    let rect_color = ui.style().interact(&point_response_1).bg_fill;
+                    //Adding the click interaction
+                    let point_response_2 = ui.interact(point_rect, point_id, Sense::click());
+                    if point_response_2.clicked() {
+                        (self.current_title, self.current_points) = save_old_add_new_points(
+                            self.project_directory.clone(),
+                            self.current_title.clone(),
+                            self.current_points.clone(),
+                            self.titles[title_id].clone(),
+                        );
+                    }
+                    //Updating the button after it has been dragged
+                    let first_point: Pos2 =
+                        (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
+                    let second_point: Pos2 =
+                        (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
+                    let rect_from_point = Rect::from_two_pos(first_point, second_point);
+                    title_node_shapes.push(Shape::rect_filled(
+                        rect_from_point,
+                        Rounding::ZERO,
+                        rect_color,
+                    ));
+                    //Adding text to each button
+                    ui.fonts(|f| {
+                        title_node_shapes.push(Shape::text(
+                            f,
+                            point_in_screen,
+                            egui::Align2::CENTER_CENTER,
+                            self.titles[title_id].name.clone(),
+                            FontId::monospace(10.0 * self.view_scale),
+                            Color32::WHITE,
+                        ))
+                    })
                 }
-                //Updating the button after it has been dragged
-                let first_point: Pos2 =
-                    (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
-                let second_point: Pos2 =
-                    (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
-                let rect_from_point = Rect::from_two_pos(first_point, second_point);
-                title_node_shapes.push(Shape::rect_filled(
-                    rect_from_point,
-                    Rounding::ZERO,
-                    rect_color,
-                ));
-            }
-            //Pushing the text shapes to be drawn
-            let mut points_in_screen: Vec<Pos2> = Vec::new();
-            for title_id in &self.title_order {
-                points_in_screen.push(to_screen * self.titles[title_id].node_position);
-            }
-            let mut titles_text: Vec<Shape> = Vec::new();
-            for (title_id, point_in_screen) in self
-                .title_order
-                .clone()
-                .into_iter()
-                .zip(points_in_screen.clone())
-            {
-                ui.fonts(|f| {
-                    titles_text.push(Shape::text(
-                        f,
-                        point_in_screen,
-                        egui::Align2::CENTER_CENTER,
-                        self.titles[&title_id].name.clone(),
-                        FontId::monospace(10.0 * self.view_scale),
-                        Color32::WHITE,
-                    ))
-                })
             }
             let line_stroke = Stroke::new(1.0, Color32::RED);
             let title_link_pairs = self.get_linked_pairs();
@@ -155,7 +168,6 @@ impl Structurer {
             //}
             painter.extend(title_lines);
             painter.extend(title_node_shapes);
-            painter.extend(titles_text);
             response
         });
     }
