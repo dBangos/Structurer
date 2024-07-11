@@ -64,13 +64,15 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 let split_line: Vec<String> =
                     line.unwrap().split("@").map(|s| s.to_string()).collect();
-                let mut temp_title: Title = Title::default();
-                temp_title.id = split_line[0].clone();
-                temp_title.name = split_line[1].clone();
-                temp_title.point_ids = split_line[2..].to_vec();
-                self.title_order.push(temp_title.id.clone());
-                self.titles
-                    .insert(temp_title.id.clone(), temp_title.clone());
+                if split_line.len() > 2 {
+                    let mut temp_title: Title = Title::default();
+                    temp_title.id = split_line[0].clone();
+                    temp_title.name = split_line[1].clone();
+                    temp_title.point_ids = split_line[2..].to_vec();
+                    self.title_order.push(temp_title.id.clone());
+                    self.titles
+                        .insert(temp_title.id.clone(), temp_title.clone());
+                }
             }
         }
     }

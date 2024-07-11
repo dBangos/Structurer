@@ -27,7 +27,6 @@ impl Structurer {
             if plus_pressed {
                 self.view_scale = self.view_scale * scale_factor;
                 let offset_center_view: Vec2 = (response.rect.max - response.rect.min) * 0.05;
-                println!("{}", offset_center_view);
                 for title_id in self.title_order.clone() {
                     self.titles.get_mut(&title_id).unwrap().node_position =
                         (self.titles[&title_id].node_position - offset_center_view)
@@ -58,6 +57,24 @@ impl Structurer {
                 response.rect,
             );
 
+            //Adding zoom behaviour on Ctrl+Mouse Wheel
+            if let Some(pointer) = ui.ctx().input(|i| i.pointer.hover_pos()) {
+                if response.hovered() {
+                    let pointer_in_layer = to_screen * pointer;
+                    let zoom_delta = ui.ctx().input(|i| i.zoom_delta());
+
+                    if zoom_delta != 1.0 {
+                        for title_id in self.title_order.clone() {
+                            self.titles.get_mut(&title_id).unwrap().node_position =
+                                self.titles[&title_id].node_position * zoom_delta;
+                            //Adjusting the view scale so the ui scales accordingly
+                            //Doing the plus, /2 to make the change slower
+                            self.view_scale =
+                                (self.view_scale + self.view_scale * zoom_delta) / 2.0;
+                        }
+                    }
+                }
+            }
             let half_x: f32 = 50.0 * self.view_scale;
             let half_y: f32 = 15.0 * self.view_scale;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
