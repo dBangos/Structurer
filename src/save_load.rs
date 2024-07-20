@@ -160,7 +160,7 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> () {
     let mut content: Vec<String> = Vec::new();
     content.push(title.name.clone());
     content.push("Version:".to_string() + &VERSION.to_string());
-    content.push("Image:".to_string() + &title.image.path + "@" + &title.image.description);
+    content.push("Image@".to_string() + &title.image.path + "@" + &title.image.description);
     save_to_filename(project_dir.clone(), title.id.clone(), content.join("\n"));
     //Updating the library file
     let mut content: Vec<String> = Vec::new();
@@ -284,7 +284,7 @@ pub fn get_title_image(project_dir: PathBuf, title_id: String) -> Image {
     let file = File::open(&file_path).expect("Error while opening file from get_title_image");
     for line in BufReader::new(file).lines() {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == "Image:" && split_line.len() == 3 {
+        if split_line[0] == "Image" && split_line.len() == 3 {
             return_image.path = split_line[1].clone();
             return_image.description = split_line[2].clone();
             break;

@@ -34,7 +34,6 @@ impl Structurer {
                             .set_directory(self.project_directory.clone())
                             .pick_file();
                         self.current_title.image.path = file.unwrap().to_string_lossy().to_string();
-                        println!("{}", self.current_title.image.path);
                     }
                 });
             });

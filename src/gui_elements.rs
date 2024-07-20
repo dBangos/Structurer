@@ -31,7 +31,6 @@ impl Structurer {
                 for point in self.current_points.clone() {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
-                *self.titles.get_mut(&self.current_title.id).unwrap() = self.current_title.clone();
             }
             if ui.button("Add Point").clicked() {
                 let temp_point = add_point(
@@ -125,6 +124,10 @@ impl Structurer {
             {
                 if is_linked {
                     if ui.button(self.titles[&title_id].name.clone()).clicked() {
+                        if self.current_title.id.len() > 0 {
+                            *self.titles.get_mut(&self.current_title.id).unwrap() =
+                                self.current_title.clone();
+                        }
                         (self.current_title, self.current_points) = save_old_add_new_points(
                             self.project_directory.clone(),
                             self.current_title.clone(),
