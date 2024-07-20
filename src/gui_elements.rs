@@ -141,20 +141,25 @@ impl Structurer {
     pub fn title_layout(&mut self, ui: &mut egui::Ui) {
         //let file_path = "/home/sleiren/Coding/structurer/testing/xi.jpg";
         //let image = egui::Image::new(format!("file://{file_path}"))
-        let image = egui::Image::new(egui::include_image!("../assets/plus-square-icon.png"))
-            .fit_to_exact_size([300.0, 300.0].into())
-            .sense(egui::Sense::click());
         //If there is an image attached, replace the placeholder
-        if self.current_title.image.path.len() > 1 {
-            let file_path = self.current_title.image.path.clone();
-            let image = egui::Image::new(format!("file://{file_path}"))
-                .fit_to_exact_size([300.0, 300.0].into())
-                .sense(egui::Sense::click());
-        }
 
         ui.horizontal(|ui| {
-            if ui.add(image).clicked() {
-                self.show_image_popup = true;
+            if self.current_title.image.path.len() > 1 {
+                let file_path = self.current_title.image.path.clone();
+                let image = egui::Image::new(format!("file://{file_path}"))
+                    .fit_to_exact_size([300.0, 300.0].into())
+                    .sense(egui::Sense::click());
+                if ui.add(image).clicked() {
+                    self.show_image_popup = true;
+                }
+            } else {
+                let image =
+                    egui::Image::new(egui::include_image!("../assets/plus-square-icon.png"))
+                        .fit_to_exact_size([300.0, 300.0].into())
+                        .sense(egui::Sense::click());
+                if ui.add(image).clicked() {
+                    self.show_image_popup = true;
+                }
             }
             ui.text_edit_singleline(&mut self.current_title.name);
         });

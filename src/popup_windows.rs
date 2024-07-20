@@ -4,19 +4,39 @@ use crate::save_load::{
 };
 use crate::{Point, Structurer};
 use eframe::egui::{self};
+use rfd::FileDialog;
 impl Structurer {
-    pub fn image_popup(&mut self, ctx: &egui::Context) {
+    pub fn title_image_popup(&mut self, ctx: &egui::Context) {
         //
         egui::Window::new("")
             .resizable(false)
             .default_pos([900.0, 400.0])
             .open(&mut self.show_image_popup)
             .show(ctx, |ui| {
-                ui.label("Description");
-                //ui.text_edit_multiline("");
-                if ui.button("Load image").clicked() {
-                    //
+                //If there is an image attached, replace the placeholder
+                if self.current_title.image.path.len() > 1 {
+                    let file_path = self.current_title.image.path.clone();
+                    let image = egui::Image::new(format!("file://{file_path}"))
+                        .fit_to_exact_size([600.0, 600.0].into())
+                        .sense(egui::Sense::click());
+                    ui.add(image);
                 }
+                ui.label("Description");
+                ui.horizontal(|ui| {
+                    ui.text_edit_multiline(&mut self.current_title.image.description);
+                    if ui.button("Reset").clicked() {
+                        self.current_title.image.description = String::new();
+                        self.current_title.image.path = String::new();
+                    }
+                    if ui.button("Load image").clicked() {
+                        let file = FileDialog::new()
+                            .add_filter("image", &["jpeg", "jpg", "png"])
+                            .set_directory(self.project_directory.clone())
+                            .pick_file();
+                        self.current_title.image.path = file.unwrap().to_string_lossy().to_string();
+                        println!("{}", self.current_title.image.path);
+                    }
+                });
             });
     }
 

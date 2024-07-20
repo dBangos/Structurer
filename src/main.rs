@@ -80,7 +80,6 @@ struct Structurer {
     show_link_title_popup: bool,
     show_source_popup: bool,
     show_image_popup: bool,
-    image_requesting_popup: Image,
     drag_distance: Vec2,
     initialized: bool,
     view_scale: f32,
@@ -102,7 +101,6 @@ impl Default for Structurer {
             show_link_title_popup: false,
             show_source_popup: false,
             show_image_popup: false,
-            image_requesting_popup: Image::default(),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             initialized: false,
             view_scale: 1.0,
@@ -207,7 +205,7 @@ impl eframe::App for Structurer {
             self.point_source_popup(ctx);
         }
         if self.show_image_popup {
-            self.image_popup(ctx);
+            self.title_image_popup(ctx);
         }
     }
 }
