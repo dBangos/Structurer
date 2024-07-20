@@ -1,6 +1,6 @@
 use crate::save_load::{
-    add_point, add_title, change_title_name, get_point_source, load_from_filename,
-    point_is_shared_with, save_to_filename, title_is_linked_with,
+    add_point, add_title, get_point_source, get_title_image, load_from_filename,
+    point_is_shared_with, save_title, save_to_filename, title_is_linked_with,
 };
 use crate::Title;
 use crate::{Point, Structurer};
@@ -27,14 +27,11 @@ impl Structurer {
                 self.load_from_library();
             }
             if ui.button("Save").clicked() {
-                change_title_name(
-                    self.project_directory.clone(),
-                    self.current_title.id.clone(),
-                    self.current_title.name.clone(),
-                );
+                save_title(self.project_directory.clone(), self.current_title.clone());
                 for point in self.current_points.clone() {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
+                *self.titles.get_mut(&self.current_title.id).unwrap() = self.current_title.clone();
             }
             if ui.button("Add Point").clicked() {
                 let temp_point = add_point(
@@ -140,6 +137,29 @@ impl Structurer {
         });
     }
 
+    //Contains the title image and fields
+    pub fn title_layout(&mut self, ui: &mut egui::Ui) {
+        //let file_path = "/home/sleiren/Coding/structurer/testing/xi.jpg";
+        //let image = egui::Image::new(format!("file://{file_path}"))
+        let image = egui::Image::new(egui::include_image!("../assets/plus-square-icon.png"))
+            .fit_to_exact_size([300.0, 300.0].into())
+            .sense(egui::Sense::click());
+        //If there is an image attached, replace the placeholder
+        if self.current_title.image.path.len() > 1 {
+            let file_path = self.current_title.image.path.clone();
+            let image = egui::Image::new(format!("file://{file_path}"))
+                .fit_to_exact_size([300.0, 300.0].into())
+                .sense(egui::Sense::click());
+        }
+
+        ui.horizontal(|ui| {
+            if ui.add(image).clicked() {
+                self.show_image_popup = true;
+            }
+            ui.text_edit_singleline(&mut self.current_title.name);
+        });
+    }
+
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         ui.vertical_centered(|ui| {
@@ -195,16 +215,13 @@ pub fn save_old_add_new_points(
     .iter()
     .collect();
     if temp_file_path_for_check.exists() {
-        change_title_name(
-            project_directory.clone(),
-            current_title.id.clone(),
-            current_title.name,
-        );
+        save_title(project_directory.clone(), current_title.clone());
     }
     let mut return_current_points: Vec<Point> = Vec::new();
     let mut return_title = new_title.clone();
     //Updating the links for the new title_id
-    return_title.links = title_is_linked_with(project_directory.clone(), current_title.id);
+    return_title.links = title_is_linked_with(project_directory.clone(), new_title.id.clone());
+    return_title.image = get_title_image(project_directory.clone(), new_title.id);
     //Save old points => Remove old points => Add new points
     for point in current_points.clone() {
         save_to_filename(project_directory.clone(), point.id, point.content);

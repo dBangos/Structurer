@@ -1,4 +1,4 @@
-use crate::{Point, Structurer, Title};
+use crate::{Image, Point, Structurer, Title};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
@@ -85,7 +85,7 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
     let _ = file.write_all(content.as_bytes());
 }
 
-//Adds a point to the current page/title, creates the corresponding file and adds it to the library.
+//Adds a point to the current page/title, create the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
 pub fn add_point(project_dir: PathBuf, title_id: String) -> Point {
     let id = Uuid::new_v4();
@@ -155,27 +155,13 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
 
 //Changes the title in a title_id file. The title is always in the first line, so the first line
 //just gets overwritten
-pub fn change_title_name(project_dir: PathBuf, title_id: String, new_title: String) -> () {
-    let file_path: PathBuf = [
-        project_dir.clone(),
-        PathBuf::from(title_id.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-
+pub fn save_title(project_dir: PathBuf, title: Title) -> () {
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = File::open(&file_path).expect("Error while opening file from change_title_name");
-    let mut first_line: bool = true;
     let mut content: Vec<String> = Vec::new();
-    for line in BufReader::new(file).lines() {
-        if first_line == true {
-            content.push(new_title.to_string());
-            first_line = false;
-        } else {
-            content.push(line.expect("Error while reading a title file."));
-        }
-    }
-    save_to_filename(project_dir.clone(), title_id.clone(), content.join("\n"));
+    content.push(title.name.clone());
+    content.push("Version:".to_string() + &VERSION.to_string());
+    content.push("Image:".to_string() + &title.image.path + "@" + &title.image.description);
+    save_to_filename(project_dir.clone(), title.id.clone(), content.join("\n"));
     //Updating the library file
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -185,8 +171,8 @@ pub fn change_title_name(project_dir: PathBuf, title_id: String, new_title: Stri
         .expect("Error while opening the library file from change_title_name");
     for line in BufReader::new(file).lines() {
         let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == title_id {
-            split_line[1] = new_title.clone();
+        if split_line[0] == title.id {
+            split_line[1] = title.name.clone();
         }
         content.push(split_line.join("@"));
     }
@@ -213,6 +199,7 @@ pub fn add_title(project_dir: PathBuf) -> String {
     let mut content: Vec<String> = Vec::new();
     content.push("New title".to_string());
     content.push("Version:".to_string() + &VERSION.to_string());
+    content.push("Image: ".to_string());
     save_to_filename(project_dir.clone(), new_id.to_string(), content.join("\n"));
     file_path = [project_dir.clone(), PathBuf::from("Links.txt")]
         .iter()
@@ -286,6 +273,25 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
     let _ = remove_file(file_path);
 }
 
+pub fn get_title_image(project_dir: PathBuf, title_id: String) -> Image {
+    let mut return_image = Image::default();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(title_id.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let file = File::open(&file_path).expect("Error while opening file from get_title_image");
+    for line in BufReader::new(file).lines() {
+        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == "Image:" && split_line.len() == 3 {
+            return_image.path = split_line[1].clone();
+            return_image.description = split_line[2].clone();
+            break;
+        }
+    }
+    return return_image;
+}
 //Gets a point_id and a list of titles and bools. If the bool is true it adds the point/confirms it is
 //there. If it is false it removes it/confirms the point isn't there.
 pub fn share_unshare_point(

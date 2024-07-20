@@ -7,11 +7,27 @@ mod popup_windows;
 mod save_load;
 use egui::{Pos2, Vec2};
 use std::collections::HashMap;
+
+#[derive(Clone)]
+struct Image {
+    path: String,
+    description: String,
+}
+impl Default for Image {
+    fn default() -> Self {
+        Self {
+            path: String::new(),
+            description: String::new(),
+        }
+    }
+}
+
 #[derive(Clone)]
 struct Point {
     id: String,
     content: String,
     source: String,
+    images: Vec<Image>,
 }
 
 impl Default for Point {
@@ -20,6 +36,7 @@ impl Default for Point {
             id: String::new(),
             content: String::new(),
             source: String::new(),
+            images: Vec::new(),
         }
     }
 }
@@ -31,6 +48,7 @@ struct Title {
     point_ids: Vec<String>,
     links: Vec<bool>, //A vectir of bools each correspondig to a title, if true it's linked
     node_position: Pos2,
+    image: Image,
 }
 
 impl Default for Title {
@@ -41,6 +59,7 @@ impl Default for Title {
             point_ids: Vec::new(),
             links: Vec::new(),
             node_position: Pos2::new(0.0, 0.0),
+            image: Image::default(),
         }
     }
 }
@@ -60,6 +79,8 @@ struct Structurer {
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
+    show_image_popup: bool,
+    image_requesting_popup: Image,
     drag_distance: Vec2,
     initialized: bool,
     view_scale: f32,
@@ -80,6 +101,8 @@ impl Default for Structurer {
             show_title_delete_popup: false,
             show_link_title_popup: false,
             show_source_popup: false,
+            show_image_popup: false,
+            image_requesting_popup: Image::default(),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             initialized: false,
             view_scale: 1.0,
@@ -159,12 +182,16 @@ impl eframe::App for Structurer {
                     self.node_view(ui);
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                ui.vertical_centered(|ui| {
-                    ui.text_edit_singleline(&mut self.current_title.name);
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        self.points_layout(ui);
+                //Don't render anything if no title is loaded
+                if self.current_title.id.len() > 1 {
+                    ui.vertical_centered(|ui| {
+                        self.title_layout(ui);
+
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            self.points_layout(ui);
+                        });
                     });
-                });
+                }
             });
         });
         if self.show_confirm_delete_popup {
@@ -178,6 +205,9 @@ impl eframe::App for Structurer {
         }
         if self.show_source_popup {
             self.point_source_popup(ctx);
+        }
+        if self.show_image_popup {
+            self.image_popup(ctx);
         }
     }
 }

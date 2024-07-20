@@ -5,6 +5,21 @@ use crate::save_load::{
 use crate::{Point, Structurer};
 use eframe::egui::{self};
 impl Structurer {
+    pub fn image_popup(&mut self, ctx: &egui::Context) {
+        //
+        egui::Window::new("")
+            .resizable(false)
+            .default_pos([900.0, 400.0])
+            .open(&mut self.show_image_popup)
+            .show(ctx, |ui| {
+                ui.label("Description");
+                //ui.text_edit_multiline("");
+                if ui.button("Load image").clicked() {
+                    //
+                }
+            });
+    }
+
     pub fn point_source_popup(&mut self, ctx: &egui::Context) {
         assert!(self.current_points.len() >= self.point_requesting_action_index);
         egui::Window::new("Confirm Deletion")
