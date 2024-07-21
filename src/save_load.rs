@@ -75,7 +75,53 @@ impl Structurer {
                 }
             }
         }
+        //Loading the image data so it can be shown in the node view
+        let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Images.txt")]
+            .iter()
+            .collect();
+        if file_path.exists() {
+            let file = File::open(&file_path)
+                .expect("Error while opening Images file from load_from_library");
+            for line in BufReader::new(file).lines() {
+                let split_line: Vec<String> =
+                    line.unwrap().split("@").map(|s| s.to_string()).collect();
+                if split_line.len() == 2 {
+                    self.titles.get_mut(&split_line[0]).unwrap().image.path = split_line[1].clone();
+                }
+            }
+        }
     }
+}
+//Gets file, line and element. Deletes line and replace is with new line
+pub fn replace_line(
+    project_dir: PathBuf,
+    line_identifier: String,
+    element: String,
+    file_name: String,
+) -> () {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
+    let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
+    for line in BufReader::new(file).lines() {
+        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
+        if split_line[0] == line_identifier {
+            split_line = Vec::new();
+            split_line.push(line_identifier.clone());
+            split_line.push(element.to_string());
+        }
+        content.push(split_line.join("@"));
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
 }
 //Gets a file name and path, saves content to it.
 pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> () {
@@ -162,6 +208,13 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> () {
     content.push("Version:".to_string() + &VERSION.to_string());
     content.push("Image@".to_string() + &title.image.path + "@" + &title.image.description);
     save_to_filename(project_dir.clone(), title.id.clone(), content.join("\n"));
+    //Updating the Image file
+    replace_line(
+        project_dir.clone(),
+        title.id.clone(),
+        title.image.path,
+        "Images".to_string(),
+    );
     //Updating the library file
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -210,6 +263,15 @@ pub fn add_title(project_dir: PathBuf) -> String {
         .expect("Error while opening links file from add_title");
     file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
         .expect("Error while writing to links file from add_title");
+    file_path = [project_dir.clone(), PathBuf::from("Images.txt")]
+        .iter()
+        .collect();
+    let mut file = OpenOptions::new()
+        .append(true)
+        .open(file_path)
+        .expect("Error while opening links file from add_title");
+    file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
+        .expect("Error while writing to links file from add_title");
     return new_id.to_string();
 }
 
@@ -239,6 +301,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
         content.join("\n"),
     );
     delete_line_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
+    delete_line_from_file(project_dir.clone(), title_id.clone(), "Images".to_string());
     delete_all_mentions_from_file(project_dir.clone(), title_id.clone(), "Links".to_string());
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     //Checking for points only on this title

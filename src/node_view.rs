@@ -8,41 +8,11 @@ impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
         //Flags for the buttons, kinda ugly but I want the buttons outside the canvas
         //But I need to be inside the canvas to calculate the centering offset
-        let mut plus_pressed = false;
-        let mut minus_pressed = false;
-        ui.horizontal(|ui| {
-            if ui.button("+").clicked() {
-                plus_pressed = true;
-            }
-            if ui.button("-").clicked() {
-                minus_pressed = true;
-            }
-        });
         Frame::canvas(ui.style()).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(
                 Vec2::new(ui.available_width(), ui.available_height()),
                 Sense::click_and_drag(),
             );
-            let scale_factor = 1.1;
-            if plus_pressed {
-                self.view_scale = self.view_scale * scale_factor;
-                let offset_center_view: Vec2 = (response.rect.max - response.rect.min) * 0.05;
-                for title_id in self.title_order.clone() {
-                    self.titles.get_mut(&title_id).unwrap().node_position =
-                        (self.titles[&title_id].node_position - offset_center_view)
-                            * self.view_scale;
-                }
-                plus_pressed = false;
-            } else if minus_pressed {
-                self.view_scale = self.view_scale / scale_factor;
-                let offset_center_view: Vec2 = (response.rect.max - response.rect.min) / 8.0;
-                for title_id in self.title_order.clone() {
-                    self.titles.get_mut(&title_id).unwrap().node_position =
-                        (self.titles[&title_id].node_position + offset_center_view)
-                            * self.view_scale;
-                }
-                minus_pressed = false;
-            }
             // Allow dragging the background
             if response.dragged() {
                 self.drag_distance = response.drag_delta();
@@ -90,7 +60,30 @@ impl Structurer {
                         (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
                     let second_point: Pos2 =
                         (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
-                    let point_rect = Rect::from_two_pos(first_point, second_point);
+                    let mut point_rect = Rect::from_two_pos(first_point, second_point);
+                    //Adding the image if there is one available
+                    println!("{}", self.titles[title_id].image.path);
+
+                    if self.titles[title_id].image.path.len() > 0 {
+                        println!("{}", self.titles[title_id].image.path);
+                        //Creating the area for the image
+                        let first_point: Pos2 = (
+                            point_in_screen.x - half_x,
+                            point_in_screen.y - half_y - 100.0,
+                        )
+                            .into();
+                        let mut second_point: Pos2 =
+                            (point_in_screen.x + half_x, point_in_screen.y - half_y).into();
+                        point_rect = Rect::from_two_pos(first_point, second_point);
+                        let file_path = self.titles[title_id].image.path.clone();
+                        let image = egui::Image::new(format!("file://{file_path}"))
+                            .paint_at(ui, point_rect);
+                        //Drawing the rectangle again so the interactable area contains the button
+                        second_point =
+                            (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
+                        point_rect = Rect::from_two_pos(first_point, second_point);
+                    }
+
                     //Getting the drag interaction and updating the point
                     let point_id = response.id.with(index);
                     let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
