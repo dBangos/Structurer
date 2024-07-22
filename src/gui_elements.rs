@@ -1,10 +1,12 @@
 use crate::save_load::{
-    add_point, add_title, get_point_source, get_title_image, load_from_filename,
-    point_is_shared_with, save_title, save_to_filename, title_is_linked_with,
+    add_image_to_point, add_point, add_title, get_point_content_from_file, get_point_source,
+    get_title_image, load_from_filename, point_is_shared_with, save_point, save_title,
+    save_to_filename, title_is_linked_with,
 };
-use crate::Title;
+use crate::{Image, Title};
 use crate::{Point, Structurer};
 use eframe::egui::{self};
+use rfd::FileDialog;
 use std::collections::HashMap;
 use std::path::PathBuf;
 impl Structurer {
@@ -199,8 +201,30 @@ impl Structurer {
                                 get_point_source(self.project_directory.clone(), point.id.clone());
                             self.show_source_popup = true;
                         }
+                        if ui.button("Add Image").clicked() {
+                            let file = FileDialog::new()
+                                .add_filter("image", &["jpeg", "jpg", "png"])
+                                .set_directory(self.project_directory.clone())
+                                .pick_file();
+                            let mut new_image: Image = Image::default();
+                            new_image.path = file.unwrap().to_string_lossy().to_string();
+                            point.images.push(new_image.clone());
+                            add_image_to_point(
+                                self.project_directory.clone(),
+                                point.id.clone(),
+                                new_image,
+                            );
+                        }
                     });
-
+                    for image in point.images.clone() {
+                        let file_path = image.path;
+                        let image = egui::Image::new(format!("file://{file_path}"))
+                            .fit_to_exact_size([100.0, 100.0].into())
+                            .sense(egui::Sense::click());
+                        if ui.add(image).clicked() {
+                            //
+                        }
+                    }
                     ui.add_sized(
                         ui.available_size(),
                         egui::TextEdit::multiline(&mut point.content),
@@ -237,12 +261,13 @@ pub fn save_old_add_new_points(
     return_title.image = get_title_image(project_directory.clone(), new_title.id);
     //Save old points => Remove old points => Add new points
     for point in current_points.clone() {
-        save_to_filename(project_directory.clone(), point.id, point.content);
+        save_point(project_directory.clone(), point);
     }
     for new_point_id in new_title.point_ids.into_iter() {
         let mut new_point: Point = Point::default();
         new_point.id = new_point_id.to_string();
-        new_point.content = load_from_filename(new_point_id.to_string(), project_directory.clone());
+        new_point.content =
+            get_point_content_from_file(project_directory.clone(), new_point.clone());
         return_current_points.push(new_point);
     }
     return (return_title, return_current_points);
