@@ -39,12 +39,24 @@ impl Structurer {
                                 self.titles[&title_id].node_position * zoom_delta;
                             //Adjusting the view scale so the ui scales accordingly
                             //Doing the plus, /2 to make the change slower
-                            self.view_scale =
-                                (self.view_scale + self.view_scale * zoom_delta) / 2.0;
+                            self.view_scale = self.view_scale * (9.0 + zoom_delta) / 10.0;
                         }
                     }
                 }
             }
+            let line_stroke = Stroke::new(1.0, Color32::RED);
+            let title_link_pairs = self.get_linked_pairs();
+
+            //Pushing the line shapes to be drawn
+            let mut title_lines: Vec<Shape> = Vec::new();
+            for (title_1, title_2) in title_link_pairs.clone() {
+                let temp_array: [Pos2; 2] = [
+                    to_screen * self.titles[&title_1].node_position,
+                    to_screen * self.titles[&title_2].node_position,
+                ];
+                title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
+            }
+            painter.extend(title_lines);
             let half_x: f32 = 50.0 * self.view_scale;
             let half_y: f32 = 15.0 * self.view_scale;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
@@ -67,7 +79,7 @@ impl Structurer {
                         //Creating the area for the image
                         let first_point: Pos2 = (
                             point_in_screen.x - half_x,
-                            point_in_screen.y - half_y - 100.0,
+                            point_in_screen.y - half_y - 100.0 * self.view_scale,
                         )
                             .into();
                         let mut second_point: Pos2 =
@@ -127,54 +139,43 @@ impl Structurer {
                     })
                 }
             }
-            let line_stroke = Stroke::new(1.0, Color32::RED);
-            let title_link_pairs = self.get_linked_pairs();
-
-            //Pushing the line shapes to be drawn
-            let mut title_lines: Vec<Shape> = Vec::new();
-            for (title_1, title_2) in title_link_pairs.clone() {
-                let temp_array: [Pos2; 2] = [
-                    to_screen * self.titles[&title_1].node_position,
-                    to_screen * self.titles[&title_2].node_position,
-                ];
-                title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
+            //Loop spreading out nodes
+            for title_1 in self.title_order.clone() {
+                for title_2 in self.title_order.clone() {
+                    if self.titles[&title_1].id == self.titles[&title_2].id {
+                        continue;
+                    } else {
+                        if (self.titles[&title_1].node_position
+                            - self.titles[&title_2].node_position)
+                            .length()
+                            < 100.0
+                        {
+                            self.titles.get_mut(&title_1).unwrap().node_position =
+                                move_point_in_line(
+                                    self.titles[&title_1].node_position,
+                                    self.titles[&title_2].node_position,
+                                    false,
+                                    10.0,
+                                );
+                        }
+                    }
+                }
             }
-            ////Loop spreading out nodes
-            //for title_1 in self.title_order.clone() {
-            //    for title_2 in self.title_order.clone() {
-            //        if self.titles[&title_1].id == self.titles[&title_2].id {
-            //            continue;
-            //        } else {
-            //            if (self.titles[&title_1].node_position
-            //                - self.titles[&title_2].node_position)
-            //                .length()
-            //                < 100.0
-            //            {
-            //                self.titles.get_mut(&title_1).unwrap().node_position =
-            //                    move_point_in_line(
-            //                        self.titles[&title_1].node_position,
-            //                        self.titles[&title_2].node_position,
-            //                        false,
-            //                        10.0,
-            //                    );
-            //            }
-            //        }
-            //    }
-            //}
-            //
-            ////Loop pulling in links
-            //for (title_1, title_2) in title_link_pairs {
-            //    let distance = self.titles[&title_1]
-            //        .node_position
-            //        .distance(self.titles[&title_2].node_position);
-            //    if distance > 200.0 {
-            //        let first_point = self.titles[&title_1].node_position;
-            //        let second_point = self.titles[&title_2].node_position;
-            //        self.titles.get_mut(&title_1).unwrap().node_position =
-            //            move_point_in_line(first_point, second_point, true, 10.0);
-            //    }
-            //}
-            painter.extend(title_lines);
+
+            //Loop pulling in links
+            for (title_1, title_2) in title_link_pairs {
+                let distance = self.titles[&title_1]
+                    .node_position
+                    .distance(self.titles[&title_2].node_position);
+                if distance > 300.0 {
+                    let first_point = self.titles[&title_1].node_position;
+                    let second_point = self.titles[&title_2].node_position;
+                    self.titles.get_mut(&title_1).unwrap().node_position =
+                        move_point_in_line(first_point, second_point, true, 2.0);
+                    self.titles.get_mut(&title_1).unwrap().node_position =
+                        move_point_in_line(second_point, first_point, true, 2.0);
+                }
+            }
             painter.extend(title_node_shapes);
             response
         });
