@@ -1,4 +1,4 @@
-use crate::{Image, Point, Structurer, Title};
+use crate::{ImageStruct, Point, Structurer, Title};
 use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
@@ -40,7 +40,7 @@ pub fn save_point(project_dir: PathBuf, point: Point) {
         content.join("\n"),
     );
 }
-pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: Image) {
+pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: ImageStruct) {
     let mut image_added: bool = false;
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [
@@ -68,7 +68,7 @@ pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: Image) 
     );
 }
 
-pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Image) {
+pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: ImageStruct) {
     let mut image_removed: bool = false;
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [
@@ -97,8 +97,8 @@ pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Im
     );
 }
 
-pub fn get_point_images(project_dir: PathBuf, point_id: String) -> Vec<Image> {
-    let mut return_vec: Vec<Image> = Vec::new();
+pub fn get_point_images(project_dir: PathBuf, point_id: String) -> Vec<ImageStruct> {
+    let mut return_vec: Vec<ImageStruct> = Vec::new();
     let file_path: PathBuf = [
         project_dir.clone(),
         PathBuf::from(point_id.clone() + ".txt"),
@@ -111,7 +111,7 @@ pub fn get_point_images(project_dir: PathBuf, point_id: String) -> Vec<Image> {
         let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
         if split_line.len() == 3 {
             if split_line[0] == "Image" {
-                let mut new_image: Image = Image::default();
+                let mut new_image: ImageStruct = ImageStruct::default();
                 new_image.path = split_line[1].clone();
                 new_image.description = split_line[2].clone();
                 return_vec.push(new_image);
@@ -449,8 +449,8 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
     let _ = remove_file(file_path);
 }
 
-pub fn get_title_image(project_dir: PathBuf, title_id: String) -> Image {
-    let mut return_image = Image::default();
+pub fn get_title_image(project_dir: PathBuf, title_id: String) -> ImageStruct {
+    let mut return_image = ImageStruct::default();
     let file_path: PathBuf = [
         project_dir.clone(),
         PathBuf::from(title_id.clone() + ".txt"),

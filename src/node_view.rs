@@ -62,10 +62,8 @@ impl Structurer {
                         (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
                     let mut point_rect = Rect::from_two_pos(first_point, second_point);
                     //Adding the image if there is one available
-                    println!("{}", self.titles[title_id].image.path);
 
                     if self.titles[title_id].image.path.len() > 0 {
-                        println!("{}", self.titles[title_id].image.path);
                         //Creating the area for the image
                         let first_point: Pos2 = (
                             point_in_screen.x - half_x,

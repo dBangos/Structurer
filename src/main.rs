@@ -9,11 +9,12 @@ use egui::{Pos2, Vec2};
 use std::collections::HashMap;
 
 #[derive(Clone)]
-struct Image {
+//Changed this to ImageStruct so as not to match egui::Image
+struct ImageStruct {
     path: String,
     description: String,
 }
-impl Default for Image {
+impl Default for ImageStruct {
     fn default() -> Self {
         Self {
             path: String::new(),
@@ -27,7 +28,7 @@ struct Point {
     id: String,
     content: String,
     source: String,
-    images: Vec<Image>,
+    images: Vec<ImageStruct>,
 }
 
 impl Default for Point {
@@ -46,9 +47,9 @@ struct Title {
     name: String,
     id: String,
     point_ids: Vec<String>,
-    links: Vec<bool>, //A vectir of bools each correspondig to a title, if true it's linked
+    links: Vec<bool>, //A vector of bools each correspondig to a title, if true it's linked
     node_position: Pos2,
-    image: Image,
+    image: ImageStruct,
 }
 
 impl Default for Title {
@@ -58,8 +59,8 @@ impl Default for Title {
             id: String::new(),
             point_ids: Vec::new(),
             links: Vec::new(),
-            node_position: Pos2::new(0.0, 0.0),
-            image: Image::default(),
+            node_position: Pos2::new(1.0, 1.0),
+            image: ImageStruct::default(),
         }
     }
 }
@@ -79,7 +80,9 @@ struct Structurer {
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
-    show_image_popup: bool,
+    show_title_image_popup: bool,
+    show_point_image_popup: bool,
+    point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
     drag_distance: Vec2,
     initialized: bool,
     view_scale: f32,
@@ -100,7 +103,9 @@ impl Default for Structurer {
             show_title_delete_popup: false,
             show_link_title_popup: false,
             show_source_popup: false,
-            show_image_popup: false,
+            show_title_image_popup: false,
+            show_point_image_popup: false,
+            point_image_requesting_popup: (0, 0),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             initialized: false,
             view_scale: 1.0,
@@ -204,8 +209,11 @@ impl eframe::App for Structurer {
         if self.show_source_popup {
             self.point_source_popup(ctx);
         }
-        if self.show_image_popup {
+        if self.show_title_image_popup {
             self.title_image_popup(ctx);
+        }
+        if self.show_point_image_popup {
+            self.point_image_popup(ctx);
         }
     }
 }

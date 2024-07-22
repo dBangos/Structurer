@@ -1,17 +1,58 @@
 use crate::save_load::{
-    delete_point, delete_title, link_unlink_title, load_from_filename, load_points_from_title_id,
-    share_unshare_point, update_source,
+    delete_image_from_point, delete_point, delete_title, link_unlink_title, load_from_filename,
+    load_points_from_title_id, share_unshare_point, update_source,
 };
 use crate::{Point, Structurer};
 use eframe::egui::{self};
 use rfd::FileDialog;
 impl Structurer {
-    pub fn title_image_popup(&mut self, ctx: &egui::Context) {
-        //
+    pub fn point_image_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("")
             .resizable(false)
             .default_pos([900.0, 400.0])
-            .open(&mut self.show_image_popup)
+            .open(&mut self.show_point_image_popup)
+            .show(ctx, |ui| {
+                //If there is an image attached, replace the placeholder
+                let file_path = self.current_points[self.point_image_requesting_popup.0].images
+                    [self.point_image_requesting_popup.1]
+                    .path
+                    .clone();
+                let image = egui::Image::new(format!("file://{file_path}"))
+                    .fit_to_exact_size([600.0, 600.0].into())
+                    .sense(egui::Sense::click());
+                ui.add(image);
+                ui.label("Description");
+                ui.horizontal(|ui| {
+                    ui.text_edit_multiline(
+                        &mut self.current_points[self.point_image_requesting_popup.0].images
+                            [self.point_image_requesting_popup.1]
+                            .description,
+                    );
+
+                    if ui.button("Delete").clicked() {
+                        delete_image_from_point(
+                            self.project_directory.clone(),
+                            self.current_points[self.point_image_requesting_popup.0]
+                                .id
+                                .clone(),
+                            self.current_points[self.point_image_requesting_popup.0].images
+                                [self.point_image_requesting_popup.1]
+                                .clone(),
+                        );
+                        ////Removing the item from state
+                        //self.current_points[self.point_image_requesting_popup.0]
+                        //    .images
+                        //    .remove(self.point_image_requesting_popup.1);
+                    }
+                });
+            });
+    }
+
+    pub fn title_image_popup(&mut self, ctx: &egui::Context) {
+        egui::Window::new("")
+            .resizable(false)
+            .default_pos([900.0, 400.0])
+            .open(&mut self.show_title_image_popup)
             .show(ctx, |ui| {
                 //If there is an image attached, replace the placeholder
                 if self.current_title.image.path.len() > 1 {

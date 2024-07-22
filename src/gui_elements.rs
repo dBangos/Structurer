@@ -1,9 +1,9 @@
 use crate::save_load::{
-    add_image_to_point, add_point, add_title, get_point_content_from_file, get_point_source,
-    get_title_image, load_from_filename, point_is_shared_with, save_point, save_title,
+    add_image_to_point, add_point, add_title, get_point_content_from_file, get_point_images,
+    get_point_source, get_title_image, point_is_shared_with, save_point, save_title,
     save_to_filename, title_is_linked_with,
 };
-use crate::{Image, Title};
+use crate::{ImageStruct, Title};
 use crate::{Point, Structurer};
 use eframe::egui::{self};
 use rfd::FileDialog;
@@ -157,18 +157,18 @@ impl Structurer {
             if self.current_title.image.path.len() > 1 {
                 let file_path = self.current_title.image.path.clone();
                 let image = egui::Image::new(format!("file://{file_path}"))
-                    .fit_to_exact_size([300.0, 300.0].into())
+                    .fit_to_exact_size([220.0, 220.0].into())
                     .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
-                    self.show_image_popup = true;
+                    self.show_title_image_popup = true;
                 }
             } else {
                 let image =
                     egui::Image::new(egui::include_image!("../assets/plus-square-icon.png"))
-                        .fit_to_exact_size([300.0, 300.0].into())
+                        .fit_to_exact_size([220.0, 220.0].into())
                         .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
-                    self.show_image_popup = true;
+                    self.show_title_image_popup = true;
                 }
             }
             ui.text_edit_singleline(&mut self.current_title.name);
@@ -206,7 +206,7 @@ impl Structurer {
                                 .add_filter("image", &["jpeg", "jpg", "png"])
                                 .set_directory(self.project_directory.clone())
                                 .pick_file();
-                            let mut new_image: Image = Image::default();
+                            let mut new_image: ImageStruct = ImageStruct::default();
                             new_image.path = file.unwrap().to_string_lossy().to_string();
                             point.images.push(new_image.clone());
                             add_image_to_point(
@@ -216,19 +216,26 @@ impl Structurer {
                             );
                         }
                     });
-                    for image in point.images.clone() {
-                        let file_path = image.path;
-                        let image = egui::Image::new(format!("file://{file_path}"))
-                            .fit_to_exact_size([100.0, 100.0].into())
-                            .sense(egui::Sense::click());
-                        if ui.add(image).clicked() {
-                            //
-                        }
-                    }
-                    ui.add_sized(
-                        ui.available_size(),
-                        egui::TextEdit::multiline(&mut point.content),
-                    );
+                    ui.vertical(|ui| {
+                        ui.horizontal(|ui| {
+                            for (image_index, image) in point.images.clone().into_iter().enumerate()
+                            {
+                                let file_path = image.path.clone();
+                                let curr_image = egui::Image::new(format!("file://{file_path}"))
+                                    .fit_to_exact_size([100.0, 100.0].into())
+                                    .sense(egui::Sense::click());
+                                if ui.add(curr_image).clicked() {
+                                    self.point_image_requesting_popup = (index, image_index);
+                                    self.show_point_image_popup = true;
+                                }
+                            }
+                        });
+
+                        ui.add_sized(
+                            ui.available_size(),
+                            egui::TextEdit::multiline(&mut point.content),
+                        );
+                    });
                 });
             }
         });
@@ -268,6 +275,7 @@ pub fn save_old_add_new_points(
         new_point.id = new_point_id.to_string();
         new_point.content =
             get_point_content_from_file(project_directory.clone(), new_point.clone());
+        new_point.images = get_point_images(project_directory.clone(), new_point_id.clone());
         return_current_points.push(new_point);
     }
     return (return_title, return_current_points);
