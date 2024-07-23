@@ -1,4 +1,4 @@
-use crate::save_load::save_to_filename;
+use crate::save_load::general::save_to_filename;
 use crate::Structurer;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;

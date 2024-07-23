@@ -4,7 +4,15 @@ mod config;
 mod gui_elements;
 mod node_view;
 mod popup_windows;
-mod save_load;
+mod save_load {
+    pub mod general;
+    pub mod image;
+    pub mod link;
+    pub mod point;
+    pub mod share;
+    pub mod source;
+    pub mod title;
+}
 use egui::{Pos2, Vec2};
 use std::collections::HashMap;
 

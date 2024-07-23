@@ -1,5 +1,5 @@
-use crate::gui_elements::save_old_add_new_points;
-use crate::save_load::all_titles_links;
+use crate::save_load::general::save_old_add_new_points;
+use crate::save_load::link::all_titles_links;
 use crate::Structurer;
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;

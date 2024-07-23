@@ -1,7 +1,10 @@
-use crate::save_load::{
-    delete_image_from_point, delete_point, delete_title, link_unlink_title, load_from_filename,
-    load_points_from_title_id, share_unshare_point, update_source,
-};
+use crate::save_load::general::load_from_filename;
+use crate::save_load::image::delete_image_from_point;
+use crate::save_load::link::link_unlink_title;
+use crate::save_load::point::{delete_point, load_points_from_title_id};
+use crate::save_load::share::share_unshare_point;
+use crate::save_load::source::update_source;
+use crate::save_load::title::delete_title;
 use crate::{Point, Structurer};
 use eframe::egui::{self};
 use rfd::FileDialog;
