@@ -7,6 +7,7 @@ use std::{fs, path::PathBuf};
 #[derive(Serialize, Deserialize)]
 struct Config {
     project_directory: PathBuf,
+    point_text_size: f32,
 }
 
 impl Structurer {
@@ -27,6 +28,7 @@ impl Structurer {
             file.read_to_string(&mut buff).unwrap();
             let new_config: Config = serde_json::from_str(&buff).unwrap();
             self.project_directory = new_config.project_directory;
+            self.point_text_size = new_config.point_text_size;
             self.load_from_library();
         }
     }
@@ -35,6 +37,7 @@ impl Structurer {
     pub fn save_to_config(&mut self) -> Result<()> {
         let current_config = Config {
             project_directory: self.project_directory.clone(),
+            point_text_size: self.point_text_size,
         };
         let dir_path: PathBuf = [
             dirs::config_dir().unwrap(),

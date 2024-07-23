@@ -94,6 +94,7 @@ struct Structurer {
     drag_distance: Vec2,
     initialized: bool,
     view_scale: f32,
+    point_text_size: f32,
 }
 
 impl Default for Structurer {
@@ -117,21 +118,31 @@ impl Default for Structurer {
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             initialized: false,
             view_scale: 1.0,
+            point_text_size: 20.0,
         }
     }
 }
 
 use egui::{FontFamily, FontId, TextStyle};
+#[inline]
+fn left_panel_labels() -> TextStyle {
+    TextStyle::Name("LeftPanelLabels".into())
+}
+#[inline]
+fn point_style() -> TextStyle {
+    TextStyle::Name("PointStyle".into())
+}
 
-fn configure_text_styles(ctx: &egui::Context) {
-    use FontFamily::{Monospace, Proportional};
+fn configure_text_styles(ctx: &egui::Context, point_text_size: f32) {
+    use FontFamily::Proportional;
 
     let mut style = (*ctx.style()).clone();
     style.text_styles = [
         (TextStyle::Heading, FontId::new(25.0, Proportional)),
         (TextStyle::Body, FontId::new(20.0, Proportional)),
-        (TextStyle::Monospace, FontId::new(12.0, Monospace)),
+        (left_panel_labels(), FontId::new(20.0, Proportional)),
         (TextStyle::Button, FontId::new(17.0, Proportional)),
+        (point_style(), FontId::new(point_text_size, Proportional)),
         (TextStyle::Small, FontId::new(8.0, Proportional)),
     ]
     .into();
@@ -152,7 +163,6 @@ fn main() -> Result<(), eframe::Error> {
         Box::new(|cc| {
             // This gives us image support:
             egui_extras::install_image_loaders(&cc.egui_ctx);
-            configure_text_styles(&cc.egui_ctx);
             Ok(Box::<Structurer>::default())
         }),
     )
@@ -164,6 +174,7 @@ impl eframe::App for Structurer {
             self.start_routine();
             self.initialized = true;
         }
+        configure_text_styles(ctx, self.point_text_size);
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::TopBottomPanel::top("top_panel")
                 .resizable(false)
@@ -171,6 +182,8 @@ impl eframe::App for Structurer {
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
                         self.main_button_line(ui);
+                        ui.separator();
+                        self.text_settings_line(ui);
                     });
                 });
             egui::SidePanel::left("left_panel")
@@ -180,7 +193,9 @@ impl eframe::App for Structurer {
                 .show_inside(ui, |ui| {
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         ui.vertical(|ui| {
+                            ui.add_space(15.0);
                             self.title_buttons(ui);
+                            ui.add_space(15.0);
                             self.linked_titles_buttons(ui);
                         });
                     });
@@ -197,6 +212,7 @@ impl eframe::App for Structurer {
                 if self.current_title.id.len() > 1 {
                     ui.vertical_centered(|ui| {
                         self.title_layout(ui);
+                        ui.separator();
 
                         egui::ScrollArea::vertical().show(ui, |ui| {
                             self.points_layout(ui);

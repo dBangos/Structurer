@@ -5,9 +5,9 @@ use crate::save_load::point::add_point;
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
-use crate::Structurer;
+use crate::{left_panel_labels, Structurer};
 use crate::{ImageStruct, Title};
-use eframe::egui::{self};
+use eframe::egui::{self, RichText};
 use rfd::FileDialog;
 use std::collections::HashMap;
 impl Structurer {
@@ -35,6 +35,8 @@ impl Structurer {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
                 *self.titles.get_mut(&self.current_title.id).unwrap() = self.current_title.clone();
+                //Saving here so save button updates the point_text_size on the json file
+                let _ = self.save_to_config();
             }
             if ui.button("Add Point").clicked() {
                 let temp_point = add_point(
@@ -97,9 +99,21 @@ impl Structurer {
         });
     }
 
+    //Contains all the text editing functions
+    pub fn text_settings_line(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.add(egui::Slider::new(&mut self.point_text_size, 1.0..=100.0));
+        });
+    }
+
     //Contains the list of buttons leading to all the titles
     pub fn title_buttons(&mut self, ui: &mut egui::Ui) {
-        ui.label("All Titles");
+        ui.label(
+            RichText::new("All Titles")
+                .text_style(left_panel_labels())
+                .strong(),
+        );
+        ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
             for title_id in self.title_order.clone().into_iter() {
@@ -121,7 +135,12 @@ impl Structurer {
 
     //Contians the buttons leading to the currently displayed title's links
     pub fn linked_titles_buttons(&mut self, ui: &mut egui::Ui) {
-        ui.label("Linked With:");
+        ui.label(
+            RichText::new("Linked Titles")
+                .text_style(left_panel_labels())
+                .strong(),
+        );
+        ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
             for (title_id, is_linked) in self

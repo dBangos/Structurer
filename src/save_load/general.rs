@@ -176,7 +176,7 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 let split_line: Vec<String> =
                     line.unwrap().split("@").map(|s| s.to_string()).collect();
-                if split_line.len() == 2 {
+                if split_line.len() == 2 && split_line[0] != "" {
                     self.titles.get_mut(&split_line[0]).unwrap().image.path = split_line[1].clone();
                 }
             }
