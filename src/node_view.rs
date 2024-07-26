@@ -23,7 +23,12 @@ impl Structurer {
             }
             //Translate points to screen coordinates
             let to_screen = RectTransform::from_to(
-                Rect::from_min_size(Pos2::ZERO, response.rect.size()),
+                //Making a rectangle, the same size as the active area
+                //But with 0,0 at the center
+                Rect::from_min_max(
+                    (-1.0 * response.rect.size() / 2.0).to_pos2(),
+                    (response.rect.size() / 2.0).to_pos2(),
+                ),
                 response.rect,
             );
 
@@ -139,43 +144,87 @@ impl Structurer {
                     })
                 }
             }
-            //Loop spreading out nodes
+            let edge_length: f32 = 100.0;
+            let divider: f32 = 400.0;
+            let gravity_constant: f32 = 0.1;
+            let force_constant: f32 = 10000.0;
             for title_1 in self.title_order.clone() {
+                //Gravity
+                self.titles.get_mut(&title_1).unwrap().node_force =
+                    self.titles[&title_1].node_position.to_vec2() * (-1.0) * gravity_constant;
+
+                println!("Gravity: {}", self.titles[&title_1].node_force);
+                //Repulsive forces
                 for title_2 in self.title_order.clone() {
                     if self.titles[&title_1].id == self.titles[&title_2].id {
                         continue;
                     } else {
-                        if (self.titles[&title_1].node_position
-                            - self.titles[&title_2].node_position)
-                            .length()
-                            < 100.0
-                        {
-                            self.titles.get_mut(&title_1).unwrap().node_position =
-                                move_point_in_line(
-                                    self.titles[&title_1].node_position,
-                                    self.titles[&title_2].node_position,
-                                    false,
-                                    10.0,
-                                );
+                        let dir = self.titles[&title_1].node_position
+                            - self.titles[&title_2].node_position;
+                        let mut repulsive_force: Vec2 = Vec2::new(10.0, 10.0);
+                        if dir.length() != 0.0 {
+                            repulsive_force = dir / (dir.length() * dir.length()) * force_constant;
                         }
+                        self.titles.get_mut(&title_1).unwrap().node_force -= repulsive_force;
+                        self.titles.get_mut(&title_2).unwrap().node_force += repulsive_force;
+                        println!("Repulsive: {}", self.titles[&title_1].node_force);
+                        println!("Repulsive: {}", self.titles[&title_2].node_force);
                     }
                 }
             }
+            //
+            ////Loop pulling in links
+            //for (title_1, title_2) in title_link_pairs {
+            //    let dir = self.titles[&title_1].node_position - self.titles[&title_2].node_position;
+            //
+            //    let diff = dir - Vec2::new(edge_length, edge_length);
+            //    self.titles.get_mut(&title_1).unwrap().node_force -= diff;
+            //    self.titles.get_mut(&title_2).unwrap().node_force += diff;
+            //}
+            //
+            //for title_1 in self.title_order.clone() {
+            //    println!("{}", self.titles[&title_1].node_force);
+            //
+            //    self.titles.get_mut(&title_1).unwrap().node_position =
+            //        self.titles[&title_1].node_force.to_pos2() / divider;
+            //}
+            ////Loop spreading out nodes
+            //for title_1 in self.title_order.clone() {
+            //    for title_2 in self.title_order.clone() {
+            //        if self.titles[&title_1].id == self.titles[&title_2].id {
+            //            continue;
+            //        } else {
+            //            if (self.titles[&title_1].node_position
+            //                - self.titles[&title_2].node_position)
+            //                .length()
+            //                < 100.0
+            //            {
+            //                self.titles.get_mut(&title_1).unwrap().node_position =
+            //                    move_point_in_line(
+            //                        self.titles[&title_1].node_position,
+            //                        self.titles[&title_2].node_position,
+            //                        false,
+            //                        10.0,
+            //                    );
+            //            }
+            //        }
+            //    }
+            //}
 
-            //Loop pulling in links
-            for (title_1, title_2) in title_link_pairs {
-                let distance = self.titles[&title_1]
-                    .node_position
-                    .distance(self.titles[&title_2].node_position);
-                if distance > 300.0 {
-                    let first_point = self.titles[&title_1].node_position;
-                    let second_point = self.titles[&title_2].node_position;
-                    self.titles.get_mut(&title_1).unwrap().node_position =
-                        move_point_in_line(first_point, second_point, true, 2.0);
-                    self.titles.get_mut(&title_1).unwrap().node_position =
-                        move_point_in_line(second_point, first_point, true, 2.0);
-                }
-            }
+            ////Loop pulling in links
+            //for (title_1, title_2) in title_link_pairs {
+            //    let distance = self.titles[&title_1]
+            //        .node_position
+            //        .distance(self.titles[&title_2].node_position);
+            //    if distance > 300.0 {
+            //        let first_point = self.titles[&title_1].node_position;
+            //        let second_point = self.titles[&title_2].node_position;
+            //        self.titles.get_mut(&title_1).unwrap().node_position =
+            //            move_point_in_line(first_point, second_point, true, 2.0);
+            //        self.titles.get_mut(&title_1).unwrap().node_position =
+            //            move_point_in_line(second_point, first_point, true, 2.0);
+            //    }
+            //}
             painter.extend(title_node_shapes);
             response
         });
