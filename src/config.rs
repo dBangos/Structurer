@@ -1,4 +1,5 @@
-use crate::save_load::save_to_filename;
+use crate::save_load::general::save_to_filename;
+use crate::save_load::link::get_linked_pairs;
 use crate::Structurer;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -29,6 +30,7 @@ impl Structurer {
             self.project_directory = new_config.project_directory;
             self.load_from_library();
         }
+        self.linked_pairs = get_linked_pairs(self.project_directory.clone());
     }
 
     //Saving stuff to the config file in the default OS location

@@ -1,14 +1,15 @@
-use crate::save_load::{
-    add_image_to_point, add_point, add_title, get_point_content_from_file, get_point_images,
-    get_point_source, get_title_image, point_is_shared_with, save_point, save_title,
-    save_to_filename, title_is_linked_with,
-};
+use crate::save_load::general::{save_old_add_new_points, save_to_filename};
+use crate::save_load::image::add_image_to_point;
+use crate::save_load::link::title_is_linked_with;
+use crate::save_load::point::add_point;
+use crate::save_load::share::point_is_shared_with;
+use crate::save_load::source::get_point_source;
+use crate::save_load::title::{add_title, save_title};
+use crate::{left_panel_labels, Structurer};
 use crate::{ImageStruct, Title};
-use crate::{Point, Structurer};
-use eframe::egui::{self};
+use eframe::egui::{self, RichText};
 use rfd::FileDialog;
 use std::collections::HashMap;
-use std::path::PathBuf;
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -34,6 +35,8 @@ impl Structurer {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
                 }
                 *self.titles.get_mut(&self.current_title.id).unwrap() = self.current_title.clone();
+                //Saving here so save button updates the point_text_size on the json file
+                let _ = self.save_to_config();
             }
             if ui.button("Add Point").clicked() {
                 let temp_point = add_point(
@@ -96,9 +99,21 @@ impl Structurer {
         });
     }
 
+    //Contains all the text editing functions
+    pub fn text_settings_line(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.add(egui::Slider::new(&mut self.point_text_size, 1.0..=100.0));
+        });
+    }
+
     //Contains the list of buttons leading to all the titles
     pub fn title_buttons(&mut self, ui: &mut egui::Ui) {
-        ui.label("All Titles");
+        ui.label(
+            RichText::new("All Titles")
+                .text_style(left_panel_labels())
+                .strong(),
+        );
+        ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
             for title_id in self.title_order.clone().into_iter() {
@@ -120,7 +135,12 @@ impl Structurer {
 
     //Contians the buttons leading to the currently displayed title's links
     pub fn linked_titles_buttons(&mut self, ui: &mut egui::Ui) {
-        ui.label("Linked With:");
+        ui.label(
+            RichText::new("Linked Titles")
+                .text_style(left_panel_labels())
+                .strong(),
+        );
+        ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
             for (title_id, is_linked) in self
@@ -240,43 +260,4 @@ impl Structurer {
             }
         });
     }
-}
-
-//Helper function that saves and updates state
-//Turned this into a function instead of a method on Structurerto avoid borrow conflicts
-pub fn save_old_add_new_points(
-    project_directory: PathBuf,
-    current_title: Title,
-    current_points: Vec<Point>,
-    new_title: Title,
-) -> (Title, Vec<Point>) {
-    //Saving the title of the curent page before switching
-    //First checking if the file exists
-    let temp_file_path_for_check: PathBuf = [
-        project_directory.clone(),
-        PathBuf::from(current_title.id.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-    if temp_file_path_for_check.exists() {
-        save_title(project_directory.clone(), current_title.clone());
-    }
-    let mut return_current_points: Vec<Point> = Vec::new();
-    let mut return_title = new_title.clone();
-    //Updating the links for the new title_id
-    return_title.links = title_is_linked_with(project_directory.clone(), new_title.id.clone());
-    return_title.image = get_title_image(project_directory.clone(), new_title.id);
-    //Save old points => Remove old points => Add new points
-    for point in current_points.clone() {
-        save_point(project_directory.clone(), point);
-    }
-    for new_point_id in new_title.point_ids.into_iter() {
-        let mut new_point: Point = Point::default();
-        new_point.id = new_point_id.to_string();
-        new_point.content =
-            get_point_content_from_file(project_directory.clone(), new_point.clone());
-        new_point.images = get_point_images(project_directory.clone(), new_point_id.clone());
-        return_current_points.push(new_point);
-    }
-    return (return_title, return_current_points);
 }

@@ -1,5 +1,4 @@
-use crate::gui_elements::save_old_add_new_points;
-use crate::save_load::all_titles_links;
+use crate::save_load::general::save_old_add_new_points;
 use crate::Structurer;
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;
@@ -50,11 +49,10 @@ impl Structurer {
                 }
             }
             let line_stroke = Stroke::new(1.0, Color32::RED);
-            let title_link_pairs = self.get_linked_pairs();
 
             //Pushing the line shapes to be drawn
             let mut title_lines: Vec<Shape> = Vec::new();
-            for (title_1, title_2) in title_link_pairs.clone() {
+            for (title_1, title_2) in self.linked_pairs.clone() {
                 let temp_array: [Pos2; 2] = [
                     to_screen * self.titles[&title_1].node_position,
                     to_screen * self.titles[&title_2].node_position,
@@ -144,146 +142,50 @@ impl Structurer {
                     })
                 }
             }
-            let edge_length: f32 = 100.0;
-            let divider: f32 = 400.0;
+            // Physics code based on https://editor.p5js.org/JeromePaddick/sketches/bjA_UOPip
+            let edge_length: f32 = 1000.0;
+            let divider: f32 = 7.0;
             let gravity_constant: f32 = 0.1;
-            let force_constant: f32 = 10000.0;
+            let force_constant: f32 = 1000.0;
             for title_1 in self.title_order.clone() {
                 //Gravity
                 self.titles.get_mut(&title_1).unwrap().node_force =
                     self.titles[&title_1].node_position.to_vec2() * (-1.0) * gravity_constant;
 
-                println!("Gravity: {}", self.titles[&title_1].node_force);
+                //println!("Gravity: {}", self.titles[&title_1].node_force);
                 //Repulsive forces
                 for title_2 in self.title_order.clone() {
                     if self.titles[&title_1].id == self.titles[&title_2].id {
                         continue;
                     } else {
-                        let dir = self.titles[&title_1].node_position
-                            - self.titles[&title_2].node_position;
+                        let dir = self.titles[&title_2].node_position
+                            - self.titles[&title_1].node_position;
                         let mut repulsive_force: Vec2 = Vec2::new(10.0, 10.0);
                         if dir.length() != 0.0 {
                             repulsive_force = dir / (dir.length() * dir.length()) * force_constant;
                         }
                         self.titles.get_mut(&title_1).unwrap().node_force -= repulsive_force;
                         self.titles.get_mut(&title_2).unwrap().node_force += repulsive_force;
-                        println!("Repulsive: {}", self.titles[&title_1].node_force);
-                        println!("Repulsive: {}", self.titles[&title_2].node_force);
+                        //println!("Repulsive: {}", repulsive_force);
                     }
                 }
             }
-            //
-            ////Loop pulling in links
-            //for (title_1, title_2) in title_link_pairs {
-            //    let dir = self.titles[&title_1].node_position - self.titles[&title_2].node_position;
-            //
-            //    let diff = dir - Vec2::new(edge_length, edge_length);
-            //    self.titles.get_mut(&title_1).unwrap().node_force -= diff;
-            //    self.titles.get_mut(&title_2).unwrap().node_force += diff;
-            //}
-            //
-            //for title_1 in self.title_order.clone() {
-            //    println!("{}", self.titles[&title_1].node_force);
-            //
-            //    self.titles.get_mut(&title_1).unwrap().node_position =
-            //        self.titles[&title_1].node_force.to_pos2() / divider;
-            //}
-            ////Loop spreading out nodes
-            //for title_1 in self.title_order.clone() {
-            //    for title_2 in self.title_order.clone() {
-            //        if self.titles[&title_1].id == self.titles[&title_2].id {
-            //            continue;
-            //        } else {
-            //            if (self.titles[&title_1].node_position
-            //                - self.titles[&title_2].node_position)
-            //                .length()
-            //                < 100.0
-            //            {
-            //                self.titles.get_mut(&title_1).unwrap().node_position =
-            //                    move_point_in_line(
-            //                        self.titles[&title_1].node_position,
-            //                        self.titles[&title_2].node_position,
-            //                        false,
-            //                        10.0,
-            //                    );
-            //            }
-            //        }
-            //    }
-            //}
 
-            ////Loop pulling in links
-            //for (title_1, title_2) in title_link_pairs {
-            //    let distance = self.titles[&title_1]
-            //        .node_position
-            //        .distance(self.titles[&title_2].node_position);
-            //    if distance > 300.0 {
-            //        let first_point = self.titles[&title_1].node_position;
-            //        let second_point = self.titles[&title_2].node_position;
-            //        self.titles.get_mut(&title_1).unwrap().node_position =
-            //            move_point_in_line(first_point, second_point, true, 2.0);
-            //        self.titles.get_mut(&title_1).unwrap().node_position =
-            //            move_point_in_line(second_point, first_point, true, 2.0);
-            //    }
-            //}
+            //Loop pulling in links
+            for (title_1, title_2) in self.linked_pairs.clone() {
+                let dir = self.titles[&title_1].node_position - self.titles[&title_2].node_position;
+
+                self.titles.get_mut(&title_1).unwrap().node_force -= dir;
+                self.titles.get_mut(&title_2).unwrap().node_force += dir;
+            }
+
+            for title_1 in self.title_order.clone() {
+                let velocity = self.titles[&title_1].node_force / divider;
+                //println!("Velocity: {}", velocity);
+                self.titles.get_mut(&title_1).unwrap().node_position += velocity;
+            }
             painter.extend(title_node_shapes);
             response
         });
     }
-
-    //Returns a vector with all the linked title pairs by index
-    fn get_linked_pairs(&mut self) -> Vec<(String, String)> {
-        let mut result: Vec<(String, String)> = Vec::new();
-        let all_links = all_titles_links(self.project_directory.clone());
-        for (title, links) in all_links {
-            for link in links {
-                if !(result.contains(&(title.clone(), link.clone()))
-                    || result.contains(&(link.clone(), title.clone())))
-                {
-                    result.push((title.clone(), link.clone()));
-                }
-            }
-        }
-        return result;
-    }
-}
-
-fn move_point_in_line(
-    first_point: Pos2,
-    second_point: Pos2,
-    closer: bool,
-    move_distance_fraction: f32,
-) -> Pos2 {
-    let mut result: Pos2 = Default::default();
-    if closer {
-        if first_point.x > second_point.x {
-            result.x = first_point.x - (first_point.x - second_point.x) / move_distance_fraction;
-        } else if first_point.x == second_point.x {
-            result.x = first_point.x;
-        } else {
-            result.x = first_point.x + (second_point.x - first_point.x) / move_distance_fraction;
-        }
-        if first_point.y > second_point.y {
-            result.y = first_point.y - (first_point.y - second_point.y) / move_distance_fraction;
-        } else if first_point.y == second_point.y {
-            result.y = first_point.y;
-        } else {
-            result.y = first_point.y + (second_point.y - first_point.y) / move_distance_fraction;
-        }
-    } else {
-        if first_point.x > second_point.x {
-            result.x = first_point.x + (first_point.x - second_point.x) / move_distance_fraction;
-        } else if first_point.x == second_point.x {
-            result.x = first_point.x;
-        } else {
-            result.x = first_point.x - (second_point.x - first_point.x) / move_distance_fraction;
-        }
-        if first_point.y > second_point.y {
-            result.y = first_point.y + (first_point.y - second_point.y) / move_distance_fraction;
-        } else if first_point.y == second_point.y {
-            result.y = first_point.y;
-        } else {
-            result.y = first_point.y - (second_point.y - first_point.y) / move_distance_fraction;
-        }
-    }
-    return result;
 }
