@@ -2,6 +2,7 @@ use eframe::egui::{self};
 use std::path::PathBuf;
 mod config;
 mod gui_elements;
+mod node_physics;
 mod node_view;
 mod popup_windows;
 mod save_load {
