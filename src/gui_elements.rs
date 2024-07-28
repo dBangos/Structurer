@@ -5,7 +5,7 @@ use crate::save_load::point::add_point;
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
-use crate::{left_panel_labels, Structurer};
+use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
 use eframe::egui::{self, RichText};
 use rfd::FileDialog;
@@ -99,13 +99,6 @@ impl Structurer {
         });
     }
 
-    //Contains all the text editing functions
-    pub fn text_settings_line(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            ui.add(egui::Slider::new(&mut self.point_text_size, 1.0..=100.0));
-        });
-    }
-
     //Contains the list of buttons leading to all the titles
     pub fn title_buttons(&mut self, ui: &mut egui::Ui) {
         ui.label(
@@ -169,10 +162,6 @@ impl Structurer {
 
     //Contains the title image and fields
     pub fn title_layout(&mut self, ui: &mut egui::Ui) {
-        //let file_path = "/home/sleiren/Coding/structurer/testing/xi.jpg";
-        //let image = egui::Image::new(format!("file://{file_path}"))
-        //If there is an image attached, replace the placeholder
-
         ui.horizontal(|ui| {
             if self.current_title.image.path.len() > 1 {
                 let file_path = self.current_title.image.path.clone();
@@ -191,7 +180,18 @@ impl Structurer {
                     self.show_title_image_popup = true;
                 }
             }
-            ui.text_edit_singleline(&mut self.current_title.name);
+            if ui
+                .label(
+                    RichText::new(self.current_title.name.clone())
+                        .text_style(title_style())
+                        .strong(),
+                )
+                .clicked()
+            {
+                self.show_title_edit_popup = true;
+            }
+
+            //ui.text_edit_singleline(&mut self.current_title.name);
         });
     }
 

@@ -93,12 +93,12 @@ struct Structurer {
     show_source_popup: bool,
     show_title_image_popup: bool,
     show_point_image_popup: bool,
+    show_title_edit_popup: bool,
     point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
     drag_distance: Vec2,
     linked_pairs: Vec<(String, String)>,
     initialized: bool,
     view_scale: f32,
-    point_text_size: f32,
 }
 
 impl Default for Structurer {
@@ -118,12 +118,12 @@ impl Default for Structurer {
             show_source_popup: false,
             show_title_image_popup: false,
             show_point_image_popup: false,
+            show_title_edit_popup: false,
             point_image_requesting_popup: (0, 0),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             linked_pairs: Vec::new(),
             initialized: false,
             view_scale: 1.0,
-            point_text_size: 20.0,
         }
     }
 }
@@ -134,11 +134,11 @@ fn left_panel_labels() -> TextStyle {
     TextStyle::Name("LeftPanelLabels".into())
 }
 #[inline]
-fn point_style() -> TextStyle {
-    TextStyle::Name("PointStyle".into())
+fn title_style() -> TextStyle {
+    TextStyle::Name("TitleStyle".into())
 }
 
-fn configure_text_styles(ctx: &egui::Context, point_text_size: f32) {
+fn configure_text_styles(ctx: &egui::Context) {
     use FontFamily::Proportional;
 
     let mut style = (*ctx.style()).clone();
@@ -147,7 +147,7 @@ fn configure_text_styles(ctx: &egui::Context, point_text_size: f32) {
         (TextStyle::Body, FontId::new(20.0, Proportional)),
         (left_panel_labels(), FontId::new(20.0, Proportional)),
         (TextStyle::Button, FontId::new(17.0, Proportional)),
-        (point_style(), FontId::new(point_text_size, Proportional)),
+        (title_style(), FontId::new(50.0, Proportional)),
         (TextStyle::Small, FontId::new(8.0, Proportional)),
     ]
     .into();
@@ -179,7 +179,7 @@ impl eframe::App for Structurer {
             self.start_routine();
             self.initialized = true;
         }
-        configure_text_styles(ctx, self.point_text_size);
+        configure_text_styles(ctx);
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::TopBottomPanel::top("top_panel")
                 .resizable(false)
@@ -187,8 +187,6 @@ impl eframe::App for Structurer {
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
                         self.main_button_line(ui);
-                        ui.separator();
-                        self.text_settings_line(ui);
                     });
                 });
             egui::SidePanel::left("left_panel")
@@ -243,6 +241,9 @@ impl eframe::App for Structurer {
         }
         if self.show_point_image_popup {
             self.point_image_popup(ctx);
+        }
+        if self.show_title_edit_popup {
+            self.title_edit_popup(ctx);
         }
     }
 }
