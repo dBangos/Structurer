@@ -1,5 +1,7 @@
 use crate::save_load::general::save_old_add_new_points;
+use crate::save_load::title;
 use crate::Structurer;
+use eframe::egui::debug_text::print;
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;
 use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
@@ -38,21 +40,23 @@ impl Structurer {
             }
 
             //Pushing the line shapes to be drawn
-            let line_stroke = Stroke::new(1.0, Color32::RED);
+            let line_stroke = Stroke::new(2.0, Color32::WHITE);
             let mut title_lines: Vec<Shape> = Vec::new();
             for (title_1, title_2) in self.linked_pairs.clone() {
                 let temp_array: [Pos2; 2] = [
-                    to_screen * self.titles[&title_1].node_position,
-                    to_screen * self.titles[&title_2].node_position,
+                    to_screen * self.titles[&title_1].node_screen_position,
+                    to_screen * self.titles[&title_2].node_screen_position,
                 ];
                 title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
             }
             painter.extend(title_lines);
             let half_x: f32 = 50.0 * self.view_scale;
             let half_y: f32 = 15.0 * self.view_scale;
+            let node_currently_clicked: Vec<bool> = Vec::new();
             let mut title_node_shapes: Vec<Shape> = Vec::new();
             for (index, title_id) in self.title_order.iter_mut().enumerate() {
-                let point_in_screen = to_screen.transform_pos(self.titles[title_id].node_position);
+                let point_in_screen =
+                    to_screen.transform_pos(self.titles[title_id].node_screen_position);
                 //If the point should be visible draw it
                 if point_in_screen.x < response.rect.max.x
                     && point_in_screen.x > response.rect.min.x
@@ -64,8 +68,8 @@ impl Structurer {
                     let second_point: Pos2 =
                         (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
                     let mut point_rect = Rect::from_two_pos(first_point, second_point);
-                    //Adding the image if there is one available
 
+                    //Adding the image if there is one available
                     if self.titles[title_id].image.path.len() > 0 {
                         let file_path = self.titles[title_id].image.path.clone();
                         let image = egui::Image::new(format!("file://{file_path}"));
@@ -93,16 +97,23 @@ impl Structurer {
 
                     //Getting the drag interaction and updating the point
                     let point_id = response.id.with(index);
-                    let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
-                    self.titles.get_mut(title_id).unwrap().node_force +=
-                        point_response_1.drag_delta();
+                    let point_response_drag = ui.interact(point_rect, point_id, Sense::drag());
+                    println!("{}", point_response_drag.drag_delta());
+                    if point_response_drag.dragged() {
+                        self.titles
+                            .get_mut(title_id)
+                            .unwrap()
+                            .node_currnetly_clicked = true;
+                        self.titles.get_mut(title_id).unwrap().node_physics_position +=
+                            point_response_drag.drag_delta() * self.view_scale;
+                    }
                     let point_in_screen =
-                        to_screen.transform_pos(self.titles[title_id].node_position);
+                        to_screen.transform_pos(self.titles[title_id].node_screen_position);
                     //Colouring the button
-                    let rect_color = ui.style().interact(&point_response_1).bg_fill;
+                    let rect_color = ui.style().interact(&point_response_drag).bg_fill;
                     //Adding the click interaction
-                    let point_response_2 = ui.interact(point_rect, point_id, Sense::click());
-                    if point_response_2.clicked() {
+                    let point_response_click = ui.interact(point_rect, point_id, Sense::click());
+                    if point_response_click.clicked() {
                         (self.current_title, self.current_points) = save_old_add_new_points(
                             self.project_directory.clone(),
                             self.current_title.clone(),
@@ -139,8 +150,9 @@ impl Structurer {
             //Calculate the new node positions
             self.node_physics();
             for title_id in self.title_order.clone() {
-                self.titles.get_mut(&title_id).unwrap().node_position =
-                    (self.titles[&title_id].node_force * self.view_scale + self.drag_distance)
+                self.titles.get_mut(&title_id).unwrap().node_screen_position =
+                    (self.titles[&title_id].node_physics_position * self.view_scale
+                        + self.drag_distance)
                         .to_pos2();
             }
             painter.extend(title_node_shapes);

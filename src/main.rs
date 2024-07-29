@@ -57,8 +57,9 @@ struct Title {
     id: String,
     point_ids: Vec<String>,
     links: Vec<bool>, //A vector of bools each correspondig to a title, if true it's linked
-    node_position: Pos2,
-    node_force: Vec2,
+    node_screen_position: Pos2,
+    node_physics_position: Vec2,
+    node_currnetly_clicked: bool,
     image: ImageStruct,
 }
 
@@ -69,8 +70,9 @@ impl Default for Title {
             id: String::new(),
             point_ids: Vec::new(),
             links: Vec::new(),
-            node_position: Pos2::new(1.0, 1.0),
-            node_force: Vec2::new(0.0, 0.0),
+            node_screen_position: Pos2::new(1.0, 1.0),
+            node_physics_position: Vec2::new(0.0, 0.0),
+            node_currnetly_clicked: false,
             image: ImageStruct::default(),
         }
     }
