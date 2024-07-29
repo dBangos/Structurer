@@ -14,7 +14,7 @@ impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            if ui.button("Set Project Directory").clicked() {
+            if ui.button("🗀 Set Project Directory").clicked() {
                 if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
                     //Resetting state in case old values don't get overwritten, in the absence of a
                     //previous library
@@ -29,7 +29,7 @@ impl Structurer {
                 }
                 self.load_from_library();
             }
-            if ui.button("Save").clicked() {
+            if ui.button("💾 Save").clicked() {
                 save_title(self.project_directory.clone(), self.current_title.clone());
                 for point in self.current_points.clone() {
                     save_to_filename(self.project_directory.clone(), point.id, point.content);
@@ -38,19 +38,10 @@ impl Structurer {
                 //Saving here so save button updates the point_text_size on the json file
                 let _ = self.save_to_config();
             }
-            if ui.button("Add Point").clicked() {
-                let temp_point = add_point(
-                    self.project_directory.clone(),
-                    self.current_title.id.clone(),
-                );
-                self.current_points.push(temp_point.clone());
-                self.titles
-                    .get_mut(&self.current_title.id)
-                    .unwrap()
-                    .point_ids
-                    .push(temp_point.id);
-            }
-            if ui.button("Add Title").clicked() {
+            //if ui.button("Save Page As:").clicked() {
+            //    //
+            //}
+            if ui.button("➕ Add Title").clicked() {
                 //Create new title files
                 let new_title_id = add_title(self.project_directory.clone());
                 //Add new title to state
@@ -83,18 +74,27 @@ impl Structurer {
                     .point_ids
                     .push(self.current_points[0].id.clone());
             }
-            if ui.button("Delete Title").clicked() {
-                self.show_title_delete_popup = true;
-            }
-            if ui.button("Save Page As:").clicked() {
-                //
-            }
-            if ui.button("Link Title").clicked() {
+            if ui.button("↔ Link Title").clicked() {
                 self.current_title.links = title_is_linked_with(
                     self.project_directory.clone(),
                     self.current_title.id.clone(),
                 );
                 self.show_link_title_popup = true;
+            }
+            if ui.button("🗑 Delete Title").clicked() {
+                self.show_title_delete_popup = true;
+            }
+            if ui.button("+ Add Point").clicked() {
+                let temp_point = add_point(
+                    self.project_directory.clone(),
+                    self.current_title.id.clone(),
+                );
+                self.current_points.push(temp_point.clone());
+                self.titles
+                    .get_mut(&self.current_title.id)
+                    .unwrap()
+                    .point_ids
+                    .push(temp_point.id);
             }
         });
     }
@@ -202,11 +202,11 @@ impl Structurer {
                 // Container for elements of each point
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
-                        if ui.button("Delete").clicked() {
+                        if ui.button("🗑 Delete").clicked() {
                             self.point_requesting_action_index = index;
                             self.show_confirm_delete_popup = true;
                         }
-                        if ui.button("Add to:").clicked() {
+                        if ui.button("➕ Share").clicked() {
                             self.titles_receiving_shared_point = point_is_shared_with(
                                 self.project_directory.clone(),
                                 point.id.clone(),
@@ -214,14 +214,14 @@ impl Structurer {
                             self.point_requesting_action_index = index;
                             self.show_share_point_popup = true;
                         }
-                        if ui.button("Source").clicked() {
+                        if ui.button("ℹ Source").clicked() {
                             self.point_requesting_action_index = index;
 
                             point.source =
                                 get_point_source(self.project_directory.clone(), point.id.clone());
                             self.show_source_popup = true;
                         }
-                        if ui.button("Add Image").clicked() {
+                        if ui.button("🖼 Add Image").clicked() {
                             let file = FileDialog::new()
                                 .add_filter("image", &["jpeg", "jpg", "png"])
                                 .set_directory(self.project_directory.clone())

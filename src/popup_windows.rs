@@ -21,7 +21,7 @@ impl Structurer {
                     ui.vertical_centered_justified(|ui| {
                         ui.text_edit_singleline(&mut self.current_title.name);
                         ui.horizontal(|ui| {
-                            if ui.button("Ok").clicked() {
+                            if ui.button("✅ Ok").clicked() {
                                 //Making sure it can't be empty and impossible to click
                                 if self.current_title.name == "".to_string() {
                                     self.current_title.name = "New title".to_string();
@@ -102,11 +102,11 @@ impl Structurer {
                 ui.label("Description");
                 ui.horizontal(|ui| {
                     ui.text_edit_multiline(&mut self.current_title.image.description);
-                    if ui.button("Reset").clicked() {
+                    if ui.button("🔄 Reset").clicked() {
                         self.current_title.image.description = String::new();
                         self.current_title.image.path = String::new();
                     }
-                    if ui.button("Load image").clicked() {
+                    if ui.button("🖼 Load Image").clicked() {
                         let file = FileDialog::new()
                             .add_filter("image", &["jpeg", "jpg", "png"])
                             .set_directory(self.project_directory.clone())
@@ -150,7 +150,7 @@ impl Structurer {
                         ui.text_edit_singleline(
                             &mut self.current_points[self.point_requesting_action_index].source,
                         );
-                        if ui.button("Add source").clicked() {
+                        if ui.button("✅ Add Source").clicked() {
                             update_source(
                                 self.project_directory.clone(),
                                 self.current_points[self.point_requesting_action_index]
@@ -162,7 +162,7 @@ impl Structurer {
                             );
                             self.show_source_popup = false;
                         }
-                        if ui.button("Cancel").clicked() {
+                        if ui.button("✖ Cancel").clicked() {
                             self.show_source_popup = false;
                         }
                     });
@@ -177,7 +177,7 @@ impl Structurer {
             .show(ctx, |ui| {
                 ui.label("Are you sure you want to permanently delete this title?");
                 ui.horizontal(|ui| {
-                    if ui.button("Yes").clicked() {
+                    if ui.button("🗑 Delete").clicked() {
                         delete_title(
                             self.project_directory.clone(),
                             self.current_title.id.clone(),
@@ -201,7 +201,7 @@ impl Structurer {
                         self.show_title_delete_popup = false;
                     }
 
-                    if ui.button("No").clicked() {
+                    if ui.button("✖ Cancel").clicked() {
                         self.show_title_delete_popup = false;
                     }
                 });
@@ -231,7 +231,7 @@ impl Structurer {
                         });
                     });
                     ui.horizontal(|ui| {
-                        if ui.button("Ok").clicked() {
+                        if ui.button("✅ Share").clicked() {
                             share_unshare_point(
                                 self.project_directory.clone(),
                                 self.current_points[self.point_requesting_action_index]
@@ -312,7 +312,7 @@ impl Structurer {
                             self.show_share_point_popup = false;
                         }
 
-                        if ui.button("Cancel").clicked() {
+                        if ui.button("✖ Cancel").clicked() {
                             self.show_share_point_popup = false;
                         }
                     });
@@ -333,7 +333,7 @@ impl Structurer {
                         });
                     });
                     ui.horizontal(|ui| {
-                        if ui.button("Ok").clicked() {
+                        if ui.button("✅ Link").clicked() {
                             link_unlink_title(
                                 self.project_directory.clone(),
                                 self.current_title.clone(),
@@ -343,7 +343,7 @@ impl Structurer {
                             self.linked_pairs = get_linked_pairs(self.project_directory.clone());
                         }
 
-                        if ui.button("Cancel").clicked() {
+                        if ui.button("✖ Cancel").clicked() {
                             self.show_link_title_popup = false;
                         }
                     });
@@ -359,7 +359,7 @@ impl Structurer {
             .show(ctx, |ui| {
                 ui.label("Are you sure you want to permanently delete this point?");
                 ui.horizontal(|ui| {
-                    if ui.button("Yes").clicked() {
+                    if ui.button("🗑 Delete").clicked() {
                         delete_point(
                             self.project_directory.clone(),
                             self.current_points[self.point_requesting_action_index]
@@ -386,7 +386,7 @@ impl Structurer {
                         self.show_confirm_delete_popup = false;
                     }
 
-                    if ui.button("No").clicked() {
+                    if ui.button("✖ Cancel").clicked() {
                         self.show_confirm_delete_popup = false;
                     }
                 });
