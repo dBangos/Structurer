@@ -101,6 +101,7 @@ struct Structurer {
     linked_pairs: Vec<(String, String)>,
     initialized: bool,
     view_scale: f32,
+    stop_clicked_nodes: bool,
 }
 
 impl Default for Structurer {
@@ -126,6 +127,7 @@ impl Default for Structurer {
             linked_pairs: Vec::new(),
             initialized: false,
             view_scale: 1.0,
+            stop_clicked_nodes: false,
         }
     }
 }
@@ -210,6 +212,10 @@ impl eframe::App for Structurer {
                 .default_width(400.0)
                 .width_range(80.0..=600.0)
                 .show_inside(ui, |ui| {
+                    ui.checkbox(
+                        &mut self.stop_clicked_nodes,
+                        "Hold nodes into place after interaction",
+                    );
                     self.node_view(ui);
                     ctx.request_repaint();
                 });

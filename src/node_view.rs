@@ -101,7 +101,7 @@ impl Structurer {
                             .unwrap()
                             .node_currnetly_clicked = true;
                         self.titles.get_mut(title_id).unwrap().node_physics_position +=
-                            point_response_drag.drag_delta() * self.view_scale;
+                            point_response_drag.drag_delta() / self.view_scale;
                     }
                     let point_in_screen =
                         to_screen.transform_pos(self.titles[title_id].node_screen_position);

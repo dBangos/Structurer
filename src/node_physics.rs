@@ -55,10 +55,9 @@ impl Structurer {
                 let temp = self.titles[&title_1].node_physics_position * (-1.0) * gravity_constant
                     / divider;
                 self.titles.get_mut(&title_1).unwrap().node_physics_position += temp;
-            } else {
+            } else if !self.stop_clicked_nodes {
                 //This is the last check of the node.
-                //Leaving it true means it can't be affected by physics. It's cool I should look
-                //into making it an option
+                //Leaving it true means it can't be affected by physics
                 self.titles
                     .get_mut(&title_1)
                     .unwrap()

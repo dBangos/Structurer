@@ -38,6 +38,7 @@ impl Structurer {
                 //Saving here so save button updates the point_text_size on the json file
                 let _ = self.save_to_config();
             }
+            ui.separator();
             //if ui.button("Save Page As:").clicked() {
             //    //
             //}
@@ -84,6 +85,7 @@ impl Structurer {
             if ui.button("🗑 Delete Title").clicked() {
                 self.show_title_delete_popup = true;
             }
+            ui.separator();
             if ui.button("+ Add Point").clicked() {
                 let temp_point = add_point(
                     self.project_directory.clone(),
