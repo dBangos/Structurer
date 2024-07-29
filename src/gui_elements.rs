@@ -242,7 +242,8 @@ impl Structurer {
                             {
                                 let file_path = image.path.clone();
                                 let curr_image = egui::Image::new(format!("file://{file_path}"))
-                                    .fit_to_exact_size([100.0, 100.0].into())
+                                    .fit_to_original_size(2.0)
+                                    .max_height(70.0)
                                     .sense(egui::Sense::click());
                                 if ui.add(curr_image).clicked() {
                                     self.point_image_requesting_popup = (index, image_index);

@@ -14,3 +14,4 @@ uuid = {version = "1.9.1", features =["v4", "fast-rng"]}
 dirs = {version = "5.0.1"}
 serde = {version ="1.0.203"}
 serde_json = {version = "1.0.120"}
+rand = {version = "0.8.5"}

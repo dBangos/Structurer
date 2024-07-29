@@ -70,7 +70,7 @@ impl Default for Title {
             point_ids: Vec::new(),
             links: Vec::new(),
             node_position: Pos2::new(1.0, 1.0),
-            node_force: Vec2::new(0.0, 1.0),
+            node_force: Vec2::new(0.0, 0.0),
             image: ImageStruct::default(),
         }
     }
@@ -209,6 +209,7 @@ impl eframe::App for Structurer {
                 .width_range(80.0..=600.0)
                 .show_inside(ui, |ui| {
                     self.node_view(ui);
+                    ctx.request_repaint();
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
                 //Don't render anything if no title is loaded

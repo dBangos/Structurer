@@ -5,8 +5,6 @@ use egui::emath::RectTransform;
 use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
 impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
-        //Flags for the buttons, kinda ugly but I want the buttons outside the canvas
-        //But I need to be inside the canvas to calculate the centering offset
         Frame::canvas(ui.style()).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(
                 Vec2::new(ui.available_width(), ui.available_height()),
@@ -14,11 +12,7 @@ impl Structurer {
             );
             // Allow dragging the background
             if response.dragged() {
-                self.drag_distance = response.drag_delta();
-                for title_id in self.title_order.clone() {
-                    self.titles.get_mut(&title_id).unwrap().node_position =
-                        self.titles[&title_id].node_position + self.drag_distance;
-                }
+                self.drag_distance += response.drag_delta();
             }
             //Translate points to screen coordinates
             let to_screen = RectTransform::from_to(
@@ -30,28 +24,21 @@ impl Structurer {
                 ),
                 response.rect,
             );
-            //Calculate the new node positions
-            self.node_physics();
             //Adding zoom behaviour on Ctrl+Mouse Wheel
             if let Some(pointer) = ui.ctx().input(|i| i.pointer.hover_pos()) {
                 if response.hovered() {
-                    let pointer_in_layer = to_screen * pointer;
+                    //Following line lets you get pointer position
+                    //if I ever want to zoom on cursor
+                    //let pointer_in_layer = to_screen * pointer;
                     let zoom_delta = ui.ctx().input(|i| i.zoom_delta());
-
                     if zoom_delta != 1.0 {
-                        for title_id in self.title_order.clone() {
-                            self.titles.get_mut(&title_id).unwrap().node_position =
-                                self.titles[&title_id].node_position * zoom_delta;
-                            //Adjusting the view scale so the ui scales accordingly
-                            //Doing the plus, /2 to make the change slower
-                            self.view_scale = self.view_scale * (9.0 + zoom_delta) / 10.0;
-                        }
+                        self.view_scale = self.view_scale * (3.0 + zoom_delta) / 4.0;
                     }
                 }
             }
-            let line_stroke = Stroke::new(1.0, Color32::RED);
 
             //Pushing the line shapes to be drawn
+            let line_stroke = Stroke::new(1.0, Color32::RED);
             let mut title_lines: Vec<Shape> = Vec::new();
             for (title_1, title_2) in self.linked_pairs.clone() {
                 let temp_array: [Pos2; 2] = [
@@ -101,10 +88,8 @@ impl Structurer {
                     //Getting the drag interaction and updating the point
                     let point_id = response.id.with(index);
                     let point_response_1 = ui.interact(point_rect, point_id, Sense::drag());
-                    self.titles.get_mut(title_id).unwrap().node_position +=
+                    self.titles.get_mut(title_id).unwrap().node_force +=
                         point_response_1.drag_delta();
-                    self.titles.get_mut(title_id).unwrap().node_position =
-                        to_screen.from().clamp(self.titles[title_id].node_position);
                     let point_in_screen =
                         to_screen.transform_pos(self.titles[title_id].node_position);
                     //Colouring the button
@@ -119,7 +104,9 @@ impl Structurer {
                             self.titles[title_id].clone(),
                         );
                     }
-                    //Updating the button after it has been dragged
+                    //Creating the rectangle to add it to painter
+                    //It has to be calculated again as the previous one is needed for the interaction
+                    //response of rect_color
                     let first_point: Pos2 =
                         (point_in_screen.x - half_x, point_in_screen.y - half_y).into();
                     let second_point: Pos2 =
@@ -143,8 +130,14 @@ impl Structurer {
                     })
                 }
             }
+            //Calculate the new node positions
+            self.node_physics();
+            for title_id in self.title_order.clone() {
+                self.titles.get_mut(&title_id).unwrap().node_position =
+                    (self.titles[&title_id].node_force * self.view_scale + self.drag_distance)
+                        .to_pos2();
+            }
             painter.extend(title_node_shapes);
-            response
         });
     }
 }
