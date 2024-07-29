@@ -67,18 +67,24 @@ impl Structurer {
                     //Adding the image if there is one available
 
                     if self.titles[title_id].image.path.len() > 0 {
+                        let file_path = self.titles[title_id].image.path.clone();
+                        let image = egui::Image::new(format!("file://{file_path}"));
+                        let image_size = image
+                            .load_and_calc_size(
+                                ui,
+                                Vec2::new(2.0 * half_x, 1000.0 * self.view_scale),
+                            )
+                            .unwrap_or(Vec2::new(2.0 * half_x, 100.0 * self.view_scale));
                         //Creating the area for the image
                         let first_point: Pos2 = (
                             point_in_screen.x - half_x,
-                            point_in_screen.y - half_y - 100.0 * self.view_scale,
+                            point_in_screen.y - half_y - image_size.y,
                         )
                             .into();
                         let mut second_point: Pos2 =
                             (point_in_screen.x + half_x, point_in_screen.y - half_y).into();
                         point_rect = Rect::from_two_pos(first_point, second_point);
-                        let file_path = self.titles[title_id].image.path.clone();
-                        let image = egui::Image::new(format!("file://{file_path}"))
-                            .paint_at(ui, point_rect);
+                        image.paint_at(ui, point_rect);
                         //Drawing the rectangle again so the interactable area contains the button
                         second_point =
                             (point_in_screen.x + half_x, point_in_screen.y + half_y).into();
