@@ -27,12 +27,16 @@ impl Structurer {
             //Adding zoom behaviour on Ctrl+Mouse Wheel
             if let Some(pointer) = ui.ctx().input(|i| i.pointer.hover_pos()) {
                 if response.hovered() {
-                    //Following line lets you get pointer position
-                    //if I ever want to zoom on cursor
-                    //let pointer_in_layer = to_screen * pointer;
                     let zoom_delta = ui.ctx().input(|i| i.zoom_delta());
                     if zoom_delta != 1.0 {
                         self.view_scale = self.view_scale * (3.0 + zoom_delta) / 4.0;
+                        if zoom_delta < 1.0 {
+                            self.drag_distance -= (pointer - response.rect.center())
+                                * (1.0 - (3.0 + zoom_delta) / 4.0);
+                        } else {
+                            self.drag_distance += (pointer - response.rect.center())
+                                * (1.0 - (3.0 + zoom_delta) / 4.0);
+                        }
                     }
                 }
             }
