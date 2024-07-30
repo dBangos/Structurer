@@ -214,7 +214,7 @@ impl eframe::App for Structurer {
                 .show_inside(ui, |ui| {
                     ui.checkbox(
                         &mut self.stop_clicked_nodes,
-                        "Hold nodes into place after interaction",
+                        "Hold node into place after interaction",
                     );
                     self.node_view(ui);
                     ctx.request_repaint();

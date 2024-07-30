@@ -111,7 +111,8 @@ impl Structurer {
                             .add_filter("image", &["jpeg", "jpg", "png"])
                             .set_directory(self.project_directory.clone())
                             .pick_file();
-                        self.current_title.image.path = file.unwrap().to_string_lossy().to_string();
+                        self.current_title.image.path =
+                            file.unwrap_or_default().to_string_lossy().to_string();
                     }
                 });
             });

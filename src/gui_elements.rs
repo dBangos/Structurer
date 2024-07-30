@@ -229,7 +229,7 @@ impl Structurer {
                                 .set_directory(self.project_directory.clone())
                                 .pick_file();
                             let mut new_image: ImageStruct = ImageStruct::default();
-                            new_image.path = file.unwrap().to_string_lossy().to_string();
+                            new_image.path = file.unwrap_or_default().to_string_lossy().to_string();
                             point.images.push(new_image.clone());
                             add_image_to_point(
                                 self.project_directory.clone(),
