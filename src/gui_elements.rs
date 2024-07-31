@@ -1,4 +1,4 @@
-use crate::save_load::general::{save_old_add_new_points, save_to_filename};
+use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
@@ -8,6 +8,7 @@ use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
 use eframe::egui::{self, RichText};
+use egui::Vec2;
 use rfd::FileDialog;
 impl Structurer {
     //Button line that contains most basic functions
@@ -260,23 +261,42 @@ impl Structurer {
                         }
                     });
                     ui.vertical(|ui| {
-                        egui::Grid::new(point.id.clone()).show(ui, |ui| {
-                            println!("{}", ui.available_width());
-                            let mut width_counter: f32 = 0.0;
-                            for (image_index, image) in point.images.clone().into_iter().enumerate()
-                            {
-                                let file_path = image.path.clone();
-                                let curr_image = egui::Image::new(format!("file://{file_path}"))
-                                    .fit_to_original_size(2.0)
-                                    .max_height(70.0)
-                                    .sense(egui::Sense::click());
-                                //width_counter
-                                if ui.add(curr_image).clicked() {
-                                    self.point_image_requesting_popup = (index, image_index);
-                                    self.show_point_image_popup = true;
+                        egui::Grid::new(point.id.clone())
+                            .max_col_width(ui.available_width())
+                            .show(ui, |ui| {
+                                let mut width_counter: f32 = 0.0;
+                                for (image_index, image) in
+                                    point.images.clone().into_iter().enumerate()
+                                {
+                                    let file_path = image.path.clone();
+                                    let curr_image =
+                                        egui::Image::new(format!("file://{file_path}"))
+                                            .fit_to_original_size(2.0)
+                                            .max_height(70.0)
+                                            .sense(egui::Sense::click());
+                                    let image_size = curr_image.load_and_calc_size(
+                                        ui,
+                                        Vec2::new(ui.available_width(), 70.0),
+                                    );
+                                    //The extra value is the grid spacing
+
+                                    match image_size {
+                                        Some(size) => {
+                                            width_counter += size.x + 7.0;
+                                            if width_counter > ui.available_width() {
+                                                width_counter = size.x + 7.0;
+                                                ui.end_row();
+                                            }
+                                            if ui.add(curr_image).clicked() {
+                                                self.point_image_requesting_popup =
+                                                    (index, image_index);
+                                                self.show_point_image_popup = true;
+                                            }
+                                        }
+                                        None => (),
+                                    }
                                 }
-                            }
-                        });
+                            });
 
                         ui.add_sized(
                             ui.available_size(),
