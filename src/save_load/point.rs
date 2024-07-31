@@ -29,7 +29,7 @@ pub fn add_point(project_dir: PathBuf, title_id: String) -> Option<Point> {
             .append(true)
             .open(file_path)
             .expect("Error while opening sources file from add_point");
-        file.write(("\n".to_string() + &id.to_string()).as_bytes())
+        file.write(("\n".to_string() + &id.to_string() + "@").as_bytes())
             .expect("Error while writing to sourcse file from add_point");
         let mut new_point: Point = Point::default();
         new_point.id = id.to_string();

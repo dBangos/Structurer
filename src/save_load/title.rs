@@ -8,6 +8,8 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
+
+use super::point::delete_point;
 const VERSION: i32 = 1;
 //Adds a title to library and creates the corresponding file
 //Returns the new title_id
@@ -42,16 +44,16 @@ pub fn add_title(project_dir: PathBuf) -> String {
     let mut file = OpenOptions::new()
         .append(true)
         .open(file_path)
-        .expect("Error while opening links file from add_title");
-    file.write(("\n".to_string() + &new_id.to_string()).as_bytes())
-        .expect("Error while writing to links file from add_title");
+        .expect("Error while opening image file from add_title");
+    file.write(("\n".to_string() + &new_id.to_string() + "@").as_bytes())
+        .expect("Error while writing to image file from add_title");
     return new_id.to_string();
 }
 
 //Gets a title_id. It deletes the library mention.
 //Then it looks if any of the points in that line were only on that line
 //if so it deletes them as well and finally it deletes the title file
-pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
+pub fn delete_title(project_dir: PathBuf, title_id: String) {
     let mut content: Vec<String> = Vec::new();
     let mut deleted_line: Vec<(String, bool)> = Vec::new();
     let mut file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
@@ -91,13 +93,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
     //Deleting points only on this title
     for (point_id, is_shared) in deleted_line {
         if !is_shared {
-            file_path = [
-                project_dir.clone(),
-                PathBuf::from(point_id.clone() + ".txt"),
-            ]
-            .iter()
-            .collect();
-            let _ = remove_file(file_path);
+            delete_point(project_dir.clone(), point_id.clone());
         }
     }
     file_path = [

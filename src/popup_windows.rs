@@ -19,15 +19,14 @@ impl Structurer {
                 .open(&mut show_popup)
                 .show(ctx, |ui| {
                     ui.vertical_centered_justified(|ui| {
-                        ui.text_edit_singleline(&mut self.current_title.name);
+                        ui.text_edit_singleline(&mut self.titles[self.current_title_index].name);
                         ui.horizontal(|ui| {
                             if ui.button("✅ Ok").clicked() {
                                 //Making sure it can't be empty and impossible to click
-                                if self.current_title.name == "".to_string() {
-                                    self.current_title.name = "New title".to_string();
+                                if self.titles[self.current_title_index].name == "".to_string() {
+                                    self.titles[self.current_title_index].name =
+                                        "New title".to_string();
                                 }
-                                self.titles.get_mut(&self.current_title.id).unwrap().name =
-                                    self.current_title.name.clone();
                                 self.show_title_edit_popup = false;
                             }
                         });
@@ -92,8 +91,8 @@ impl Structurer {
             .open(&mut self.show_title_image_popup)
             .show(ctx, |ui| {
                 //If there is an image attached, replace the placeholder
-                if self.current_title.image.path.len() > 1 {
-                    let file_path = self.current_title.image.path.clone();
+                if self.titles[self.current_title_index].image.path.len() > 1 {
+                    let file_path = self.titles[self.current_title_index].image.path.clone();
                     let image = egui::Image::new(format!("file://{file_path}"))
                         .fit_to_exact_size([600.0, 600.0].into())
                         .sense(egui::Sense::click());
@@ -101,17 +100,19 @@ impl Structurer {
                 }
                 ui.label("Description");
                 ui.horizontal(|ui| {
-                    ui.text_edit_multiline(&mut self.current_title.image.description);
+                    ui.text_edit_multiline(
+                        &mut self.titles[self.current_title_index].image.description,
+                    );
                     if ui.button("🔄 Reset").clicked() {
-                        self.current_title.image.description = String::new();
-                        self.current_title.image.path = String::new();
+                        self.titles[self.current_title_index].image.description = String::new();
+                        self.titles[self.current_title_index].image.path = String::new();
                     }
                     if ui.button("🖼 Load Image").clicked() {
                         let file = FileDialog::new()
                             .add_filter("image", &["jpeg", "jpg", "png"])
                             .set_directory(self.project_directory.clone())
                             .pick_file();
-                        self.current_title.image.path =
+                        self.titles[self.current_title_index].image.path =
                             file.unwrap_or_default().to_string_lossy().to_string();
                     }
                 });
@@ -181,27 +182,30 @@ impl Structurer {
                     if ui.button("🗑 Delete").clicked() {
                         delete_title(
                             self.project_directory.clone(),
-                            self.current_title.id.clone(),
+                            self.titles[self.current_title_index].id.clone(),
                         );
                         //Removing the title from state
-                        self.titles.remove(&self.current_title.id.clone());
-                        self.title_order
-                            .retain(|x| *x != self.current_title.id.clone());
+                        self.titles.remove(self.current_title_index);
                         //Showing the first title
-                        self.current_title = self.titles[&self.title_order[0]].clone();
-                        self.current_points = Vec::new();
-                        for new_point_id in self.titles[&self.title_order[0]].point_ids.clone() {
-                            let mut new_point: Point = Point::default();
-                            new_point.id = new_point_id.to_string();
-                            new_point.content = load_from_filename(
-                                new_point_id.to_string(),
-                                self.project_directory.clone(),
-                            );
-                            self.current_points.push(new_point);
+                        self.current_title_index = 0;
+                        if self.titles.len() == 0 {
+                            self.title_loaded = false;
+                        } else {
+                            self.current_points = Vec::new();
+                            for new_point_id in
+                                self.titles[self.current_title_index].point_ids.clone()
+                            {
+                                let mut new_point: Point = Point::default();
+                                new_point.id = new_point_id.to_string();
+                                new_point.content = load_from_filename(
+                                    new_point_id.to_string(),
+                                    self.project_directory.clone(),
+                                );
+                                self.current_points.push(new_point);
+                            }
                         }
                         self.show_title_delete_popup = false;
                     }
-
                     if ui.button("✖ Cancel").clicked() {
                         self.show_title_delete_popup = false;
                     }
@@ -219,15 +223,12 @@ impl Structurer {
                     ui.label("Share point:");
                     egui::ScrollArea::vertical().show(ui, |ui| {
                         ui.vertical_centered(|ui| {
-                            for (is_shared, checkbox_title_id) in self
+                            for (is_shared, checkbox_title) in self
                                 .titles_receiving_shared_point
                                 .iter_mut()
-                                .zip(self.title_order.clone())
+                                .zip(self.titles.clone())
                             {
-                                ui.checkbox(
-                                    is_shared,
-                                    self.titles[&checkbox_title_id].name.clone(),
-                                );
+                                ui.checkbox(is_shared, checkbox_title.name.clone());
                             }
                         });
                     });
@@ -239,45 +240,40 @@ impl Structurer {
                                     .id
                                     .clone(),
                                 self.titles_receiving_shared_point.clone(),
-                                self.title_order.clone(),
                             );
                             //Adding the point to shared in state, removing from unshared in
                             //state
-                            for (title_id, is_shared) in self
-                                .title_order
+                            for (title, is_shared) in self
+                                .titles
                                 .clone()
-                                .into_iter()
+                                .iter_mut()
                                 .zip(self.titles_receiving_shared_point.clone())
                             {
                                 if is_shared
-                                    && !self.titles[&title_id].point_ids.contains(
+                                    && title.point_ids.contains(
                                         &self.current_points[self.point_requesting_action_index]
                                             .id
                                             .clone(),
                                     )
                                 {
-                                    self.titles.get_mut(&title_id).unwrap().point_ids.push(
+                                    title.point_ids.push(
                                         self.current_points[self.point_requesting_action_index]
                                             .id
                                             .clone(),
                                     );
                                 } else if !is_shared
-                                    && self.titles[&title_id].point_ids.contains(
+                                    && title.point_ids.contains(
                                         &self.current_points[self.point_requesting_action_index]
                                             .id
                                             .clone(),
                                     )
                                 {
-                                    self.titles
-                                        .get_mut(&title_id)
-                                        .unwrap()
-                                        .point_ids
-                                        .retain(|x| {
-                                            *x != self.current_points
-                                                [self.point_requesting_action_index]
-                                                .id
-                                                .clone()
-                                        });
+                                    title.point_ids.retain(|x| {
+                                        *x != self.current_points
+                                            [self.point_requesting_action_index]
+                                            .id
+                                            .clone()
+                                    });
                                 }
                             }
                             //If the point is not shared to any titles, delete it
@@ -293,22 +289,18 @@ impl Structurer {
                                         .clone(),
                                 );
                                 //Removing the point from all titles in state
-                                for title_id in self.title_order.clone() {
-                                    self.titles
-                                        .get_mut(&title_id)
-                                        .unwrap()
-                                        .point_ids
-                                        .retain(|x| {
-                                            *x != self.current_points
-                                                [self.point_requesting_action_index]
-                                                .id
-                                                .clone()
-                                        })
+                                for title in self.titles.iter_mut() {
+                                    title.point_ids.retain(|x| {
+                                        *x != self.current_points
+                                            [self.point_requesting_action_index]
+                                            .id
+                                            .clone()
+                                    })
                                 }
                             }
                             self.current_points = load_points_from_title_id(
                                 self.project_directory.clone(),
-                                self.current_title.id.clone(),
+                                self.titles[self.current_title_index].id.clone(),
                             );
                             self.show_share_point_popup = false;
                         }
@@ -322,13 +314,17 @@ impl Structurer {
                     ui.vertical(|ui| {
                         egui::ScrollArea::vertical().show(ui, |ui| {
                             ui.vertical_centered(|ui| {
-                                for (is_linked, title_id) in self
-                                    .current_title
+                                //Need to create a local temp to obey the borrow checkers whims
+                                let mut local_name_list: Vec<String> = Vec::new();
+                                for title in self.titles.clone() {
+                                    local_name_list.push(title.name);
+                                }
+                                for (is_linked, title_name) in self.titles[self.current_title_index]
                                     .links
                                     .iter_mut()
-                                    .zip(self.title_order.clone())
+                                    .zip(local_name_list)
                                 {
-                                    ui.checkbox(is_linked, self.titles[&title_id].name.clone());
+                                    ui.checkbox(is_linked, title_name);
                                 }
                             });
                         });
@@ -337,11 +333,14 @@ impl Structurer {
                         if ui.button("✅ Link").clicked() {
                             link_unlink_title(
                                 self.project_directory.clone(),
-                                self.current_title.clone(),
-                                self.title_order.clone(),
+                                self.current_title_index.clone(),
+                                self.titles.clone(),
                             );
                             self.show_link_title_popup = false;
-                            self.linked_pairs = get_linked_pairs(self.project_directory.clone());
+                            self.linked_pairs = get_linked_pairs(
+                                self.project_directory.clone(),
+                                self.titles.clone(),
+                            );
                         }
 
                         if ui.button("✖ Cancel").clicked() {
@@ -368,21 +367,17 @@ impl Structurer {
                                 .clone(),
                         );
                         //Removing the point from all titles in state
-                        for title_id in self.title_order.clone() {
-                            self.titles
-                                .get_mut(&title_id)
-                                .unwrap()
-                                .point_ids
-                                .retain(|x| {
-                                    *x != self.current_points[self.point_requesting_action_index]
-                                        .id
-                                        .clone()
-                                })
+                        for title in self.titles.iter_mut() {
+                            title.point_ids.retain(|x| {
+                                *x != self.current_points[self.point_requesting_action_index]
+                                    .id
+                                    .clone()
+                            })
                         }
                         //Loading the remaining points
                         self.current_points = load_points_from_title_id(
                             self.project_directory.clone(),
-                            self.current_title.id.clone(),
+                            self.titles[self.current_title_index].id.clone(),
                         );
                         self.show_confirm_delete_popup = false;
                     }

@@ -150,8 +150,7 @@ impl Structurer {
         if file_path.exists() {
             let file =
                 File::open(&file_path).expect("Error while opening file from load_from_library");
-            self.title_order = Vec::new();
-            self.titles = HashMap::new();
+            self.titles = Vec::new();
             for line in BufReader::new(file).lines() {
                 let split_line: Vec<String> =
                     line.unwrap().split("@").map(|s| s.to_string()).collect();
@@ -160,9 +159,7 @@ impl Structurer {
                     temp_title.id = split_line[0].clone();
                     temp_title.name = split_line[1].clone();
                     temp_title.point_ids = split_line[2..].to_vec();
-                    self.title_order.push(temp_title.id.clone());
-                    self.titles
-                        .insert(temp_title.id.clone(), temp_title.clone());
+                    self.titles.push(temp_title.clone());
                 }
             }
         }
@@ -177,7 +174,13 @@ impl Structurer {
                 let split_line: Vec<String> =
                     line.unwrap().split("@").map(|s| s.to_string()).collect();
                 if split_line.len() == 2 && split_line[0] != "" {
-                    self.titles.get_mut(&split_line[0]).unwrap().image.path = split_line[1].clone();
+                    //If this is too slow replace it with a hashmap
+                    for title in self.titles.iter_mut() {
+                        if title.id == split_line[0] {
+                            title.image.path = split_line[1].clone();
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -190,7 +193,7 @@ pub fn save_old_add_new_points(
     current_title: Title,
     current_points: Vec<Point>,
     new_title: Title,
-) -> (Title, Vec<Point>) {
+) -> Vec<Point> {
     //Saving the title of the curent page before switching
     //First checking if the file exists
     let temp_file_path_for_check: PathBuf = [
@@ -203,10 +206,10 @@ pub fn save_old_add_new_points(
         save_title(project_directory.clone(), current_title.clone());
     }
     let mut return_current_points: Vec<Point> = Vec::new();
-    let mut return_title = new_title.clone();
-    //Updating the links for the new title_id
-    return_title.links = title_is_linked_with(project_directory.clone(), new_title.id.clone());
-    return_title.image = get_title_image(project_directory.clone(), new_title.id);
+    //let mut return_title = new_title.clone();
+    ////Updating the links for the new title_id
+    //return_title.links = title_is_linked_with(project_directory.clone(), new_title.id.clone());
+    //return_title.image = get_title_image(project_directory.clone(), new_title.id);
     //Save old points => Remove old points => Add new points
     for point in current_points.clone() {
         save_point(project_directory.clone(), point);
@@ -219,5 +222,5 @@ pub fn save_old_add_new_points(
         new_point.images = get_point_images(project_directory.clone(), new_point_id.clone());
         return_current_points.push(new_point);
     }
-    return (return_title, return_current_points);
+    return return_current_points;
 }

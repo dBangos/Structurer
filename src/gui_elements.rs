@@ -9,7 +9,6 @@ use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
 use eframe::egui::{self, RichText};
 use rfd::FileDialog;
-use std::collections::HashMap;
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -18,10 +17,8 @@ impl Structurer {
                 if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
                     //Resetting state in case old values don't get overwritten, in the absence of a
                     //previous library
-                    self.titles = HashMap::new();
-                    self.title_order = Vec::new();
-                    self.current_points = Vec::new();
-                    self.current_title = Title::default();
+                    self.titles = Vec::new();
+                    self.current_title_index = 0;
                     self.view_scale = 1.0;
                     self.project_directory = dir_path;
                     let _ = self.save_to_config();
@@ -30,7 +27,10 @@ impl Structurer {
                 self.load_from_library();
             }
             if ui.button("💾 Save").clicked() {
-                match save_title(self.project_directory.clone(), self.current_title.clone()) {
+                match save_title(
+                    self.project_directory.clone(),
+                    self.titles[self.current_title_index].clone(),
+                ) {
                     Some(()) => {
                         for point in self.current_points.clone() {
                             save_to_filename(
@@ -39,8 +39,6 @@ impl Structurer {
                                 point.content,
                             );
                         }
-                        *self.titles.get_mut(&self.current_title.id).unwrap() =
-                            self.current_title.clone();
                         //Saving here so save button updates the point_text_size on the json file
                         let _ = self.save_to_config();
                     }
@@ -55,45 +53,42 @@ impl Structurer {
                 //Create new title files
                 let new_title_id = add_title(self.project_directory.clone());
                 //Add new title to state
-                self.title_order.push(new_title_id.clone());
                 let mut temp_title: Title = Title::default();
                 temp_title.id = new_title_id.clone();
                 temp_title.name = "New title".to_string();
-                self.titles
-                    .insert(temp_title.id.clone(), temp_title.clone());
-                //Switch focus to the new title page
-                (self.current_title, self.current_points) = save_old_add_new_points(
-                    self.project_directory.clone(),
-                    self.current_title.clone(),
-                    self.current_points.clone(),
-                    self.titles[self
-                        .title_order
-                        .last()
-                        .expect("Error while accesing last title")]
-                    .clone(),
-                );
                 //Add point to the new title
-                let temp_point = add_point(
-                    self.project_directory.clone(),
-                    self.current_title.id.clone(),
-                );
+                let temp_point = add_point(self.project_directory.clone(), temp_title.id.clone());
                 match temp_point {
                     Some(p) => {
                         self.current_points.push(p.clone());
                         //Add new point to state
-                        self.titles
-                            .get_mut(&new_title_id)
-                            .unwrap()
-                            .point_ids
-                            .push(p.id);
+                        temp_title.point_ids.push(p.id);
                     }
                     None => (),
                 }
+                //Switch focus to the new title page
+                self.titles.push(temp_title);
+                if self.title_loaded {
+                    self.current_points = save_old_add_new_points(
+                        self.project_directory.clone(),
+                        self.titles[self.current_title_index].clone(),
+                        self.current_points.clone(),
+                        self.titles[self.titles.len() - 1].clone(),
+                    );
+                } else {
+                    self.current_points = save_old_add_new_points(
+                        self.project_directory.clone(),
+                        Title::default(),
+                        self.current_points.clone(),
+                        self.titles[0].clone(),
+                    );
+                }
+                self.current_title_index = self.titles.len() - 1;
             }
             if ui.button("↔ Link Title").clicked() {
-                self.current_title.links = title_is_linked_with(
+                self.titles[self.current_title_index].links = title_is_linked_with(
                     self.project_directory.clone(),
-                    self.current_title.id.clone(),
+                    self.titles[self.current_title_index].id.clone(),
                 );
                 self.show_link_title_popup = true;
             }
@@ -104,16 +99,12 @@ impl Structurer {
             if ui.button("+ Add Point").clicked() {
                 let temp_point = add_point(
                     self.project_directory.clone(),
-                    self.current_title.id.clone(),
+                    self.titles[self.current_title_index].id.clone(),
                 );
                 match temp_point {
                     Some(p) => {
                         self.current_points.push(p.clone());
-                        self.titles
-                            .get_mut(&self.current_title.id)
-                            .unwrap()
-                            .point_ids
-                            .push(p.id);
+                        self.titles[self.current_title_index].point_ids.push(p.id);
                     }
                     None => (),
                 }
@@ -131,18 +122,20 @@ impl Structurer {
         ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for title_id in self.title_order.clone().into_iter() {
-                if ui.button(self.titles[&title_id].name.clone()).clicked() {
-                    if self.current_title.id.len() > 0 {
-                        *self.titles.get_mut(&self.current_title.id).unwrap() =
-                            self.current_title.clone();
+            for index in 0..self.titles.len() {
+                if ui.button(self.titles[index].name.clone()).clicked() {
+                    if self.title_loaded == false {
+                        self.title_loaded = true;
+                        self.current_title_index = index;
                     }
-                    (self.current_title, self.current_points) = save_old_add_new_points(
+
+                    self.current_points = save_old_add_new_points(
                         self.project_directory.clone(),
-                        self.current_title.clone(),
+                        self.titles[self.current_title_index].clone(),
                         self.current_points.clone(),
-                        self.titles[&title_id].clone(),
+                        self.titles[index].clone(),
                     );
+                    self.current_title_index = index;
                 }
             }
         });
@@ -158,24 +151,23 @@ impl Structurer {
         ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            for (title_id, is_linked) in self
-                .title_order
-                .clone()
-                .into_iter()
-                .zip(self.current_title.links.clone())
-            {
-                if is_linked {
-                    if ui.button(self.titles[&title_id].name.clone()).clicked() {
-                        if self.current_title.id.len() > 0 {
-                            *self.titles.get_mut(&self.current_title.id).unwrap() =
-                                self.current_title.clone();
+            if self.title_loaded {
+                for (index, is_linked) in self.titles[self.current_title_index]
+                    .links
+                    .clone()
+                    .into_iter()
+                    .enumerate()
+                {
+                    if is_linked {
+                        if ui.button(self.titles[index].name.clone()).clicked() {
+                            self.current_points = save_old_add_new_points(
+                                self.project_directory.clone(),
+                                self.titles[self.current_title_index].clone(),
+                                self.current_points.clone(),
+                                self.titles[index].clone(),
+                            );
+                            self.current_title_index = index;
                         }
-                        (self.current_title, self.current_points) = save_old_add_new_points(
-                            self.project_directory.clone(),
-                            self.current_title.clone(),
-                            self.current_points.clone(),
-                            self.titles[&title_id].clone(),
-                        );
                     }
                 }
             }
@@ -185,8 +177,8 @@ impl Structurer {
     //Contains the title image and fields
     pub fn title_layout(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            if self.current_title.image.path.len() > 1 {
-                let file_path = self.current_title.image.path.clone();
+            if self.titles[self.current_title_index].image.path.len() > 1 {
+                let file_path = self.titles[self.current_title_index].image.path.clone();
                 let image = egui::Image::new(format!("file://{file_path}"))
                     .fit_to_exact_size([220.0, 220.0].into())
                     .sense(egui::Sense::click());
@@ -204,7 +196,7 @@ impl Structurer {
             }
             if ui
                 .label(
-                    RichText::new(self.current_title.name.clone())
+                    RichText::new(self.titles[self.current_title_index].name.clone())
                         .text_style(title_style())
                         .strong(),
                 )

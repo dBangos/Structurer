@@ -30,7 +30,7 @@ impl Structurer {
             self.project_directory = new_config.project_directory;
             self.load_from_library();
         }
-        self.linked_pairs = get_linked_pairs(self.project_directory.clone());
+        self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
     }
 
     //Saving stuff to the config file in the default OS location

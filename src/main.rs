@@ -15,7 +15,6 @@ mod save_load {
     pub mod title;
 }
 use egui::{Pos2, Vec2};
-use std::collections::HashMap;
 
 #[derive(Clone)]
 //Changed this to ImageStruct so as not to match egui::Image
@@ -80,11 +79,10 @@ impl Default for Title {
 
 struct Structurer {
     project_directory: PathBuf,
-    titles: HashMap<String, Title>,
-    title_order: Vec<String>,
-    current_points: Vec<Point>, //Current_point(point_id,point_content)
-    current_title: Title,
-
+    titles: Vec<Title>,
+    title_loaded: bool,
+    current_title_index: usize,
+    current_points: Vec<Point>,
     show_confirm_delete_popup: bool,
     point_requesting_action_index: usize, //The index of the point in current_points
     show_share_point_popup: bool,
@@ -98,7 +96,7 @@ struct Structurer {
     show_title_edit_popup: bool,
     point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
     drag_distance: Vec2,
-    linked_pairs: Vec<(String, String)>,
+    linked_pairs: Vec<(usize, usize)>,
     initialized: bool,
     view_scale: f32,
     stop_clicked_nodes: bool,
@@ -108,10 +106,10 @@ impl Default for Structurer {
     fn default() -> Self {
         Self {
             project_directory: Default::default(),
-            titles: HashMap::new(),
-            title_order: Vec::new(),
-            current_points: Vec::new(), //Current_point(point_id,point_content)
-            current_title: Title::default(),
+            titles: Vec::new(),
+            title_loaded: false,
+            current_title_index: 0,
+            current_points: Vec::new(),
             show_confirm_delete_popup: false,
             point_requesting_action_index: 0,
             show_share_point_popup: false,
@@ -220,8 +218,8 @@ impl eframe::App for Structurer {
                     ctx.request_repaint();
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                //Don't render anything if no title is loaded
-                if self.current_title.id.len() > 1 {
+                //Render stuff only if a title is loaded
+                if self.title_loaded == true {
                     ui.vertical_centered(|ui| {
                         self.title_layout(ui);
                         ui.separator();
