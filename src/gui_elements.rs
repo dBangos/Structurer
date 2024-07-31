@@ -1,7 +1,7 @@
 use crate::save_load::general::{save_old_add_new_points, save_to_filename};
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
-use crate::save_load::point::add_point;
+use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
@@ -33,11 +33,7 @@ impl Structurer {
                 ) {
                     Some(()) => {
                         for point in self.current_points.clone() {
-                            save_to_filename(
-                                self.project_directory.clone(),
-                                point.id,
-                                point.content,
-                            );
+                            save_point(self.project_directory.clone(), point);
                         }
                         //Saving here so save button updates the point_text_size on the json file
                         let _ = self.save_to_config();
@@ -264,7 +260,9 @@ impl Structurer {
                         }
                     });
                     ui.vertical(|ui| {
-                        ui.horizontal(|ui| {
+                        egui::Grid::new(point.id.clone()).show(ui, |ui| {
+                            println!("{}", ui.available_width());
+                            let mut width_counter: f32 = 0.0;
                             for (image_index, image) in point.images.clone().into_iter().enumerate()
                             {
                                 let file_path = image.path.clone();
@@ -272,6 +270,7 @@ impl Structurer {
                                     .fit_to_original_size(2.0)
                                     .max_height(70.0)
                                     .sense(egui::Sense::click());
+                                //width_counter
                                 if ui.add(curr_image).clicked() {
                                     self.point_image_requesting_popup = (index, image_index);
                                     self.show_point_image_popup = true;
