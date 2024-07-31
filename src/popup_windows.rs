@@ -204,6 +204,8 @@ impl Structurer {
                                 self.current_points.push(new_point);
                             }
                         }
+                        self.linked_pairs =
+                            get_linked_pairs(self.project_directory.clone(), self.titles.clone());
                         self.show_title_delete_popup = false;
                     }
                     if ui.button("✖ Cancel").clicked() {
