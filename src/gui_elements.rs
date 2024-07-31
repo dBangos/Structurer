@@ -261,10 +261,10 @@ impl Structurer {
                         }
                     });
                     ui.vertical(|ui| {
-                        egui::Grid::new(point.id.clone())
-                            .max_col_width(ui.available_width())
-                            .show(ui, |ui| {
-                                let mut width_counter: f32 = 0.0;
+                        ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
+                        ui.with_layout(
+                            egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
+                            |ui| {
                                 for (image_index, image) in
                                     point.images.clone().into_iter().enumerate()
                                 {
@@ -274,29 +274,14 @@ impl Structurer {
                                             .fit_to_original_size(2.0)
                                             .max_height(70.0)
                                             .sense(egui::Sense::click());
-                                    let image_size = curr_image.load_and_calc_size(
-                                        ui,
-                                        Vec2::new(ui.available_width(), 70.0),
-                                    );
-                                    //The extra value is the grid spacing
 
-                                    match image_size {
-                                        Some(size) => {
-                                            width_counter += size.x + 7.0;
-                                            if width_counter > ui.available_width() {
-                                                width_counter = size.x + 7.0;
-                                                ui.end_row();
-                                            }
-                                            if ui.add(curr_image).clicked() {
-                                                self.point_image_requesting_popup =
-                                                    (index, image_index);
-                                                self.show_point_image_popup = true;
-                                            }
-                                        }
-                                        None => (),
+                                    if ui.add(curr_image).clicked() {
+                                        self.point_image_requesting_popup = (index, image_index);
+                                        self.show_point_image_popup = true;
                                     }
                                 }
-                            });
+                            },
+                        );
 
                         ui.add_sized(
                             ui.available_size(),
