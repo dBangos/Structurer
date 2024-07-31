@@ -136,6 +136,10 @@ impl Structurer {
                         self.titles[index].clone(),
                     );
                     self.current_title_index = index;
+                    self.titles[index].links = title_is_linked_with(
+                        self.project_directory.clone(),
+                        self.titles[index].id.clone(),
+                    );
                 }
             }
         });
@@ -167,6 +171,10 @@ impl Structurer {
                                 self.titles[index].clone(),
                             );
                             self.current_title_index = index;
+                            self.titles[index].links = title_is_linked_with(
+                                self.project_directory.clone(),
+                                self.titles[index].id.clone(),
+                            );
                         }
                     }
                 }
