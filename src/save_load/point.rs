@@ -11,31 +11,34 @@ use std::path::PathBuf;
 use uuid::Uuid;
 //Adds a point to the current page/title, create the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
-pub fn add_point(project_dir: PathBuf, title_id: String) -> Point {
-    let id = Uuid::new_v4();
-    save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
-    add_element_to_line(
-        project_dir.clone(),
-        title_id,
-        id.to_string(),
-        "Library".to_string(),
-    );
+pub fn add_point(project_dir: PathBuf, title_id: String) -> Option<Point> {
+    if title_id != String::new() && project_dir != PathBuf::new() {
+        let id = Uuid::new_v4();
+        save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
+        add_element_to_line(
+            project_dir.clone(),
+            title_id,
+            id.to_string(),
+            "Library".to_string(),
+        );
 
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
-        .iter()
-        .collect();
-    let mut file = OpenOptions::new()
-        .append(true)
-        .open(file_path)
-        .expect("Error while opening sources file from add_point");
-    file.write(("\n".to_string() + &id.to_string()).as_bytes())
-        .expect("Error while writing to sourcse file from add_point");
-    let mut new_point: Point = Point::default();
-    new_point.id = id.to_string();
-    new_point.content = "New point".to_string();
-    return new_point;
+        let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
+            .iter()
+            .collect();
+        let mut file = OpenOptions::new()
+            .append(true)
+            .open(file_path)
+            .expect("Error while opening sources file from add_point");
+        file.write(("\n".to_string() + &id.to_string()).as_bytes())
+            .expect("Error while writing to sourcse file from add_point");
+        let mut new_point: Point = Point::default();
+        new_point.id = id.to_string();
+        new_point.content = "New point".to_string();
+        return Some(new_point);
+    } else {
+        return None;
+    }
 }
-
 //Gets a point id, deletes the corresponding file and all library mentions
 pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     let file_path: PathBuf = [

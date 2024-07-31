@@ -25,7 +25,7 @@ pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: ImageSt
         }
         content.push(split_line.join("@"));
     }
-    let _ = save_to_filename(
+    save_to_filename(
         project_dir.clone(),
         point_id.to_string(),
         content.join("\n"),

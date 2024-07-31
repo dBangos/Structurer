@@ -110,37 +110,43 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) -> () {
 }
 //Changes the title in a title_id file. The title is always in the first line, so the first line
 //just gets overwritten
-pub fn save_title(project_dir: PathBuf, title: Title) -> () {
+pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let mut content: Vec<String> = Vec::new();
-    content.push(title.name.clone());
-    content.push("Version:".to_string() + &VERSION.to_string());
-    content.push("Image@".to_string() + &title.image.path + "@" + &title.image.description);
-    save_to_filename(project_dir.clone(), title.id.clone(), content.join("\n"));
-    //Updating the Image file
-    replace_line(
-        project_dir.clone(),
-        title.id.clone(),
-        title.image.path,
-        "Images".to_string(),
-    );
-    //Updating the library file
-    let mut content: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
-        .iter()
-        .collect();
-    let file = File::open(&file_path)
-        .expect("Error while opening the library file from change_title_name");
-    for line in BufReader::new(file).lines() {
-        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == title.id {
-            split_line[1] = title.name.clone();
+    if project_dir != PathBuf::new() && title.id != String::new() {
+        let mut content: Vec<String> = Vec::new();
+        content.push(title.name.clone());
+        content.push("Version:".to_string() + &VERSION.to_string());
+        content.push("Image@".to_string() + &title.image.path + "@" + &title.image.description);
+        save_to_filename(project_dir.clone(), title.id.clone(), content.join("\n"));
+        //Updating the Image file
+        replace_line(
+            project_dir.clone(),
+            title.id.clone(),
+            title.image.path,
+            "Images".to_string(),
+        );
+        //Updating the library file
+        let mut content: Vec<String> = Vec::new();
+        let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
+            .iter()
+            .collect();
+        let file = File::open(&file_path)
+            .expect("Error while opening the library file from change_title_name");
+        for line in BufReader::new(file).lines() {
+            let mut split_line: Vec<String> =
+                line.unwrap().split("@").map(|s| s.to_string()).collect();
+            if split_line[0] == title.id && split_line.len() > 1 {
+                split_line[1] = title.name.clone();
+            }
+            content.push(split_line.join("@"));
         }
-        content.push(split_line.join("@"));
+        save_to_filename(
+            project_dir.clone(),
+            "Library".to_string(),
+            content.join("\n"),
+        );
+        return Some(());
+    } else {
+        return None;
     }
-    let _ = save_to_filename(
-        project_dir.clone(),
-        "Library".to_string(),
-        content.join("\n"),
-    );
 }
