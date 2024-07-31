@@ -1,9 +1,7 @@
-use crate::save_load::image::{get_point_images, get_title_image};
-use crate::save_load::link::title_is_linked_with;
+use crate::save_load::image::get_point_images;
 use crate::save_load::point::{get_point_content_from_file, save_point};
 use crate::save_load::title::save_title;
 use crate::{Point, Structurer, Title};
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;

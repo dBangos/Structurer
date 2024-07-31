@@ -1,7 +1,4 @@
-use eframe::epaint::Vertex;
-
 use crate::save_load::general::save_to_filename;
-use crate::save_load::title;
 use crate::Title;
 use std::collections::HashMap;
 use std::fs::File;
@@ -18,9 +15,7 @@ pub fn get_linked_pairs(project_dir: PathBuf, title_list: Vec<Title>) -> Vec<(us
     let all_links = all_titles_links(project_dir.clone());
     for (title, links) in all_links {
         for link in links {
-            if !(result.contains(&(index_id_map[&title], index_id_map[&link]))
-                || result.contains(&(index_id_map[&link], index_id_map[&title])))
-            {
+            if !(result.contains(&(index_id_map[&link], index_id_map[&title]))) {
                 result.push((index_id_map[&title], index_id_map[&link]));
             }
         }
@@ -41,7 +36,7 @@ pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
                 Ok(l) => {
                     if l != "" {
                         let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                        if split_line.len() > 2 {
+                        if split_line.len() > 1 {
                             result.push((split_line[0].to_string(), split_line[1..].to_vec()));
                         } else {
                             result.push((split_line[0].to_string(), vec![]));
