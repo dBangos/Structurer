@@ -32,21 +32,16 @@ pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
         let file = File::open(&file_path)
             .expect("Error while opening the links file from title_is_linked_with");
         for line in BufReader::new(file).lines() {
-            match line {
-                Ok(l) => {
-                    if l != "" {
-                        let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                        if split_line.len() > 1 {
-                            result.push((split_line[0].to_string(), split_line[1..].to_vec()));
-                        } else {
-                            result.push((split_line[0].to_string(), vec![]));
-                        }
+            if let Ok(l) = line {
+                if l != "" {
+                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    if split_line.len() > 1 {
+                        result.push((split_line[0].to_string(), split_line[1..].to_vec()));
+                    } else {
+                        result.push((split_line[0].to_string(), vec![]));
                     }
                 }
-                Err(_) => (),
             }
-            //This is greater than 2 cause @ is added at the end of each name like
-            //title_id@title_id@
         }
     }
     return result;
@@ -61,14 +56,11 @@ pub fn title_is_linked_with(project_dir: PathBuf, title_id: String) -> Vec<bool>
     let file = File::open(&file_path)
         .expect("Error while opening the links file from title_is_linked_with");
     for line in BufReader::new(file).lines() {
-        match line {
-            Ok(l) => {
-                if l != "" {
-                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                    result.push(split_line.contains(&title_id));
-                }
+        if let Ok(l) = line {
+            if l != "" {
+                let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                result.push(split_line.contains(&title_id));
             }
-            Err(_) => (),
         }
     }
     return result;
@@ -103,39 +95,36 @@ pub fn link_unlink_title(
         .expect("Error while opening the links file from point_is_shared_with");
     let mut empty_line_offset: usize = 0;
     for (initial_index, line) in BufReader::new(file).lines().enumerate() {
-        match line {
-            Ok(l) => {
-                let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                if split_line[0] == "" {
-                    empty_line_offset += 1;
-                } else {
-                    let index = initial_index - empty_line_offset;
-                    assert_eq!(split_line[0], title_list[index].id);
-                    //If this is the line of the title being checked
-                    if curr_title_index == index {
-                        split_line = Vec::new();
-                        split_line.push(title_list[curr_title_index].id.clone());
-                        for id in id_list.clone() {
-                            split_line.push(id);
-                        }
+        if let Ok(l) = line {
+            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] == "" {
+                empty_line_offset += 1;
+            } else {
+                let index = initial_index - empty_line_offset;
+                assert_eq!(split_line[0], title_list[index].id);
+                //If this is the line of the title being checked
+                if curr_title_index == index {
+                    split_line = Vec::new();
+                    split_line.push(title_list[curr_title_index].id.clone());
+                    for id in id_list.clone() {
+                        split_line.push(id);
                     }
-                    //If this title should be linked
-                    else if title_list[curr_title_index].links[index] {
-                        if !split_line.contains(&title_list[curr_title_index].id.clone()) {
-                            split_line.push(title_list[curr_title_index].id.clone());
-                        }
-                    }
-                    //If this title shouldn't be linked
-                    else {
-                        if split_line.contains(&title_list[curr_title_index].id.clone()) {
-                            split_line
-                                .retain(|value| *value != title_list[curr_title_index].id.clone());
-                        }
-                    }
-                    content.push(split_line.join("@"));
                 }
+                //If this title should be linked
+                else if title_list[curr_title_index].links[index] {
+                    if !split_line.contains(&title_list[curr_title_index].id.clone()) {
+                        split_line.push(title_list[curr_title_index].id.clone());
+                    }
+                }
+                //If this title shouldn't be linked
+                else {
+                    if split_line.contains(&title_list[curr_title_index].id.clone()) {
+                        split_line
+                            .retain(|value| *value != title_list[curr_title_index].id.clone());
+                    }
+                }
+                content.push(split_line.join("@"));
             }
-            Err(_) => (),
         }
     }
     let _ = save_to_filename(project_dir.clone(), "Links".to_string(), content.join("\n"));

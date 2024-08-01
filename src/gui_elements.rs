@@ -28,18 +28,15 @@ impl Structurer {
                 self.load_from_library();
             }
             if ui.button("💾 Save").clicked() {
-                match save_title(
+                if let Some(()) = save_title(
                     self.project_directory.clone(),
                     self.titles[self.current_title_index].clone(),
                 ) {
-                    Some(()) => {
-                        for point in self.current_points.clone() {
-                            save_point(self.project_directory.clone(), point);
-                        }
-                        //Saving here so save button updates the point_text_size on the json file
-                        let _ = self.save_to_config();
+                    for point in self.current_points.clone() {
+                        save_point(self.project_directory.clone(), point);
                     }
-                    None => (),
+                    //Saving here so save button updates the point_text_size on the json file
+                    let _ = self.save_to_config();
                 }
             }
             ui.separator();
@@ -55,13 +52,10 @@ impl Structurer {
                 temp_title.name = "New title".to_string();
                 //Add point to the new title
                 let temp_point = add_point(self.project_directory.clone(), temp_title.id.clone());
-                match temp_point {
-                    Some(p) => {
-                        self.current_points.push(p.clone());
-                        //Add new point to state
-                        temp_title.point_ids.push(p.id);
-                    }
-                    None => (),
+                if let Some(p) = temp_point {
+                    self.current_points.push(p.clone());
+                    //Add new point to state
+                    temp_title.point_ids.push(p.id);
                 }
                 //Switch focus to the new title page
                 self.titles.push(temp_title);
@@ -94,16 +88,12 @@ impl Structurer {
             }
             ui.separator();
             if ui.button("+ Add Point").clicked() {
-                let temp_point = add_point(
+                if let Some(p) = add_point(
                     self.project_directory.clone(),
                     self.titles[self.current_title_index].id.clone(),
-                );
-                match temp_point {
-                    Some(p) => {
-                        self.current_points.push(p.clone());
-                        self.titles[self.current_title_index].point_ids.push(p.id);
-                    }
-                    None => (),
+                ) {
+                    self.current_points.push(p.clone());
+                    self.titles[self.current_title_index].point_ids.push(p.id);
                 }
             }
         });
@@ -218,6 +208,7 @@ impl Structurer {
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         ui.vertical_centered(|ui| {
             for (index, point) in self.current_points.iter_mut().enumerate() {
+                ui.add_space(5.0);
                 // Container for elements of each point
                 ui.horizontal(|ui| {
                     ui.vertical(|ui| {
@@ -241,22 +232,19 @@ impl Structurer {
                             self.show_source_popup = true;
                         }
                         if ui.button("🖼 Add Image").clicked() {
-                            let file = FileDialog::new()
+                            if let Some(f) = FileDialog::new()
                                 .add_filter("image", &["jpeg", "jpg", "png"])
                                 .set_directory(self.project_directory.clone())
-                                .pick_file();
-                            match file {
-                                Some(f) => {
-                                    let mut new_image: ImageStruct = ImageStruct::default();
-                                    new_image.path = f.to_string_lossy().to_string();
-                                    point.images.push(new_image.clone());
-                                    add_image_to_point(
-                                        self.project_directory.clone(),
-                                        point.id.clone(),
-                                        new_image,
-                                    );
-                                }
-                                None => (),
+                                .pick_file()
+                            {
+                                let mut new_image: ImageStruct = ImageStruct::default();
+                                new_image.path = f.to_string_lossy().to_string();
+                                point.images.push(new_image.clone());
+                                add_image_to_point(
+                                    self.project_directory.clone(),
+                                    point.id.clone(),
+                                    new_image,
+                                );
                             }
                         }
                     });
