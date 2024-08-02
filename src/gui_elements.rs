@@ -110,18 +110,12 @@ impl Structurer {
         ui.separator();
         ui.vertical(|ui| {
             for index in 0..self.titles.len() {
-                //If the string is too long shorten it and add ...
-                let button_name: String;
-                if (self.titles[index].name.clone().len() * 8) as f32 > ui.available_size().x {
-                    let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
-                    button_name = self.titles[index].name.clone()[..char_count].to_string() + "...";
-                } else {
-                    button_name = self.titles[index].name.clone();
-                }
-
                 //Binding each title button to loading the corresponding points
                 if ui
-                    .add(Button::new(button_name).wrap_mode(TextWrapMode::Extend))
+                    .add(
+                        Button::new(self.titles[index].name.clone())
+                            .wrap_mode(TextWrapMode::Truncate),
+                    )
                     .clicked()
                 {
                     if self.title_loaded == false {
@@ -163,21 +157,12 @@ impl Structurer {
                     .enumerate()
                 {
                     if is_linked {
-                        //If the string is too long shorten it and add ...
-                        let button_name: String;
-                        if (self.titles[index].name.clone().len() * 8) as f32
-                            > ui.available_size().x
-                        {
-                            let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
-                            button_name =
-                                self.titles[index].name.clone()[..char_count].to_string() + "...";
-                        } else {
-                            button_name = self.titles[index].name.clone();
-                        }
-
                         //Binding each title button to loading the corresponding points
                         if ui
-                            .add(Button::new(button_name).wrap_mode(TextWrapMode::Extend))
+                            .add(
+                                Button::new(self.titles[index].name.clone())
+                                    .wrap_mode(TextWrapMode::Truncate),
+                            )
                             .clicked()
                         {
                             self.current_points = save_old_add_new_points(
