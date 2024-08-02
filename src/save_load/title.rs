@@ -61,12 +61,14 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
         .collect();
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] != title_id {
-            content.push(split_line.join("@"));
-        } else {
-            for item in &split_line[2..] {
-                deleted_line.push((item.to_string(), false));
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] != title_id {
+                content.push(split_line.join("@"));
+            } else {
+                for item in &split_line[2..] {
+                    deleted_line.push((item.to_string(), false));
+                }
             }
         }
     }
@@ -81,11 +83,13 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     //Checking for points only on this title
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        for (point_id, is_shared) in deleted_line.iter_mut() {
-            if *is_shared == false {
-                if split_line.contains(&point_id) {
-                    *is_shared = true;
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            for (point_id, is_shared) in deleted_line.iter_mut() {
+                if *is_shared == false {
+                    if split_line.contains(&point_id) {
+                        *is_shared = true;
+                    }
                 }
             }
         }
@@ -129,12 +133,13 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
         let file = File::open(&file_path)
             .expect("Error while opening the library file from change_title_name");
         for line in BufReader::new(file).lines() {
-            let mut split_line: Vec<String> =
-                line.unwrap().split("@").map(|s| s.to_string()).collect();
-            if split_line[0] == title.id && split_line.len() > 1 {
-                split_line[1] = title.name.clone();
+            if let Ok(l) = line {
+                let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                if split_line[0] == title.id && split_line.len() > 1 {
+                    split_line[1] = title.name.clone();
+                }
+                content.push(split_line.join("@"));
             }
-            content.push(split_line.join("@"));
         }
         save_to_filename(
             project_dir.clone(),

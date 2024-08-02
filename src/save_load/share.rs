@@ -12,8 +12,10 @@ pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<bool>
     let file = File::open(&file_path)
         .expect("Error while opening the library file from point_is_shared_with");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        result.push(split_line.contains(&point_id));
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            result.push(split_line.contains(&point_id));
+        }
     }
     return result;
 }
@@ -32,18 +34,16 @@ pub fn share_unshare_point(project_dir: PathBuf, point_id: String, checklist: Ve
         .into_iter()
         .zip(checklist.into_iter())
     {
-        let mut split_line: Vec<String> = line_read
-            .unwrap()
-            .split("@")
-            .map(|s| s.to_string())
-            .collect();
-        if is_shared && !split_line.contains(&point_id) {
-            split_line.push(point_id.clone());
-        } else if !is_shared && split_line.contains(&point_id) {
-            split_line.retain(|value| *value != point_id);
-        }
+        if let Ok(line) = line_read {
+            let mut split_line: Vec<String> = line.split("@").map(|s| s.to_string()).collect();
+            if is_shared && !split_line.contains(&point_id) {
+                split_line.push(point_id.clone());
+            } else if !is_shared && split_line.contains(&point_id) {
+                split_line.retain(|value| *value != point_id);
+            }
 
-        content.push(split_line.join("@"));
+            content.push(split_line.join("@"));
+        }
     }
     let _ = save_to_filename(
         project_dir.clone(),

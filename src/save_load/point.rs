@@ -62,9 +62,11 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point: Point) -> String
     let file =
         File::open(&file_path).expect("Error while opening file from get_point_content_from_file");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] != "Image" {
-            resutl_string = resutl_string + &split_line.join("@");
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] != "Image" {
+                resutl_string = resutl_string + &split_line.join("@");
+            }
         }
     }
     return resutl_string;
@@ -94,10 +96,12 @@ pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<
     let file =
         File::open(&file_path).expect("Error while opening file from load_points_from_title_id");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == title_id {
-            library_line = split_line[2..].to_vec();
-            break;
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] == title_id {
+                library_line = split_line[2..].to_vec();
+                break;
+            }
         }
     }
     for point in library_line.into_iter() {

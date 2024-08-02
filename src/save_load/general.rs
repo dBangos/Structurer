@@ -25,11 +25,13 @@ pub fn add_element_to_line(
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
     let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
     for line in BufReader::new(file).lines() {
-        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == line_identifier {
-            split_line.push(element.to_string());
+        if let Ok(l) = line {
+            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] == line_identifier {
+                split_line.push(element.to_string());
+            }
+            content.push(split_line.join("@"));
         }
-        content.push(split_line.join("@"));
     }
     let _ = save_to_filename(
         project_dir.clone(),
@@ -48,9 +50,11 @@ pub fn delete_line_from_file(project_dir: PathBuf, identifier: String, file_name
     .collect();
     let file = File::open(&file_path).expect("Error while opening file from delete_line_from_file");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0].to_string() != identifier {
-            content.push(split_line.join("@"));
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0].to_string() != identifier {
+                content.push(split_line.join("@"));
+            }
         }
     }
     save_to_filename(
@@ -76,13 +80,14 @@ pub fn delete_all_mentions_from_file(
     let file = File::open(&file_path)
         .expect("Error while opening file from delete_all_mentions_from_file");
     for line in BufReader::new(file).lines() {
-        let split_line: Vec<String> = line
-            .unwrap()
-            .split("@")
-            .map(|s| s.to_string())
-            .filter(|s| *s != identifier)
-            .collect();
-        content.push(split_line.join("@"));
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l
+                .split("@")
+                .map(|s| s.to_string())
+                .filter(|s| *s != identifier)
+                .collect();
+            content.push(split_line.join("@"));
+        }
     }
     let _ = save_to_filename(project_dir.clone(), file_name, content.join("\n"));
 }
@@ -103,13 +108,15 @@ pub fn replace_line(
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
     let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
     for line in BufReader::new(file).lines() {
-        let mut split_line: Vec<String> = line.unwrap().split("@").map(|s| s.to_string()).collect();
-        if split_line[0] == line_identifier {
-            split_line = Vec::new();
-            split_line.push(line_identifier.clone());
-            split_line.push(element.to_string());
+        if let Ok(l) = line {
+            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] == line_identifier {
+                split_line = Vec::new();
+                split_line.push(line_identifier.clone());
+                split_line.push(element.to_string());
+            }
+            content.push(split_line.join("@"));
         }
-        content.push(split_line.join("@"));
     }
     let _ = save_to_filename(
         project_dir.clone(),
@@ -152,17 +159,19 @@ impl Structurer {
                 File::open(&file_path).expect("Error while opening file from load_from_library");
             self.titles = Vec::new();
             for line in BufReader::new(file).lines() {
-                let split_line: Vec<String> =
-                    line.unwrap().split("@").map(|s| s.to_string()).collect();
-                if split_line.len() > 2 {
-                    let mut temp_title: Title = Title::default();
-                    temp_title.id = split_line[0].clone();
-                    temp_title.name = split_line[1].clone();
-                    temp_title.point_ids = split_line[2..].to_vec();
-                    self.titles.push(temp_title.clone());
+                if let Ok(l) = line {
+                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    if split_line.len() > 2 {
+                        let mut temp_title: Title = Title::default();
+                        temp_title.id = split_line[0].clone();
+                        temp_title.name = split_line[1].clone();
+                        temp_title.point_ids = split_line[2..].to_vec();
+                        self.titles.push(temp_title.clone());
+                    }
                 }
             }
         }
+
         //Loading the image data so it can be shown in the node view
         let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Images.txt")]
             .iter()
@@ -171,14 +180,15 @@ impl Structurer {
             let file = File::open(&file_path)
                 .expect("Error while opening Images file from load_from_library");
             for line in BufReader::new(file).lines() {
-                let split_line: Vec<String> =
-                    line.unwrap().split("@").map(|s| s.to_string()).collect();
-                if split_line.len() == 2 && split_line[0] != "" {
-                    //If this is too slow replace it with a hashmap
-                    for title in self.titles.iter_mut() {
-                        if title.id == split_line[0] {
-                            title.image.path = split_line[1].clone();
-                            break;
+                if let Ok(l) = line {
+                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    if split_line.len() == 2 && split_line[0] != "" {
+                        //If this is too slow replace it with a hashmap
+                        for title in self.titles.iter_mut() {
+                            if title.id == split_line[0] {
+                                title.image.path = split_line[1].clone();
+                                break;
+                            }
                         }
                     }
                 }
@@ -207,11 +217,6 @@ pub fn save_old_add_new_points(
         save_title(project_directory.clone(), current_title.clone());
     }
     let mut return_current_points: Vec<Point> = Vec::new();
-    //let mut return_title = new_title.clone();
-    ////Updating the links for the new title_id
-    //return_title.links = title_is_linked_with(project_directory.clone(), new_title.id.clone());
-    //return_title.image = get_title_image(project_directory.clone(), new_title.id);
-    //Save old points => Remove old points => Add new points
     for point in current_points.clone() {
         save_point(project_directory.clone(), point);
     }
