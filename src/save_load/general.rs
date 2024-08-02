@@ -6,6 +6,8 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
+
+use super::link::get_linked_pairs;
 //Gets file, line and element. Appends element to the line
 pub fn add_element_to_line(
     project_dir: PathBuf,
@@ -182,6 +184,7 @@ impl Structurer {
                 }
             }
         }
+        self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
     }
 }
 //Helper function that saves and updates state

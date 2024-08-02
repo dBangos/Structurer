@@ -23,7 +23,7 @@ impl Structurer {
                     self.view_scale = 1.0;
                     self.project_directory = dir_path;
                     let _ = self.save_to_config();
-                    self.create_library_links();
+                    self.create_library_files();
                 }
                 self.load_from_library();
             }

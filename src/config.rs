@@ -22,14 +22,12 @@ impl Structurer {
             let _ = fs::create_dir(dir_path.clone());
         }
         dir_path.push("Structurer_state.json");
-        if dir_path.exists() {
-            let mut file = fs::File::open(&dir_path).expect("Error while opening config file");
-            let mut buff = String::new();
-            file.read_to_string(&mut buff).unwrap();
-            let new_config: Config = serde_json::from_str(&buff).unwrap();
-            self.project_directory = new_config.project_directory;
-            self.load_from_library();
-        }
+        let mut file = fs::File::open(&dir_path).expect("Error while opening config file");
+        let mut buff = String::new();
+        file.read_to_string(&mut buff).unwrap();
+        let new_config: Config = serde_json::from_str(&buff).unwrap();
+        self.project_directory = new_config.project_directory;
+        self.load_from_library();
         self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
     }
 
@@ -50,28 +48,23 @@ impl Structurer {
         Ok(())
     }
 
-    pub fn create_library_links(&mut self) {
-        //Creating a library file if there isn't one
-        let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Library.txt")]
+    //If a library file doesn't exist, create it
+    pub fn create_library_files(&mut self) {
+        let file_vec: Vec<&str> = vec!["Library", "Sources", "Images", "Links"];
+        for file_name in file_vec {
+            let file_path: PathBuf = [
+                self.project_directory.clone(),
+                PathBuf::from(file_name.to_string() + ".txt"),
+            ]
             .iter()
             .collect();
-        if !file_path.exists() {
-            save_to_filename(
-                self.project_directory.clone(),
-                "Library".to_string(),
-                "".to_string(),
-            )
-        }
-        //Creating a links file if there isn't one
-        let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Links.txt")]
-            .iter()
-            .collect();
-        if !file_path.exists() {
-            save_to_filename(
-                self.project_directory.clone(),
-                "Links".to_string(),
-                "".to_string(),
-            )
+            if !file_path.exists() {
+                save_to_filename(
+                    self.project_directory.clone(),
+                    file_name.to_string(),
+                    "".to_string(),
+                )
+            }
         }
     }
 }
