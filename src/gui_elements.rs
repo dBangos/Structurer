@@ -1,3 +1,5 @@
+use std::usize;
+
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
@@ -7,7 +9,8 @@ use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
-use eframe::egui::{self, RichText};
+use eframe::egui::{self, Button, RichText, TextWrapMode};
+use eframe::emath::Numeric;
 use egui::Vec2;
 use rfd::FileDialog;
 impl Structurer {
@@ -108,9 +111,22 @@ impl Structurer {
         );
         ui.separator();
         ui.vertical(|ui| {
-            //Binding each title button to loading the corresponding points
             for index in 0..self.titles.len() {
-                if ui.button(self.titles[index].name.clone()).clicked() {
+                //If the string is too long shorten it and add ...
+                let button_name: String;
+                if (self.titles[index].name.clone().len() * 8) as f32 > ui.available_size().x.into()
+                {
+                    let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
+                    button_name = self.titles[index].name.clone()[..char_count].to_string() + "...";
+                } else {
+                    button_name = self.titles[index].name.clone();
+                }
+
+                //Binding each title button to loading the corresponding points
+                if ui
+                    .add(Button::new(button_name).wrap_mode(TextWrapMode::Extend))
+                    .clicked()
+                {
                     if self.title_loaded == false {
                         self.title_loaded = true;
                         self.current_title_index = index;
@@ -150,7 +166,23 @@ impl Structurer {
                     .enumerate()
                 {
                     if is_linked {
-                        if ui.button(self.titles[index].name.clone()).clicked() {
+                        //If the string is too long shorten it and add ...
+                        let button_name: String;
+                        if (self.titles[index].name.clone().len() * 8) as f32
+                            > ui.available_size().x.into()
+                        {
+                            let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
+                            button_name =
+                                self.titles[index].name.clone()[..char_count].to_string() + "...";
+                        } else {
+                            button_name = self.titles[index].name.clone();
+                        }
+
+                        //Binding each title button to loading the corresponding points
+                        if ui
+                            .add(Button::new(button_name).wrap_mode(TextWrapMode::Extend))
+                            .clicked()
+                        {
                             self.current_points = save_old_add_new_points(
                                 self.project_directory.clone(),
                                 self.titles[self.current_title_index].clone(),

@@ -192,7 +192,7 @@ impl eframe::App for Structurer {
                     });
                 });
             egui::SidePanel::left("left_panel")
-                .resizable(false)
+                .resizable(true)
                 .default_width(150.0)
                 .width_range(80.0..=400.0)
                 .show_inside(ui, |ui| {

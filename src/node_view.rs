@@ -142,11 +142,17 @@ impl Structurer {
                     ));
                     //Adding text to each button
                     ui.fonts(|f| {
+                        let text_on_node: String;
+                        if title.name.clone().len() >= 16 {
+                            text_on_node = title.name.clone()[..13].to_string() + "...";
+                        } else {
+                            text_on_node = title.name.clone();
+                        }
                         title_node_shapes.push(Shape::text(
                             f,
                             point_in_screen,
                             egui::Align2::CENTER_CENTER,
-                            title.name.clone(),
+                            text_on_node,
                             FontId::monospace(10.0 * self.view_scale),
                             Color32::WHITE,
                         ))
