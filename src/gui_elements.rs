@@ -1,5 +1,3 @@
-use std::usize;
-
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
@@ -10,9 +8,9 @@ use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
 use eframe::egui::{self, Button, RichText, TextWrapMode};
-use eframe::emath::Numeric;
 use egui::Vec2;
 use rfd::FileDialog;
+use std::usize;
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -114,8 +112,7 @@ impl Structurer {
             for index in 0..self.titles.len() {
                 //If the string is too long shorten it and add ...
                 let button_name: String;
-                if (self.titles[index].name.clone().len() * 8) as f32 > ui.available_size().x.into()
-                {
+                if (self.titles[index].name.clone().len() * 8) as f32 > ui.available_size().x {
                     let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
                     button_name = self.titles[index].name.clone()[..char_count].to_string() + "...";
                 } else {
@@ -169,7 +166,7 @@ impl Structurer {
                         //If the string is too long shorten it and add ...
                         let button_name: String;
                         if (self.titles[index].name.clone().len() * 8) as f32
-                            > ui.available_size().x.into()
+                            > ui.available_size().x
                         {
                             let char_count = ((ui.available_size().x / 8.0) - 3.0) as usize;
                             button_name =
