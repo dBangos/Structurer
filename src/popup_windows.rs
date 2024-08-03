@@ -99,10 +99,14 @@ impl Structurer {
                     ui.add(image);
                 }
                 ui.label("Description");
-                ui.horizontal(|ui| {
+                ui.vertical_centered(|ui| {
                     ui.text_edit_multiline(
                         &mut self.titles[self.current_title_index].image.description,
                     );
+                });
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    ui.add_space(115.0);
                     if ui.button("🔄 Reset").clicked() {
                         self.titles[self.current_title_index].image.description = String::new();
                         self.titles[self.current_title_index].image.path = String::new();
@@ -179,6 +183,7 @@ impl Structurer {
             .show(ctx, |ui| {
                 ui.label("Are you sure you want to permanently delete this title?");
                 ui.horizontal(|ui| {
+                    ui.add_space(85.0);
                     if ui.button("🗑 Delete").clicked() {
                         delete_title(
                             self.project_directory.clone(),
@@ -219,7 +224,9 @@ impl Structurer {
         assert!(self.current_points.len() >= self.point_requesting_action_index);
         egui::Window::new("")
             .resizable(false)
-            .default_pos([900.0, 400.0])
+            .default_pos([700.0, 200.0])
+            .min_size([300.0, 300.0])
+            .max_size([300.0, 600.0])
             .show(ctx, |ui| {
                 if self.show_share_point_popup {
                     ui.label("Share point:");
@@ -234,7 +241,9 @@ impl Structurer {
                             }
                         });
                     });
+                    ui.add_space(20.0);
                     ui.horizontal(|ui| {
+                        ui.add_space(70.0);
                         if ui.button("✅ Share").clicked() {
                             share_unshare_point(
                                 self.project_directory.clone(),
@@ -331,7 +340,9 @@ impl Structurer {
                             });
                         });
                     });
+                    ui.add_space(20.0);
                     ui.horizontal(|ui| {
+                        ui.add_space(75.0);
                         if ui.button("✅ Link").clicked() {
                             link_unlink_title(
                                 self.project_directory.clone(),
@@ -361,6 +372,7 @@ impl Structurer {
             .show(ctx, |ui| {
                 ui.label("Are you sure you want to permanently delete this point?");
                 ui.horizontal(|ui| {
+                    ui.add_space(85.0);
                     if ui.button("🗑 Delete").clicked() {
                         delete_point(
                             self.project_directory.clone(),
