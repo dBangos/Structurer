@@ -13,11 +13,11 @@ impl Structurer {
                 - self.titles[title_index_2].node_physics_position;
 
             if !self.titles[title_index_1].node_currnetly_clicked {
-                self.titles[title_index_1].node_physics_position -= dir / divider / divider;
+                self.titles[title_index_1].node_physics_position -= dir / divider / divider / 2.0;
             }
 
             if !self.titles[title_index_2].node_currnetly_clicked {
-                self.titles[title_index_2].node_physics_position += dir / divider / divider;
+                self.titles[title_index_2].node_physics_position += dir / divider / divider / 2.0;
             }
         }
         for index in 0..self.titles.len() {

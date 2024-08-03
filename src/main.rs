@@ -124,7 +124,7 @@ impl Default for Structurer {
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             linked_pairs: Vec::new(),
             initialized: false,
-            view_scale: 1.0,
+            view_scale: 0.85,
             stop_clicked_nodes: false,
         }
     }

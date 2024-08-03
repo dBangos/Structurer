@@ -10,7 +10,6 @@ use crate::{ImageStruct, Title};
 use eframe::egui::{self, Button, RichText, TextWrapMode};
 use egui::Vec2;
 use rfd::FileDialog;
-use std::usize;
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -21,12 +20,15 @@ impl Structurer {
                     //previous library
                     self.titles = Vec::new();
                     self.current_title_index = 0;
-                    self.view_scale = 1.0;
+                    self.view_scale = 0.85;
                     self.project_directory = dir_path;
+                    self.current_points = Vec::new();
+                    self.title_loaded = false;
                     let _ = self.save_to_config();
                     self.create_library_files();
+                    self.load_from_library();
+                    ui.ctx().forget_all_images();
                 }
-                self.load_from_library();
             }
             if ui.button("💾 Save").clicked() {
                 if let Some(()) = save_title(
@@ -189,7 +191,8 @@ impl Structurer {
             if self.titles[self.current_title_index].image.path.len() > 1 {
                 let file_path = self.titles[self.current_title_index].image.path.clone();
                 let image = egui::Image::new(format!("file://{file_path}"))
-                    .fit_to_exact_size([220.0, 220.0].into())
+                    .fit_to_original_size(2.0)
+                    .max_height(200.0)
                     .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
                     self.show_title_image_popup = true;
