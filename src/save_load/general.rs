@@ -224,7 +224,7 @@ pub fn save_old_add_new_points(
         let mut new_point: Point = Point::default();
         new_point.id = new_point_id.to_string();
         new_point.content =
-            get_point_content_from_file(project_directory.clone(), new_point.clone());
+            get_point_content_from_file(project_directory.clone(), new_point.id.clone());
         new_point.images = get_point_images(project_directory.clone(), new_point_id.clone());
         return_current_points.push(new_point);
     }

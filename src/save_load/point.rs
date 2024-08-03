@@ -51,11 +51,11 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     delete_all_mentions_from_file(project_dir.clone(), point_id.clone(), "Library".to_string());
     delete_line_from_file(project_dir.clone(), point_id.clone(), "Sources".to_string());
 }
-pub fn get_point_content_from_file(project_dir: PathBuf, point: Point) -> String {
-    let mut resutl_string: String = String::new();
+pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> String {
+    let mut result_string: String = String::new();
     let file_path: PathBuf = [
         project_dir.clone(),
-        PathBuf::from(point.id.clone() + ".txt"),
+        PathBuf::from(point_id.clone() + ".txt"),
     ]
     .iter()
     .collect();
@@ -65,11 +65,11 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point: Point) -> String
         if let Ok(l) = line {
             let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
             if split_line[0] != "Image" {
-                resutl_string = resutl_string + &split_line.join("@");
+                result_string = result_string + &split_line.join("@") + "\n";
             }
         }
     }
-    return resutl_string;
+    return result_string;
 }
 
 pub fn save_point(project_dir: PathBuf, point: Point) {
@@ -107,6 +107,7 @@ pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<
     for point in library_line.into_iter() {
         let mut new_point: Point = Point::default();
         new_point.id = point.clone();
+        new_point.content = get_point_content_from_file(project_dir.clone(), point.clone());
         new_point.content = load_from_filename(point, project_dir.clone());
         result.push(new_point);
     }
