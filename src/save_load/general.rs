@@ -1,13 +1,16 @@
 use crate::save_load::image::get_point_images;
+use crate::save_load::link::get_linked_pairs;
+use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{get_point_content_from_file, save_point};
+use crate::save_load::tag::get_title_tags;
 use crate::save_load::title::save_title;
 use crate::{Point, Structurer, Title};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
+use std::usize;
 
-use super::link::get_linked_pairs;
 //Gets file, line and element. Appends element to the line
 pub fn add_element_to_line(
     project_dir: PathBuf,
@@ -146,6 +149,24 @@ pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 }
 
 impl Structurer {
+    pub fn change_title(&mut self, index: usize) {
+        self.current_points = save_old_add_new_points(
+            self.project_directory.clone(),
+            self.titles[self.current_title_index].clone(),
+            self.current_points.clone(),
+            self.titles[index].clone(),
+        );
+        self.current_title_index = index;
+        self.titles[index].links = title_is_linked_with(
+            self.project_directory.clone(),
+            self.titles[index].id.clone(),
+        );
+        self.titles[index].tags = get_title_tags(
+            self.project_directory.clone(),
+            self.titles[index].id.clone(),
+        );
+    }
+
     //Loading the titles and corresponding points from the Libary.txt file.
     //This file has a title_id being the first word of each line
     //the title being the second word,
@@ -161,11 +182,13 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
                     let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                    if split_line.len() > 2 {
+                    if split_line.len() > 1 {
                         let mut temp_title: Title = Title::default();
                         temp_title.id = split_line[0].clone();
                         temp_title.name = split_line[1].clone();
-                        temp_title.point_ids = split_line[2..].to_vec();
+                        if split_line.len() > 2 {
+                            temp_title.point_ids = split_line[2..].to_vec();
+                        }
                         self.titles.push(temp_title.clone());
                     }
                 }
@@ -182,11 +205,12 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
                     let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                    if split_line.len() == 2 && split_line[0] != "" {
+                    if split_line.len() == 3 && split_line[0] != "" {
                         //If this is too slow replace it with a hashmap
                         for title in self.titles.iter_mut() {
                             if title.id == split_line[0] {
                                 title.image.path = split_line[1].clone();
+                                title.image.description = split_line[2].clone();
                                 break;
                             }
                         }
@@ -206,16 +230,7 @@ pub fn save_old_add_new_points(
     new_title: Title,
 ) -> Vec<Point> {
     //Saving the title of the curent page before switching
-    //First checking if the file exists
-    let temp_file_path_for_check: PathBuf = [
-        project_directory.clone(),
-        PathBuf::from(current_title.id.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-    if temp_file_path_for_check.exists() {
-        save_title(project_directory.clone(), current_title.clone());
-    }
+    save_title(project_directory.clone(), current_title);
     let mut return_current_points: Vec<Point> = Vec::new();
     for point in current_points.clone() {
         save_point(project_directory.clone(), point);

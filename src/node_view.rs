@@ -1,5 +1,6 @@
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::link::title_is_linked_with;
+use crate::save_load::tag::get_title_tags;
 use crate::{Structurer, Title};
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;
@@ -126,6 +127,8 @@ impl Structurer {
                         self.current_title_index = index;
                         title.links =
                             title_is_linked_with(self.project_directory.clone(), title.id.clone());
+                        title.tags =
+                            get_title_tags(self.project_directory.clone(), title.id.clone());
                     }
                     //Creating the rectangle to add it to painter
                     //It has to be calculated again as the previous one is needed for the interaction

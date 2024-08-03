@@ -12,6 +12,7 @@ mod save_load {
     pub mod point;
     pub mod share;
     pub mod source;
+    pub mod tag;
     pub mod title;
 }
 use egui::{Pos2, Vec2};
@@ -60,6 +61,7 @@ struct Title {
     node_physics_position: Vec2,
     node_currnetly_clicked: bool,
     image: ImageStruct,
+    tags: Vec<String>,
 }
 
 impl Default for Title {
@@ -73,6 +75,7 @@ impl Default for Title {
             node_physics_position: Vec2::new(0.0, 0.0),
             node_currnetly_clicked: false,
             image: ImageStruct::default(),
+            tags: Vec::new(),
         }
     }
 }
@@ -94,6 +97,7 @@ struct Structurer {
     show_title_image_popup: bool,
     show_point_image_popup: bool,
     show_title_edit_popup: bool,
+    show_tags_popup: bool,
     point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
     drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
@@ -120,6 +124,7 @@ impl Default for Structurer {
             show_title_image_popup: false,
             show_point_image_popup: false,
             show_title_edit_popup: false,
+            show_tags_popup: false,
             point_image_requesting_popup: (0, 0),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             linked_pairs: Vec::new(),
@@ -251,6 +256,9 @@ impl eframe::App for Structurer {
         }
         if self.show_title_edit_popup {
             self.title_edit_popup(ctx);
+        }
+        if self.show_tags_popup {
+            self.tags_popup(ctx);
         }
     }
 }

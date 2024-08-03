@@ -99,6 +99,10 @@ impl Structurer {
                     self.titles[self.current_title_index].point_ids.push(p.id);
                 }
             }
+            ui.separator();
+            if ui.button("📑Tags").clicked() {
+                self.show_tags_popup = true;
+            }
         });
     }
 
@@ -124,18 +128,7 @@ impl Structurer {
                         self.title_loaded = true;
                         self.current_title_index = index;
                     }
-
-                    self.current_points = save_old_add_new_points(
-                        self.project_directory.clone(),
-                        self.titles[self.current_title_index].clone(),
-                        self.current_points.clone(),
-                        self.titles[index].clone(),
-                    );
-                    self.current_title_index = index;
-                    self.titles[index].links = title_is_linked_with(
-                        self.project_directory.clone(),
-                        self.titles[index].id.clone(),
-                    );
+                    self.change_title(index);
                 }
             }
         });
@@ -167,17 +160,7 @@ impl Structurer {
                             )
                             .clicked()
                         {
-                            self.current_points = save_old_add_new_points(
-                                self.project_directory.clone(),
-                                self.titles[self.current_title_index].clone(),
-                                self.current_points.clone(),
-                                self.titles[index].clone(),
-                            );
-                            self.current_title_index = index;
-                            self.titles[index].links = title_is_linked_with(
-                                self.project_directory.clone(),
-                                self.titles[index].id.clone(),
-                            );
+                            self.change_title(index);
                         }
                     }
                 }

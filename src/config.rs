@@ -28,7 +28,6 @@ impl Structurer {
         let new_config: Config = serde_json::from_str(&buff).unwrap();
         self.project_directory = new_config.project_directory;
         self.load_from_library();
-        self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
     }
 
     //Saving stuff to the config file in the default OS location
@@ -50,7 +49,7 @@ impl Structurer {
 
     //If a library file doesn't exist, create it
     pub fn create_library_files(&mut self) {
-        let file_vec: Vec<&str> = vec!["Library", "Sources", "Images", "Links"];
+        let file_vec: Vec<&str> = vec!["Library", "Sources", "Images", "Links", "Tags"];
         for file_name in file_vec {
             let file_path: PathBuf = [
                 self.project_directory.clone(),

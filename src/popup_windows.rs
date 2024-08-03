@@ -9,6 +9,26 @@ use crate::{Point, Structurer};
 use eframe::egui::{self};
 use rfd::FileDialog;
 impl Structurer {
+    pub fn tags_popup(&mut self, ctx: &egui::Context) {
+        if self.show_tags_popup {
+            //Local bool to use for .open() so X in top right corner can be used
+            let mut show_popup = true;
+            egui::Window::new("Tags")
+                .resizable(false)
+                .default_pos([900.0, 400.0])
+                .min_size([300.0, 300.0])
+                .max_size([300.0, 600.0])
+                .open(&mut show_popup)
+                .show(ctx, |ui| {
+                    ui.vertical_centered_justified(|ui| {
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            //
+                        });
+                    });
+                });
+            self.show_tags_popup &= show_popup;
+        }
+    }
     pub fn title_edit_popup(&mut self, ctx: &egui::Context) {
         if self.show_title_edit_popup {
             //Local bool to use for .open() so X in top right corner can be used
