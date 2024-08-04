@@ -3,8 +3,8 @@ use crate::save_load::general::{
 };
 use crate::save_load::point::delete_point;
 use crate::Title;
+use std::fs::File;
 use std::fs::OpenOptions;
-use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;

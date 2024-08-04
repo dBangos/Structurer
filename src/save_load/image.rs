@@ -90,24 +90,3 @@ pub fn get_point_images(project_dir: PathBuf, point_id: String) -> Vec<ImageStru
     }
     return return_vec;
 }
-pub fn get_title_image(project_dir: PathBuf, title_id: String) -> ImageStruct {
-    let mut return_image = ImageStruct::default();
-    let file_path: PathBuf = [
-        project_dir.clone(),
-        PathBuf::from(title_id.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-    let file = File::open(&file_path).expect("Error while opening file from get_title_image");
-    for line in BufReader::new(file).lines() {
-        if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-            if split_line[0] == "Image" && split_line.len() == 3 {
-                return_image.path = split_line[1].clone();
-                return_image.description = split_line[2].clone();
-                break;
-            }
-        }
-    }
-    return return_image;
-}

@@ -2,7 +2,7 @@ use crate::save_load::image::get_point_images;
 use crate::save_load::link::get_linked_pairs;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{get_point_content_from_file, save_point};
-use crate::save_load::tag::get_title_tags;
+use crate::save_load::tag::{get_all_tags, get_title_tags};
 use crate::save_load::title::save_title;
 use crate::{Point, Structurer, Title};
 use std::fs::File;
@@ -10,8 +10,6 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use std::usize;
-
-use super::tag::get_all_tags;
 
 //Gets file, line and element. Appends element to the line
 pub fn add_element_to_line(

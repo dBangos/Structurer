@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
