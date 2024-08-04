@@ -150,6 +150,9 @@ pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
 
 impl Structurer {
     pub fn change_title(&mut self, index: usize) {
+        if self.center_current_node {
+            self.drag_distance = -1.0 * self.titles[index].node_physics_position * self.view_scale;
+        }
         self.current_points = save_old_add_new_points(
             self.project_directory.clone(),
             self.titles[self.current_title_index].clone(),
