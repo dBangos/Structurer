@@ -163,7 +163,9 @@ impl Structurer {
                 }
             }
             //Calculate the new node positions
-            self.node_physics();
+            if self.node_view_start_stop_physics {
+                self.node_physics();
+            }
             for title in self.titles.iter_mut() {
                 title.node_screen_position =
                     (title.node_physics_position * self.view_scale + self.drag_distance).to_pos2();

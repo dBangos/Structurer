@@ -2,6 +2,7 @@ use eframe::egui::{self};
 use std::path::PathBuf;
 mod config;
 mod gui_elements;
+mod node_controls;
 mod node_physics;
 mod node_view;
 mod popup_windows;
@@ -106,6 +107,7 @@ struct Structurer {
     all_tags: Vec<String>,
     current_title_tag_bools: Vec<bool>,
     possible_new_tag: String,
+    node_view_start_stop_physics: bool,
 }
 
 impl Default for Structurer {
@@ -136,6 +138,7 @@ impl Default for Structurer {
             all_tags: Vec::new(),
             current_title_tag_bools: Vec::new(),
             possible_new_tag: String::new(),
+            node_view_start_stop_physics: true,
         }
     }
 }
@@ -220,10 +223,8 @@ impl eframe::App for Structurer {
                 .default_width(400.0)
                 .width_range(80.0..=600.0)
                 .show_inside(ui, |ui| {
-                    ui.checkbox(
-                        &mut self.stop_clicked_nodes,
-                        "Hold node into place after interaction",
-                    );
+                    self.node_controls(ui);
+
                     self.node_view(ui);
                     ctx.request_repaint();
                 });
