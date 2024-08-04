@@ -255,20 +255,22 @@ impl Structurer {
                                 get_point_source(self.project_directory.clone(), point.id.clone());
                             self.show_source_popup = true;
                         }
-                        if ui.button("🖼 Add Image").clicked() {
-                            if let Some(f) = FileDialog::new()
+                        if ui.button("🖼 Add Images").clicked() {
+                            if let Some(files) = FileDialog::new()
                                 .add_filter("image", &["jpeg", "jpg", "png"])
                                 .set_directory(self.project_directory.clone())
-                                .pick_file()
+                                .pick_files()
                             {
-                                let mut new_image: ImageStruct = ImageStruct::default();
-                                new_image.path = f.to_string_lossy().to_string();
-                                point.images.push(new_image.clone());
-                                add_image_to_point(
-                                    self.project_directory.clone(),
-                                    point.id.clone(),
-                                    new_image,
-                                );
+                                for file in files {
+                                    let mut new_image: ImageStruct = ImageStruct::default();
+                                    new_image.path = file.to_string_lossy().to_string();
+                                    point.images.push(new_image.clone());
+                                    add_image_to_point(
+                                        self.project_directory.clone(),
+                                        point.id.clone(),
+                                        new_image,
+                                    );
+                                }
                             }
                         }
                     });

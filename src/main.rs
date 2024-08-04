@@ -90,7 +90,6 @@ struct Structurer {
     point_requesting_action_index: usize, //The index of the point in current_points
     show_share_point_popup: bool,
     titles_receiving_shared_point: Vec<bool>, //(title_id,title,is_shared_or_not)
-
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
