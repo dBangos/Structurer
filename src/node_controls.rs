@@ -10,6 +10,9 @@ impl Structurer {
             if ui.button("⏸ Pause").clicked() {
                 self.node_view_start_stop_physics = false;
             }
+            if ui.button("▣ Pop Out").clicked() {
+                self.show_node_view_popup = !self.show_node_view_popup;
+            }
         });
         ui.checkbox(
             &mut self.stop_clicked_nodes,

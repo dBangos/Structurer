@@ -1,7 +1,7 @@
-use eframe::egui::{self, IconData};
-use eframe::icon_data::from_png_bytes;
+use eframe::egui::{self};
+use egui::{FontFamily, FontId, TextStyle};
+use egui::{Pos2, Vec2};
 use std::path::PathBuf;
-use std::sync::Arc;
 mod config;
 mod gui_elements;
 mod node_controls;
@@ -18,7 +18,6 @@ mod save_load {
     pub mod tag;
     pub mod title;
 }
-use egui::{Pos2, Vec2};
 
 #[derive(Clone)]
 //Changed this to ImageStruct so as not to match egui::Image
@@ -111,6 +110,7 @@ struct Structurer {
     possible_new_tag: String,
     node_view_start_stop_physics: bool,
     center_current_node: bool,
+    show_node_view_popup: bool,
 }
 
 impl Default for Structurer {
@@ -143,11 +143,11 @@ impl Default for Structurer {
             possible_new_tag: String::new(),
             node_view_start_stop_physics: true,
             center_current_node: true,
+            show_node_view_popup: false,
         }
     }
 }
 
-use egui::{FontFamily, FontId, TextStyle};
 #[inline]
 fn left_panel_labels() -> TextStyle {
     TextStyle::Name("LeftPanelLabels".into())
@@ -233,8 +233,10 @@ impl eframe::App for Structurer {
                 .show_inside(ui, |ui| {
                     self.node_controls(ui);
 
-                    self.node_view(ui);
-                    ctx.request_repaint();
+                    if !self.show_node_view_popup {
+                        self.node_view(ui);
+                        ctx.request_repaint();
+                    }
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
                 //Render stuff only if a title is loaded
@@ -273,6 +275,9 @@ impl eframe::App for Structurer {
         }
         if self.show_tags_popup {
             self.tags_popup(ctx);
+        }
+        if self.show_node_view_popup {
+            self.node_view_popup(ctx);
         }
     }
 }
