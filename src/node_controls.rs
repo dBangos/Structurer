@@ -15,5 +15,6 @@ impl Structurer {
             &mut self.stop_clicked_nodes,
             "Hold node into place after interaction",
         );
+        ui.checkbox(&mut self.center_current_node, "Center current title");
     }
 }

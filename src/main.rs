@@ -108,6 +108,7 @@ struct Structurer {
     current_title_tag_bools: Vec<bool>,
     possible_new_tag: String,
     node_view_start_stop_physics: bool,
+    center_current_node: bool,
 }
 
 impl Default for Structurer {
@@ -139,6 +140,7 @@ impl Default for Structurer {
             current_title_tag_bools: Vec::new(),
             possible_new_tag: String::new(),
             node_view_start_stop_physics: true,
+            center_current_node: true,
         }
     }
 }

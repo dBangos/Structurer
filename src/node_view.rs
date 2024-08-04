@@ -129,6 +129,10 @@ impl Structurer {
                             title_is_linked_with(self.project_directory.clone(), title.id.clone());
                         title.tags =
                             get_title_tags(self.project_directory.clone(), title.id.clone());
+                        if self.center_current_node {
+                            self.drag_distance =
+                                -1.0 * title.node_physics_position * self.view_scale;
+                        }
                     }
                     //Creating the rectangle to add it to painter
                     //It has to be calculated again as the previous one is needed for the interaction

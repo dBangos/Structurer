@@ -126,6 +126,10 @@ impl Structurer {
                         self.title_loaded = true;
                         self.current_title_index = index;
                     }
+                    if self.center_current_node {
+                        self.drag_distance =
+                            -1.0 * self.titles[index].node_physics_position * self.view_scale;
+                    }
                     //Load the titles tags so they won't get deleted by save_old_add_new
                     self.titles[index].tags = get_title_tags(
                         self.project_directory.clone(),
@@ -163,6 +167,11 @@ impl Structurer {
                             )
                             .clicked()
                         {
+                            if self.center_current_node {
+                                self.drag_distance = -1.0
+                                    * self.titles[index].node_physics_position
+                                    * self.view_scale;
+                            }
                             self.change_title(index);
                         }
                     }
