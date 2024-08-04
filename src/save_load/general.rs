@@ -11,6 +11,8 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use std::usize;
 
+use super::tag::get_all_tags;
+
 //Gets file, line and element. Appends element to the line
 pub fn add_element_to_line(
     project_dir: PathBuf,
@@ -219,6 +221,7 @@ impl Structurer {
             }
         }
         self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
+        self.all_tags = get_all_tags(self.project_directory.clone());
     }
 }
 //Helper function that saves and updates state

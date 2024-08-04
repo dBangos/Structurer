@@ -104,6 +104,9 @@ struct Structurer {
     initialized: bool,
     view_scale: f32,
     stop_clicked_nodes: bool,
+    all_tags: Vec<String>,
+    current_title_tag_bools: Vec<bool>,
+    possible_new_tag: String,
 }
 
 impl Default for Structurer {
@@ -131,6 +134,9 @@ impl Default for Structurer {
             initialized: false,
             view_scale: 0.85,
             stop_clicked_nodes: false,
+            all_tags: Vec::new(),
+            current_title_tag_bools: Vec::new(),
+            possible_new_tag: String::new(),
         }
     }
 }

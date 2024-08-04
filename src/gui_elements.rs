@@ -1,9 +1,12 @@
+use std::thread::current;
+
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
+use crate::save_load::tag::get_title_tags;
 use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
@@ -100,9 +103,6 @@ impl Structurer {
                 }
             }
             ui.separator();
-            if ui.button("📑Tags").clicked() {
-                self.show_tags_popup = true;
-            }
         });
     }
 
@@ -128,6 +128,11 @@ impl Structurer {
                         self.title_loaded = true;
                         self.current_title_index = index;
                     }
+                    //Load the titles tags so they won't get deleted by save_old_add_new
+                    self.titles[index].tags = get_title_tags(
+                        self.project_directory.clone(),
+                        self.titles[index].id.clone(),
+                    );
                     self.change_title(index);
                 }
             }
@@ -189,18 +194,39 @@ impl Structurer {
                     self.show_title_image_popup = true;
                 }
             }
-            if ui
-                .label(
-                    RichText::new(self.titles[self.current_title_index].name.clone())
-                        .text_style(title_style())
-                        .strong(),
-                )
-                .clicked()
-            {
-                self.show_title_edit_popup = true;
-            }
-
-            //ui.text_edit_singleline(&mut self.current_title.name);
+            ui.add_space(10.0);
+            ui.vertical(|ui| {
+                if ui
+                    .label(
+                        RichText::new(self.titles[self.current_title_index].name.clone())
+                            .text_style(title_style())
+                            .strong(),
+                    )
+                    .clicked()
+                {
+                    self.show_title_edit_popup = true;
+                }
+                ui.horizontal(|ui| {
+                    for tag in self.titles[self.current_title_index].tags.clone() {
+                        ui.add(Button::new(tag));
+                    }
+                    let mut tag_label: String = "Add Tag".to_string();
+                    if self.titles[self.current_title_index].tags.len() > 0 {
+                        tag_label = "+".to_string();
+                    }
+                    if ui.button(tag_label).clicked() {
+                        self.current_title_tag_bools = Vec::new();
+                        for tag in self.all_tags.clone() {
+                            if self.titles[self.current_title_index].tags.contains(&tag) {
+                                self.current_title_tag_bools.push(true);
+                            } else {
+                                self.current_title_tag_bools.push(false);
+                            }
+                        }
+                        self.show_tags_popup = true;
+                    }
+                });
+            });
         });
     }
 
