@@ -1,11 +1,10 @@
-use crate::save_load::general::load_from_filename;
 use crate::save_load::image::delete_image_from_point;
 use crate::save_load::link::{get_linked_pairs, link_unlink_title};
 use crate::save_load::point::{delete_point, load_points_from_title_id};
 use crate::save_load::share::share_unshare_point;
 use crate::save_load::source::update_source;
 use crate::save_load::title::{delete_title, save_title};
-use crate::{left_panel_labels, Point, Structurer};
+use crate::{left_panel_labels, Structurer};
 use eframe::egui::{self, RichText};
 use rfd::FileDialog;
 impl Structurer {
@@ -293,30 +292,15 @@ impl Structurer {
                 ui.horizontal(|ui| {
                     ui.add_space(85.0);
                     if ui.button("🗑 Delete").clicked() {
+                        let delete_title_index = self.current_title_index;
+                        self.change_title(0);
                         delete_title(
                             self.project_directory.clone(),
-                            self.titles[self.current_title_index].id.clone(),
+                            self.titles[delete_title_index].id.clone(),
                         );
                         //Removing the title from state
-                        self.titles.remove(self.current_title_index);
-                        //Showing the first title
-                        self.current_title_index = 0;
-                        if self.titles.len() == 0 {
-                            self.title_loaded = false;
-                        } else {
-                            self.current_points = Vec::new();
-                            for new_point_id in
-                                self.titles[self.current_title_index].point_ids.clone()
-                            {
-                                let mut new_point: Point = Point::default();
-                                new_point.id = new_point_id.to_string();
-                                new_point.content = load_from_filename(
-                                    new_point_id.to_string(),
-                                    self.project_directory.clone(),
-                                );
-                                self.current_points.push(new_point);
-                            }
-                        }
+                        self.titles.remove(delete_title_index);
+                        //Updating linked pairs
                         self.linked_pairs =
                             get_linked_pairs(self.project_directory.clone(), self.titles.clone());
                         self.show_title_delete_popup = false;
