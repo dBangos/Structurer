@@ -292,6 +292,9 @@ impl Structurer {
                 ui.horizontal(|ui| {
                     ui.add_space(85.0);
                     if ui.button("🗑 Delete").clicked() {
+                        if self.titles.len() == 1 {
+                            self.title_loaded = false;
+                        }
                         let delete_title_index = self.current_title_index;
                         self.change_title(0);
                         delete_title(
