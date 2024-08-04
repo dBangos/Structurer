@@ -1,5 +1,7 @@
-use eframe::egui::{self};
+use eframe::egui::{self, IconData};
+use eframe::icon_data::from_png_bytes;
 use std::path::PathBuf;
+use std::sync::Arc;
 mod config;
 mod gui_elements;
 mod node_controls;
@@ -174,8 +176,12 @@ fn configure_text_styles(ctx: &egui::Context) {
 fn main() -> Result<(), eframe::Error> {
     env_logger::init(); // Log to stderr (if you run with `RUST_LOG=debug`).
 
+    let icon = eframe::icon_data::from_png_bytes(include_bytes!("../assets/icon.png")).unwrap();
+
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1820.0, 1000.0]),
+        viewport: egui::ViewportBuilder::default()
+            .with_inner_size([1820.0, 1000.0])
+            .with_icon(icon),
         ..Default::default()
     };
 
