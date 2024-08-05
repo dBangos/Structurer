@@ -19,8 +19,8 @@ mod save_load {
     pub mod title;
 }
 
-#[derive(Clone)]
-//Changed this to ImageStruct so as not to match egui::Image
+use serde::{Deserialize, Serialize};
+#[derive(Clone, Serialize, Deserialize)]
 struct ImageStruct {
     path: String,
     description: String,
@@ -34,7 +34,7 @@ impl Default for ImageStruct {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 struct Point {
     id: String,
     content: String,
@@ -53,7 +53,7 @@ impl Default for Point {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 struct Title {
     name: String,
     id: String,
@@ -82,6 +82,7 @@ impl Default for Title {
     }
 }
 
+#[derive(Serialize, Deserialize)]
 struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
@@ -89,9 +90,9 @@ struct Structurer {
     current_title_index: usize,
     current_points: Vec<Point>,
     show_confirm_delete_popup: bool,
-    point_requesting_action_index: usize, //The index of the point in current_points
+    point_requesting_action_index: usize,
     show_share_point_popup: bool,
-    titles_receiving_shared_point: Vec<bool>, //(title_id,title,is_shared_or_not)
+    titles_receiving_shared_point: Vec<bool>,
     show_title_delete_popup: bool,
     show_link_title_popup: bool,
     show_source_popup: bool,
@@ -195,8 +196,28 @@ fn main() -> Result<(), eframe::Error> {
         }),
     )
 }
+//From https://github.com/emilk/eframe_template/blob/main/src/app.rs
+impl Structurer {
+    /// Called once before the first frame.
+    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
+        // This is also where you can customize the look and feel of egui using
+        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
 
+        // Load previous app state (if any).
+        // Note that you must enable the `persistence` feature for this to work.
+        if let Some(storage) = cc.storage {
+            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
+        }
+
+        Default::default()
+    }
+}
 impl eframe::App for Structurer {
+    /// Called by the frame work to save state before shutdown.
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        eframe::set_value(storage, eframe::APP_KEY, self);
+    }
+
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.initialized {
             self.start_routine();

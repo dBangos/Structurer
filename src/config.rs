@@ -7,6 +7,23 @@ use std::{fs, path::PathBuf};
 #[derive(Serialize, Deserialize)]
 struct Config {
     project_directory: PathBuf,
+    //title_loaded: bool,
+    //current_title_index: usize,
+    center_current_node: bool,
+    node_view_start_stop_physics: bool,
+    stop_clicked_nodes: bool,
+}
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            project_directory: PathBuf::default(),
+            //title_loaded: false,
+            //current_title_index: 0,
+            center_current_node: true,
+            node_view_start_stop_physics: true,
+            stop_clicked_nodes: false,
+        }
+    }
 }
 
 impl Structurer {
@@ -24,8 +41,13 @@ impl Structurer {
         let mut file = fs::File::open(&dir_path).expect("Error while opening config file");
         let mut buff = String::new();
         file.read_to_string(&mut buff).unwrap();
-        let new_config: Config = serde_json::from_str(&buff).unwrap();
+        let new_config: Config = serde_json::from_str(&buff).unwrap_or_default();
         self.project_directory = new_config.project_directory;
+        //self.title_loaded = new_config.title_loaded;
+        //self.current_title_index = new_config.current_title_index;
+        self.center_current_node = new_config.center_current_node;
+        self.node_view_start_stop_physics = new_config.node_view_start_stop_physics;
+        self.stop_clicked_nodes = new_config.stop_clicked_nodes;
         self.load_from_library();
     }
 
@@ -33,6 +55,11 @@ impl Structurer {
     pub fn save_to_config(&mut self) -> Result<()> {
         let current_config = Config {
             project_directory: self.project_directory.clone(),
+            //title_loaded: self.title_loaded,
+            //current_title_index: self.current_title_index,
+            center_current_node: self.center_current_node,
+            node_view_start_stop_physics: self.node_view_start_stop_physics,
+            stop_clicked_nodes: self.stop_clicked_nodes,
         };
         let dir_path: PathBuf = [
             dirs::config_dir().unwrap(),
