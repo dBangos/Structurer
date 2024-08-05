@@ -1,12 +1,9 @@
-use std::vec;
-
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
-use crate::save_load::tag::get_title_tags;
 use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
@@ -124,7 +121,7 @@ impl Structurer {
                         self.tags_in_filter.push(tag);
                     }
                 }
-                if ui.button("Reset").clicked() {
+                if ui.button("↺ Reset").clicked() {
                     self.tags_actively_filtering = vec![false; self.all_tags.len()];
                     self.tags_in_filter = Vec::new();
                 }
@@ -167,11 +164,6 @@ impl Structurer {
                                 self.title_loaded = true;
                                 self.current_title_index = index;
                             }
-                            //Load the titles tags so they won't get deleted by save_old_add_new
-                            self.titles[index].tags = get_title_tags(
-                                self.project_directory.clone(),
-                                self.titles[index].id.clone(),
-                            );
                             self.change_title(index);
                         }
                     }
@@ -190,11 +182,6 @@ impl Structurer {
                             self.title_loaded = true;
                             self.current_title_index = index;
                         }
-                        //Load the titles tags so they won't get deleted by save_old_add_new
-                        self.titles[index].tags = get_title_tags(
-                            self.project_directory.clone(),
-                            self.titles[index].id.clone(),
-                        );
                         self.change_title(index);
                     }
                 }
@@ -275,11 +262,11 @@ impl Structurer {
                     for tag in self.titles[self.current_title_index].tags.clone() {
                         //On click filter by tag
                         if ui.button(tag.clone()).clicked() {
-                            //If not already filtering with this tag, only then filter with it
                             //If the last checkbox got unchecked empty the string vector
                             if self.tags_actively_filtering.iter().all(|&x| x == false) {
                                 self.tags_in_filter = Vec::new();
                             }
+                            //If not already filtering with this tag, only then filter with it
                             if !self.tags_in_filter.contains(&tag) {
                                 self.tags_in_filter.push(tag.clone());
                                 assert_eq!(self.all_tags.len(), self.tags_actively_filtering.len());

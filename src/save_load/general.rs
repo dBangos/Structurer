@@ -2,7 +2,7 @@ use crate::save_load::image::get_point_images;
 use crate::save_load::link::get_linked_pairs;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{get_point_content_from_file, save_point};
-use crate::save_load::tag::{get_all_tags, get_title_tags};
+use crate::save_load::tag::get_all_tags;
 use crate::save_load::title::save_title;
 use crate::{Point, Structurer, Title};
 use std::fs::File;
@@ -94,6 +94,7 @@ pub fn delete_all_mentions_from_file(
     }
     let _ = save_to_filename(project_dir.clone(), file_name, content.join("\n"));
 }
+
 //Gets file, line and element. Deletes line and replace is with new line
 pub fn replace_line(
     project_dir: PathBuf,
@@ -127,6 +128,7 @@ pub fn replace_line(
         content.join("\n"),
     );
 }
+
 //Gets a file name and path, saves content to it.
 pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> () {
     let file_path: PathBuf = [project_dir, PathBuf::from(id + ".txt")].iter().collect();
@@ -134,6 +136,7 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
         File::create(&file_path).expect("Error while creating file from save_to_filename");
     let _ = file.write_all(content.as_bytes());
 }
+
 //Gets the filename of a txt file, returns its content.
 pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
     let file_path: PathBuf = [project_dir, PathBuf::from(title + ".txt")]
@@ -161,10 +164,6 @@ impl Structurer {
         );
         self.current_title_index = index;
         self.titles[index].links = title_is_linked_with(
-            self.project_directory.clone(),
-            self.titles[index].id.clone(),
-        );
-        self.titles[index].tags = get_title_tags(
             self.project_directory.clone(),
             self.titles[index].id.clone(),
         );
@@ -224,8 +223,10 @@ impl Structurer {
         self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
         self.all_tags = get_all_tags(self.project_directory.clone());
         self.tags_actively_filtering = vec![false; self.all_tags.len()];
+        self.add_tags_to_titles();
     }
 }
+
 //Helper function that saves and updates state
 //Turned this into a function instead of a method on Structurerto avoid borrow conflicts
 pub fn save_old_add_new_points(
