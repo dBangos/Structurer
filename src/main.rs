@@ -97,7 +97,7 @@ struct Structurer {
     show_title_image_popup: bool,
     show_point_image_popup: bool,
     show_title_edit_popup: bool,
-    show_tags_popup: bool,
+    show_add_tags_popup: bool,
     point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
     drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
@@ -110,6 +110,9 @@ struct Structurer {
     node_view_start_stop_physics: bool,
     center_current_node: bool,
     show_node_view_popup: bool,
+    show_tags_popup: bool,
+    tags_actively_filtering: Vec<bool>,
+    tags_in_filter: Vec<String>,
 }
 
 impl Default for Structurer {
@@ -130,7 +133,7 @@ impl Default for Structurer {
             show_title_image_popup: false,
             show_point_image_popup: false,
             show_title_edit_popup: false,
-            show_tags_popup: false,
+            show_add_tags_popup: false,
             point_image_requesting_popup: (0, 0),
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             linked_pairs: Vec::new(),
@@ -143,6 +146,9 @@ impl Default for Structurer {
             node_view_start_stop_physics: true,
             center_current_node: true,
             show_node_view_popup: false,
+            show_tags_popup: false,
+            tags_actively_filtering: Vec::new(),
+            tags_in_filter: Vec::new(),
         }
     }
 }
@@ -271,11 +277,14 @@ impl eframe::App for Structurer {
         if self.show_title_edit_popup {
             self.title_edit_popup(ctx);
         }
-        if self.show_tags_popup {
-            self.tags_popup(ctx);
+        if self.show_add_tags_popup {
+            self.add_tags_popup(ctx);
         }
         if self.show_node_view_popup {
             self.node_view_popup(ctx);
+        }
+        if self.show_tags_popup {
+            self.tags_popup(ctx);
         }
     }
 }

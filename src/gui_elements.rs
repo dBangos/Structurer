@@ -101,7 +101,32 @@ impl Structurer {
                 }
             }
             ui.separator();
+            if ui.button("📑 Tags").clicked() {
+                self.show_tags_popup = true;
+            }
+            ui.separator();
         });
+        //If filtering based on tags
+        if self.tags_actively_filtering.iter().any(|&x| x == true) {
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label("Only showing titles with tags:");
+                self.tags_in_filter = Vec::new();
+                for (tag_bool, tag) in self
+                    .tags_actively_filtering
+                    .iter_mut()
+                    .zip(self.all_tags.clone())
+                {
+                    if *tag_bool {
+                        ui.checkbox(tag_bool, tag.clone());
+                        self.tags_in_filter.push(tag);
+                    }
+                }
+                if ui.button("Reset").clicked() {
+                    self.tags_actively_filtering = vec![false; self.all_tags.len()];
+                }
+            });
+        }
     }
 
     //Contains the list of buttons leading to all the titles
@@ -113,25 +138,61 @@ impl Structurer {
         );
         ui.separator();
         ui.vertical(|ui| {
-            for index in 0..self.titles.len() {
+            //If actively filtering check if this has the tags
+            if self.tags_actively_filtering.iter().any(|&x| x == true) {
                 //Binding each title button to loading the corresponding points
-                if ui
-                    .add(
-                        Button::new(self.titles[index].name.clone())
-                            .wrap_mode(TextWrapMode::Truncate),
-                    )
-                    .clicked()
-                {
-                    if self.title_loaded == false {
-                        self.title_loaded = true;
-                        self.current_title_index = index;
+                for index in 0..self.titles.len() {
+                    let mut contains_flag = true;
+                    for tag in self.tags_in_filter.clone() {
+                        if self.titles[index].tags.contains(&tag) {
+                            continue;
+                        } else {
+                            contains_flag = false;
+                            break;
+                        }
                     }
-                    //Load the titles tags so they won't get deleted by save_old_add_new
-                    self.titles[index].tags = get_title_tags(
-                        self.project_directory.clone(),
-                        self.titles[index].id.clone(),
-                    );
-                    self.change_title(index);
+                    if contains_flag {
+                        if ui
+                            .add(
+                                Button::new(self.titles[index].name.clone())
+                                    .wrap_mode(TextWrapMode::Truncate),
+                            )
+                            .clicked()
+                        {
+                            if self.title_loaded == false {
+                                self.title_loaded = true;
+                                self.current_title_index = index;
+                            }
+                            //Load the titles tags so they won't get deleted by save_old_add_new
+                            self.titles[index].tags = get_title_tags(
+                                self.project_directory.clone(),
+                                self.titles[index].id.clone(),
+                            );
+                            self.change_title(index);
+                        }
+                    }
+                }
+            } else {
+                //Binding each title button to loading the corresponding points
+                for index in 0..self.titles.len() {
+                    if ui
+                        .add(
+                            Button::new(self.titles[index].name.clone())
+                                .wrap_mode(TextWrapMode::Truncate),
+                        )
+                        .clicked()
+                    {
+                        if self.title_loaded == false {
+                            self.title_loaded = true;
+                            self.current_title_index = index;
+                        }
+                        //Load the titles tags so they won't get deleted by save_old_add_new
+                        self.titles[index].tags = get_title_tags(
+                            self.project_directory.clone(),
+                            self.titles[index].id.clone(),
+                        );
+                        self.change_title(index);
+                    }
                 }
             }
         });
@@ -174,6 +235,7 @@ impl Structurer {
     //Contains the title image and fields
     pub fn title_layout(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
+            //If there is an image show it, else show the placeholder
             if self.titles[self.current_title_index].image.path.len() > 1 {
                 let file_path = self.titles[self.current_title_index].image.path.clone();
                 let image = egui::Image::new(format!("file://{file_path}"))
@@ -205,8 +267,19 @@ impl Structurer {
                     self.show_title_edit_popup = true;
                 }
                 ui.horizontal(|ui| {
+                    //Add tag buttons
                     for tag in self.titles[self.current_title_index].tags.clone() {
-                        ui.add(Button::new(tag));
+                        //On click filter by tag
+                        if ui.button(tag.clone()).clicked() {
+                            //If not already filtering with this tag, only then filter with it
+                            if !self.tags_in_filter.contains(&tag) {
+                                self.tags_in_filter.push(tag.clone());
+                                assert_eq!(self.all_tags.len(), self.tags_actively_filtering.len());
+                                if let Some(index) = self.all_tags.iter().position(|x| *x == tag) {
+                                    self.tags_actively_filtering[index] = true;
+                                }
+                            }
+                        }
                     }
                     let mut tag_label: String = "Add Tag".to_string();
                     if self.titles[self.current_title_index].tags.len() > 0 {
@@ -221,7 +294,7 @@ impl Structurer {
                                 self.current_title_tag_bools.push(false);
                             }
                         }
-                        self.show_tags_popup = true;
+                        self.show_add_tags_popup = true;
                     }
                 });
             });

@@ -223,6 +223,7 @@ impl Structurer {
         }
         self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
         self.all_tags = get_all_tags(self.project_directory.clone());
+        self.tags_actively_filtering = vec![false; self.all_tags.len()];
     }
 }
 //Helper function that saves and updates state
