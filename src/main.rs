@@ -19,8 +19,7 @@ mod save_load {
     pub mod title;
 }
 
-use serde::{Deserialize, Serialize};
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 struct ImageStruct {
     path: String,
     description: String,
@@ -34,7 +33,7 @@ impl Default for ImageStruct {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 struct Point {
     id: String,
     content: String,
@@ -53,7 +52,7 @@ impl Default for Point {
     }
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone)]
 struct Title {
     name: String,
     id: String,
@@ -82,7 +81,6 @@ impl Default for Title {
     }
 }
 
-#[derive(Serialize, Deserialize)]
 struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
@@ -196,28 +194,7 @@ fn main() -> Result<(), eframe::Error> {
         }),
     )
 }
-//From https://github.com/emilk/eframe_template/blob/main/src/app.rs
-impl Structurer {
-    /// Called once before the first frame.
-    pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // This is also where you can customize the look and feel of egui using
-        // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-
-        // Load previous app state (if any).
-        // Note that you must enable the `persistence` feature for this to work.
-        if let Some(storage) = cc.storage {
-            return eframe::get_value(storage, eframe::APP_KEY).unwrap_or_default();
-        }
-
-        Default::default()
-    }
-}
 impl eframe::App for Structurer {
-    /// Called by the frame work to save state before shutdown.
-    fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        eframe::set_value(storage, eframe::APP_KEY, self);
-    }
-
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.initialized {
             self.start_routine();
