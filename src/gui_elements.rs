@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
@@ -124,8 +126,10 @@ impl Structurer {
                 }
                 if ui.button("Reset").clicked() {
                     self.tags_actively_filtering = vec![false; self.all_tags.len()];
+                    self.tags_in_filter = Vec::new();
                 }
             });
+            ui.add_space(2.0);
         }
     }
 
@@ -272,6 +276,10 @@ impl Structurer {
                         //On click filter by tag
                         if ui.button(tag.clone()).clicked() {
                             //If not already filtering with this tag, only then filter with it
+                            //If the last checkbox got unchecked empty the string vector
+                            if self.tags_actively_filtering.iter().all(|&x| x == false) {
+                                self.tags_in_filter = Vec::new();
+                            }
                             if !self.tags_in_filter.contains(&tag) {
                                 self.tags_in_filter.push(tag.clone());
                                 assert_eq!(self.all_tags.len(), self.tags_actively_filtering.len());
@@ -281,11 +289,11 @@ impl Structurer {
                             }
                         }
                     }
-                    let mut tag_label: String = "Add Tag".to_string();
+                    let mut add_tag_label: String = "Add Tag".to_string();
                     if self.titles[self.current_title_index].tags.len() > 0 {
-                        tag_label = "+".to_string();
+                        add_tag_label = "+".to_string();
                     }
-                    if ui.button(tag_label).clicked() {
+                    if ui.button(add_tag_label).clicked() {
                         self.current_title_tag_bools = Vec::new();
                         for tag in self.all_tags.clone() {
                             if self.titles[self.current_title_index].tags.contains(&tag) {
