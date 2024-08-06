@@ -87,13 +87,14 @@ impl Structurer {
                             )
                             .unwrap_or(Vec2::new(2.0 * half_x, 100.0 * self.view_scale));
                         //Creating the area for the image
+                        //+1.0 Removes a pixel gap
                         let first_point: Pos2 = (
                             point_in_screen.x - half_x,
-                            point_in_screen.y - half_y - image_size.y,
+                            point_in_screen.y - half_y - image_size.y + 1.0,
                         )
                             .into();
                         let mut second_point: Pos2 =
-                            (point_in_screen.x + half_x, point_in_screen.y - half_y).into();
+                            (point_in_screen.x + half_x, point_in_screen.y - half_y + 1.0).into();
                         point_rect = Rect::from_two_pos(first_point, second_point);
                         image.paint_at(ui, point_rect);
                         //Drawing the rectangle again so the interactable area contains the button

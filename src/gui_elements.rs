@@ -325,7 +325,7 @@ impl Structurer {
                         }
                         if ui.button("🖼 Add Images").clicked() {
                             if let Some(files) = FileDialog::new()
-                                .add_filter("image", &["jpeg", "jpg", "png"])
+                                .add_filter("image", &["jpeg", "jpg", "png", "webp"])
                                 .set_directory(self.project_directory.clone())
                                 .pick_files()
                             {

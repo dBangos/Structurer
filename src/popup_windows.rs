@@ -272,7 +272,7 @@ impl Structurer {
                     }
                     if ui.button("🖼 Load Image").clicked() {
                         let file = FileDialog::new()
-                            .add_filter("image", &["jpeg", "jpg", "png"])
+                            .add_filter("image", &["jpeg", "jpg", "png", "webp"])
                             .set_directory(self.project_directory.clone())
                             .pick_file();
                         self.titles[self.current_title_index].image.path =
@@ -368,7 +368,7 @@ impl Structurer {
     }
 
     pub fn show_share_point_or_link_title_popup(&mut self, ctx: &egui::Context) {
-        assert!(self.current_points.len() >= self.point_requesting_action_index);
+        assert!(self.current_points.len() > self.point_requesting_action_index);
         egui::Window::new("")
             .resizable(false)
             .default_pos([700.0, 200.0])
@@ -403,12 +403,11 @@ impl Structurer {
                             //state
                             for (title, is_shared) in self
                                 .titles
-                                .clone()
                                 .iter_mut()
                                 .zip(self.titles_receiving_shared_point.clone())
                             {
                                 if is_shared
-                                    && title.point_ids.contains(
+                                    && !title.point_ids.contains(
                                         &self.current_points[self.point_requesting_action_index]
                                             .id
                                             .clone(),
@@ -456,10 +455,8 @@ impl Structurer {
                                     })
                                 }
                             }
-                            self.current_points = load_points_from_title_id(
-                                self.project_directory.clone(),
-                                self.titles[self.current_title_index].id.clone(),
-                            );
+                            //Refresh the current title
+                            self.change_title(self.current_title_index);
                             self.show_share_point_popup = false;
                         }
 
