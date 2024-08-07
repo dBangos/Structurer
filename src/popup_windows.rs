@@ -284,7 +284,7 @@ impl Structurer {
 
     pub fn point_source_popup(&mut self, ctx: &egui::Context) {
         assert!(self.current_points.len() >= self.point_requesting_action_index);
-        egui::Window::new("Confirm Deletion")
+        egui::Window::new("Add source to point")
             .resizable(false)
             .default_pos([900.0, 400.0])
             .show(ctx, |ui| {

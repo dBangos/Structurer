@@ -95,6 +95,77 @@ pub fn delete_all_mentions_from_file(
     let _ = save_to_filename(project_dir.clone(), file_name, content.join("\n"));
 }
 
+//Gets already created string line a file and a N number. Adds the line after N lines
+pub fn insert_line_at_position(
+    project_dir: PathBuf,
+    file_name: String,
+    new_line: String,
+    position: usize,
+) {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let mut current_line: usize = 0;
+    let mut line_inserted: bool = false;
+    //Open the file-> Read its content->Don't read line starting with id->Save content
+    let file = File::open(&file_path).expect("Error while opening file from delete_line");
+    for line in BufReader::new(file).lines() {
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] != "" {
+                if current_line == position && line_inserted == false {
+                    content.push(new_line.clone());
+                    line_inserted = true;
+                }
+                content.push(split_line.join("@"));
+                current_line += 1;
+            }
+        }
+    }
+    if line_inserted == false {
+        content.push(new_line);
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
+}
+
+//Gets file and identifier. Removes line starting with identifier
+pub fn delete_line(project_dir: PathBuf, file_name: String, line_identifier: String) -> String {
+    let mut content: Vec<String> = Vec::new();
+    let file_path: PathBuf = [
+        project_dir.clone(),
+        PathBuf::from(file_name.clone() + ".txt"),
+    ]
+    .iter()
+    .collect();
+    let mut deleted_line: String = String::new();
+    //Open the file-> Read its content->Don't read line starting with id->Save content
+    let file = File::open(&file_path).expect("Error while opening file from delete_line");
+    for line in BufReader::new(file).lines() {
+        if let Ok(l) = line {
+            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            if split_line[0] != line_identifier {
+                content.push(split_line.join("@"));
+            } else {
+                deleted_line = split_line.join("@");
+            }
+        }
+    }
+    let _ = save_to_filename(
+        project_dir.clone(),
+        file_name.to_string(),
+        content.join("\n"),
+    );
+    return deleted_line;
+}
+
 //Gets file, line and element. Deletes line and replace is with new line
 pub fn replace_line(
     project_dir: PathBuf,
@@ -110,7 +181,7 @@ pub fn replace_line(
     .iter()
     .collect();
     //Open the file-> Read its content->Modify the proper title->Save contents in old files' place
-    let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
+    let file = File::open(&file_path).expect("Error while opening file from replace_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
             let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();

@@ -1,14 +1,58 @@
 use crate::save_load::general::{
-    delete_all_mentions_from_file, delete_line_from_file, replace_line, save_to_filename,
+    delete_all_mentions_from_file, delete_line, delete_line_from_file, insert_line_at_position,
+    replace_line, save_to_filename,
 };
+use crate::save_load::link::{get_linked_pairs, title_is_linked_with};
 use crate::save_load::point::delete_point;
-use crate::Title;
+use crate::{Structurer, Title};
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
+
+impl Structurer {
+    //Gets a title and a position, reorders titles in state and files
+    pub fn change_title_position(&mut self, from_position: usize, to_position: usize) {
+        self.titles[from_position].links = title_is_linked_with(
+            self.project_directory.clone(),
+            self.titles[from_position].id.clone(),
+        );
+        let title = self.titles[from_position].clone();
+
+        //Update the state
+        //Wnen dragging below the last element to_position gets len+0 so we have to compensate
+        let mut to_position = to_position;
+        if to_position >= self.titles.len() {
+            to_position = self.titles.len() - 1;
+        }
+        if from_position < to_position {
+            self.titles[from_position..=to_position].rotate_left(1);
+        } else {
+            self.titles[to_position..=from_position].rotate_right(1);
+        }
+
+        //Updating the files
+        let lib_file_list = ["Images", "Library", "Tags", "Links"];
+        for file_name in lib_file_list {
+            let line = delete_line(
+                self.project_directory.clone(),
+                file_name.to_string(),
+                title.id.clone(),
+            );
+            insert_line_at_position(
+                self.project_directory.clone(),
+                file_name.to_string(),
+                line,
+                to_position,
+            )
+        }
+        self.current_title_index = to_position;
+        //Updating linked pairs
+        self.linked_pairs = get_linked_pairs(self.project_directory.clone(), self.titles.clone());
+    }
+}
 
 //Adds a title to library and creates the corresponding file
 //Returns the new title_id
@@ -105,6 +149,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
         }
     }
 }
+
 pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
     if project_dir != PathBuf::new() && title.id != String::new() {
         //Updating the Image file

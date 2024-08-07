@@ -8,8 +8,16 @@ use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Title};
 use eframe::egui::{self, Button, RichText, TextWrapMode};
-use egui::Vec2;
+use egui::{Id, Vec2};
+use egui_dnd::{dnd, DragDropItem};
 use rfd::FileDialog;
+
+impl DragDropItem for &mut Title {
+    fn id(&self) -> Id {
+        Id::new(&self.id)
+    }
+}
+
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -139,52 +147,60 @@ impl Structurer {
         );
         ui.separator();
         ui.vertical(|ui| {
-            //If actively filtering check if this has the tags
-            if self.tags_actively_filtering.iter().any(|&x| x == true) {
-                //Binding each title button to loading the corresponding points
-                for index in 0..self.titles.len() {
-                    let mut contains_flag = true;
-                    for tag in self.tags_in_filter.clone() {
-                        if self.titles[index].tags.contains(&tag) {
-                            continue;
-                        } else {
-                            contains_flag = false;
-                            break;
-                        }
-                    }
-                    if contains_flag {
-                        if ui
-                            .add(
-                                Button::new(self.titles[index].name.clone())
-                                    .wrap_mode(TextWrapMode::Truncate),
-                            )
-                            .clicked()
-                        {
-                            if self.title_loaded == false {
-                                self.title_loaded = true;
-                                self.current_title_index = index;
-                            }
-                            self.change_title(index);
-                        }
-                    }
-                }
-            } else {
-                //Binding each title button to loading the corresponding points
-                for index in 0..self.titles.len() {
-                    if ui
-                        .add(
-                            Button::new(self.titles[index].name.clone())
-                                .wrap_mode(TextWrapMode::Truncate),
-                        )
-                        .clicked()
+            let tag_filter = self.tags_actively_filtering.iter().any(|&x| x == true);
+            let mut index: usize = 0;
+            let mut index_of_button_clicked: Option<usize> = None;
+            //Drag and drop functionality
+            let response =
+                dnd(ui, "dnd").show(self.titles.iter_mut(), |ui, title, handle, _state| {
+                    //If the filter is active and the title has the tags
+                    if tag_filter
+                        && title
+                            .tags
+                            .iter()
+                            .all(|item| self.tags_in_filter.contains(item))
                     {
-                        if self.title_loaded == false {
-                            self.title_loaded = true;
-                            self.current_title_index = index;
-                        }
-                        self.change_title(index);
+                        handle.ui(ui, |ui| {
+                            if ui
+                                .add(
+                                    Button::new(title.name.clone())
+                                        .wrap_mode(TextWrapMode::Truncate),
+                                )
+                                .clicked()
+                            {
+                                if self.title_loaded == false {
+                                    self.title_loaded = true;
+                                    self.current_title_index = index;
+                                }
+                                index_of_button_clicked = Some(index);
+                            }
+                            index += 1;
+                        });
+                    // If the filter isn't active
+                    } else if !tag_filter {
+                        handle.ui(ui, |ui| {
+                            if ui
+                                .add(
+                                    Button::new(title.name.clone())
+                                        .wrap_mode(TextWrapMode::Truncate),
+                                )
+                                .clicked()
+                            {
+                                if self.title_loaded == false {
+                                    self.title_loaded = true;
+                                    self.current_title_index = index;
+                                }
+                                index_of_button_clicked = Some(index);
+                            }
+                            index += 1;
+                        });
                     }
-                }
+                });
+            if let Some(update) = response.final_update() {
+                self.change_title_position(update.from, update.to);
+            }
+            if let Some(idx) = index_of_button_clicked {
+                self.change_title(idx);
             }
         });
     }

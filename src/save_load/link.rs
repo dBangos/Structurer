@@ -35,7 +35,7 @@ pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
             if let Ok(l) = line {
                 if l != "" {
                     let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-                    if split_line.len() > 1 {
+                    if split_line.len() > 1 && split_line[1] != "" {
                         result.push((split_line[0].to_string(), split_line[1..].to_vec()));
                     } else {
                         result.push((split_line[0].to_string(), vec![]));
