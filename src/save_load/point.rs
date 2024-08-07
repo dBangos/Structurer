@@ -2,13 +2,49 @@ use crate::save_load::general::{
     add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, load_from_filename,
     save_to_filename,
 };
-use crate::Point;
+use crate::{Point, Structurer};
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
+use std::usize;
 use uuid::Uuid;
+
+use super::general::replace_line;
+
+impl Structurer {
+    pub fn change_point_position(&mut self, from_position: usize, to_position: usize) {
+        //Update the state
+        //Wnen dragging below the last element to_position gets len+0 so we have to compensate
+        let mut to_position = to_position;
+        if to_position >= self.titles[self.current_title_index].point_ids.len() {
+            to_position = self.titles[self.current_title_index].point_ids.len() - 1;
+        }
+        if from_position < to_position {
+            self.titles[self.current_title_index].point_ids[from_position..=to_position]
+                .rotate_left(1);
+        } else {
+            self.titles[self.current_title_index].point_ids[to_position..=from_position]
+                .rotate_right(1);
+        }
+        //Update the library file
+        let new_line = self.titles[self.current_title_index].name.clone()
+            + "@"
+            + &self.titles[self.current_title_index].point_ids.join("@");
+        replace_line(
+            self.project_directory.clone(),
+            self.titles[self.current_title_index].id.clone(),
+            new_line,
+            "Library".to_string(),
+        );
+        //Reloading the points
+        self.current_points = load_points_from_title_id(
+            self.project_directory.clone(),
+            self.titles[self.current_title_index].id.clone(),
+        );
+    }
+}
 //Adds a point to the current page/title, create the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
 pub fn add_point(project_dir: PathBuf, title_id: String) -> Option<Point> {

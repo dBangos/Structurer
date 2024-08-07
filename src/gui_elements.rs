@@ -6,7 +6,7 @@ use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
-use crate::{ImageStruct, Title};
+use crate::{ImageStruct, Point, Title};
 use eframe::egui::{self, Button, RichText, TextWrapMode};
 use egui::{Id, Vec2};
 use egui_dnd::{dnd, DragDropItem};
@@ -18,6 +18,11 @@ impl DragDropItem for &mut Title {
     }
 }
 
+impl DragDropItem for &mut Point {
+    fn id(&self) -> Id {
+        Id::new(&self.id)
+    }
+}
 impl Structurer {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
@@ -155,10 +160,10 @@ impl Structurer {
                 dnd(ui, "dnd").show(self.titles.iter_mut(), |ui, title, handle, _state| {
                     //If the filter is active and the title has the tags
                     if tag_filter
-                        && title
-                            .tags
+                        && self
+                            .tags_in_filter
                             .iter()
-                            .all(|item| self.tags_in_filter.contains(item))
+                            .all(|item| title.tags.contains(item))
                     {
                         handle.ui(ui, |ui| {
                             if ui
@@ -314,79 +319,93 @@ impl Structurer {
 
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
-        ui.vertical_centered(|ui| {
-            for (index, point) in self.current_points.iter_mut().enumerate() {
-                ui.add_space(5.0);
-                // Container for elements of each point
-                ui.horizontal(|ui| {
-                    ui.vertical(|ui| {
-                        if ui.button("🗑 Delete").clicked() {
-                            self.point_requesting_action_index = index;
-                            self.show_confirm_delete_popup = true;
-                        }
-                        if ui.button("➕ Share").clicked() {
-                            self.titles_receiving_shared_point = point_is_shared_with(
-                                self.project_directory.clone(),
-                                point.id.clone(),
-                            );
-                            self.point_requesting_action_index = index;
-                            self.show_share_point_popup = true;
-                        }
-                        if ui.button("ℹ Source").clicked() {
-                            self.point_requesting_action_index = index;
-
-                            point.source =
-                                get_point_source(self.project_directory.clone(), point.id.clone());
-                            self.show_source_popup = true;
-                        }
-                        if ui.button("🖼 Add Images").clicked() {
-                            if let Some(files) = FileDialog::new()
-                                .add_filter("image", &["jpeg", "jpg", "png", "webp"])
-                                .set_directory(self.project_directory.clone())
-                                .pick_files()
-                            {
-                                for file in files {
-                                    let mut new_image: ImageStruct = ImageStruct::default();
-                                    new_image.path = file.to_string_lossy().to_string();
-                                    point.images.push(new_image.clone());
-                                    add_image_to_point(
-                                        self.project_directory.clone(),
-                                        point.id.clone(),
-                                        new_image,
-                                    );
-                                }
+        let mut index: usize = 0;
+        ui.vertical(|ui| {
+            ui.add_space(5.0);
+            let response = dnd(ui, "dnd2").show(
+                self.current_points.iter_mut(),
+                |ui, point, handle, _state| {
+                    // Container for elements of each point
+                    ui.horizontal(|ui| {
+                        ui.vertical(|ui| {
+                            handle.ui(ui, |ui| {
+                                let _ = ui.button("↕ Reorder");
+                            });
+                            if ui.button("🗑 Delete").clicked() {
+                                self.point_requesting_action_index = index;
+                                self.show_confirm_delete_popup = true;
                             }
-                        }
-                    });
-                    ui.vertical(|ui| {
-                        ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
-                        ui.with_layout(
-                            egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
-                            |ui| {
-                                for (image_index, image) in
-                                    point.images.clone().into_iter().enumerate()
-                                {
-                                    let file_path = image.path.clone();
-                                    let curr_image =
-                                        egui::Image::new(format!("file://{file_path}"))
-                                            .fit_to_original_size(2.0)
-                                            .max_height(70.0)
-                                            .sense(egui::Sense::click());
+                            if ui.button("➕ Share").clicked() {
+                                self.titles_receiving_shared_point = point_is_shared_with(
+                                    self.project_directory.clone(),
+                                    point.id.clone(),
+                                );
+                                self.point_requesting_action_index = index;
+                                self.show_share_point_popup = true;
+                            }
+                            if ui.button("ℹ Source").clicked() {
+                                self.point_requesting_action_index = index;
 
-                                    if ui.add(curr_image).clicked() {
-                                        self.point_image_requesting_popup = (index, image_index);
-                                        self.show_point_image_popup = true;
+                                point.source = get_point_source(
+                                    self.project_directory.clone(),
+                                    point.id.clone(),
+                                );
+                                self.show_source_popup = true;
+                            }
+                            if ui.button("🖼 Add Images").clicked() {
+                                if let Some(files) = FileDialog::new()
+                                    .add_filter("image", &["jpeg", "jpg", "png", "webp"])
+                                    .set_directory(self.project_directory.clone())
+                                    .pick_files()
+                                {
+                                    for file in files {
+                                        let mut new_image: ImageStruct = ImageStruct::default();
+                                        new_image.path = file.to_string_lossy().to_string();
+                                        point.images.push(new_image.clone());
+                                        add_image_to_point(
+                                            self.project_directory.clone(),
+                                            point.id.clone(),
+                                            new_image,
+                                        );
                                     }
                                 }
-                            },
-                        );
+                            }
+                        });
+                        ui.vertical(|ui| {
+                            ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
+                            ui.with_layout(
+                                egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
+                                |ui| {
+                                    for (image_index, image) in
+                                        point.images.clone().into_iter().enumerate()
+                                    {
+                                        let file_path = image.path.clone();
+                                        let curr_image =
+                                            egui::Image::new(format!("file://{file_path}"))
+                                                .fit_to_original_size(2.0)
+                                                .max_height(70.0)
+                                                .sense(egui::Sense::click());
 
-                        ui.add_sized(
-                            ui.available_size(),
-                            egui::TextEdit::multiline(&mut point.content),
-                        );
+                                        if ui.add(curr_image).clicked() {
+                                            self.point_image_requesting_popup =
+                                                (index, image_index);
+                                            self.show_point_image_popup = true;
+                                        }
+                                    }
+                                },
+                            );
+
+                            ui.add_sized(
+                                ui.available_size(),
+                                egui::TextEdit::multiline(&mut point.content),
+                            );
+                        });
                     });
-                });
+                    index += 1;
+                },
+            );
+            if let Some(update) = response.final_update() {
+                self.change_point_position(update.from, update.to);
             }
         });
     }

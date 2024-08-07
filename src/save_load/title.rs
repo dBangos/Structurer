@@ -172,8 +172,8 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
         let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
             .iter()
             .collect();
-        let file = File::open(&file_path)
-            .expect("Error while opening the library file from change_title_name");
+        let file =
+            File::open(&file_path).expect("Error while opening the library file from save_title");
         for line in BufReader::new(file).lines() {
             if let Ok(l) = line {
                 let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
