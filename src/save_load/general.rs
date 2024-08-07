@@ -208,20 +208,6 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
     let _ = file.write_all(content.as_bytes());
 }
 
-//Gets the filename of a txt file, returns its content.
-pub fn load_from_filename(title: String, project_dir: PathBuf) -> String {
-    let file_path: PathBuf = [project_dir, PathBuf::from(title + ".txt")]
-        .iter()
-        .collect();
-    let mut file =
-        File::open(&file_path).expect("Error while opening file from load_from_filename");
-    let mut s = String::new();
-    match file.read_to_string(&mut s) {
-        Err(why) => panic!("couldn't read {}: {}", file_path.display(), why),
-        Ok(_) => return s,
-    }
-}
-
 impl Structurer {
     pub fn change_title(&mut self, index: usize) {
         if self.center_current_node {

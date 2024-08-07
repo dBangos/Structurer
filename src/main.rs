@@ -113,6 +113,8 @@ struct Structurer {
     show_tags_popup: bool,
     tags_actively_filtering: Vec<bool>,
     tags_in_filter: Vec<String>,
+    show_timeline_popup: bool,
+    show_select_datetime_popup: bool,
 }
 
 impl Default for Structurer {
@@ -149,6 +151,8 @@ impl Default for Structurer {
             show_tags_popup: false,
             tags_actively_filtering: Vec::new(),
             tags_in_filter: Vec::new(),
+            show_timeline_popup: false,
+            show_select_datetime_popup: false,
         }
     }
 }

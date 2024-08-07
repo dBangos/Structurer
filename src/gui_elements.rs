@@ -117,6 +117,10 @@ impl Structurer {
                 self.show_tags_popup = true;
             }
             ui.separator();
+            if ui.button("📅 Timeline").clicked() {
+                self.show_timeline_popup = true;
+            }
+            ui.separator();
         });
         //If filtering based on tags
         if self.tags_actively_filtering.iter().any(|&x| x == true) {
@@ -253,6 +257,8 @@ impl Structurer {
                 let image = egui::Image::new(format!("file://{file_path}"))
                     .fit_to_original_size(2.0)
                     .max_height(200.0)
+                    .max_width(500.0)
+                    .maintain_aspect_ratio(true)
                     .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
                     self.show_title_image_popup = true;
@@ -329,13 +335,45 @@ impl Structurer {
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
                             handle.ui(ui, |ui| {
-                                let _ = ui.button("↕ Reorder");
+                                ui.horizontal(|ui| {
+                                    ui.label("↕");
+                                    ui.menu_button("➕ Add..", |ui| {
+                                        if ui.button("🖼 Images").clicked() {
+                                            ui.close_menu();
+                                            if let Some(files) = FileDialog::new()
+                                                .add_filter(
+                                                    "image",
+                                                    &["jpeg", "jpg", "png", "webp"],
+                                                )
+                                                .set_directory(self.project_directory.clone())
+                                                .pick_files()
+                                            {
+                                                for file in files {
+                                                    let mut new_image: ImageStruct =
+                                                        ImageStruct::default();
+                                                    new_image.path =
+                                                        file.to_string_lossy().to_string();
+                                                    point.images.push(new_image.clone());
+                                                    add_image_to_point(
+                                                        self.project_directory.clone(),
+                                                        point.id.clone(),
+                                                        new_image,
+                                                    );
+                                                }
+                                            }
+                                        }
+                                        if ui.button("📆 Date").clicked() {
+                                            self.point_requesting_action_index = index;
+                                            self.show_select_datetime_popup = true;
+                                        }
+                                    });
+                                });
                             });
                             if ui.button("🗑 Delete").clicked() {
                                 self.point_requesting_action_index = index;
                                 self.show_confirm_delete_popup = true;
                             }
-                            if ui.button("➕ Share").clicked() {
+                            if ui.button("🔀 Share").clicked() {
                                 self.titles_receiving_shared_point = point_is_shared_with(
                                     self.project_directory.clone(),
                                     point.id.clone(),
@@ -351,24 +389,6 @@ impl Structurer {
                                     point.id.clone(),
                                 );
                                 self.show_source_popup = true;
-                            }
-                            if ui.button("🖼 Add Images").clicked() {
-                                if let Some(files) = FileDialog::new()
-                                    .add_filter("image", &["jpeg", "jpg", "png", "webp"])
-                                    .set_directory(self.project_directory.clone())
-                                    .pick_files()
-                                {
-                                    for file in files {
-                                        let mut new_image: ImageStruct = ImageStruct::default();
-                                        new_image.path = file.to_string_lossy().to_string();
-                                        point.images.push(new_image.clone());
-                                        add_image_to_point(
-                                            self.project_directory.clone(),
-                                            point.id.clone(),
-                                            new_image,
-                                        );
-                                    }
-                                }
                             }
                         });
                         ui.vertical(|ui| {

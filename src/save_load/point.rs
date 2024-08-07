@@ -1,6 +1,5 @@
 use crate::save_load::general::{
-    add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, load_from_filename,
-    save_to_filename,
+    add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, save_to_filename,
 };
 use crate::save_load::image::get_point_images;
 use crate::{Point, Structurer};
