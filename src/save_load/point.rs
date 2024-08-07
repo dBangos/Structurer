@@ -2,6 +2,7 @@ use crate::save_load::general::{
     add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, load_from_filename,
     save_to_filename,
 };
+use crate::save_load::image::get_point_images;
 use crate::{Point, Structurer};
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
@@ -144,7 +145,7 @@ pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<
         let mut new_point: Point = Point::default();
         new_point.id = point.clone();
         new_point.content = get_point_content_from_file(project_dir.clone(), point.clone());
-        new_point.content = load_from_filename(point, project_dir.clone());
+        new_point.images = get_point_images(project_dir.clone(), new_point.id.clone());
         result.push(new_point);
     }
     return result;
