@@ -9,7 +9,20 @@ mod gui_elements;
 mod node_controls;
 mod node_physics;
 mod node_view;
-mod popup_windows;
+mod popups {
+    pub mod add_tags_popup;
+    pub mod confirm_deletion_popup;
+    pub mod node_view_popup;
+    pub mod point_datetime_popup;
+    pub mod point_image_popup;
+    pub mod point_source_popup;
+    pub mod share_point_lint_title_popup;
+    pub mod tags_popup;
+    pub mod timeline_popup;
+    pub mod title_delete_popup;
+    pub mod title_edit_popup;
+    pub mod title_image_popup;
+}
 mod save_load {
     pub mod general;
     pub mod image;
