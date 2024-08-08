@@ -1,5 +1,6 @@
 use crate::save_load::general::{
-    add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, save_to_filename,
+    add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, replace_line,
+    save_to_filename,
 };
 use crate::save_load::image::get_point_images;
 use crate::{Point, Structurer};
@@ -11,9 +12,30 @@ use std::path::PathBuf;
 use std::usize;
 use uuid::Uuid;
 
-use super::general::replace_line;
-
 impl Structurer {
+    pub fn get_all_point_ids(&mut self) {
+        let mut point_id_vec: Vec<String> = Vec::new();
+        for title in self.titles.iter() {
+            for point_id in &title.point_ids {
+                if !point_id_vec.contains(&point_id) {
+                    point_id_vec.push(point_id.to_string());
+                }
+            }
+        }
+        self.all_point_ids = point_id_vec;
+    }
+    pub fn get_all_points(&mut self) {
+        self.get_all_point_ids();
+        for point_id in &self.all_point_ids {
+            let mut new_point: Point = Point::default();
+            new_point.id = point_id.clone();
+            new_point.content =
+                get_point_content_from_file(self.project_directory.clone(), point_id.clone());
+            new_point.images =
+                get_point_images(self.project_directory.clone(), new_point.id.clone());
+            self.all_points.insert(point_id.to_string(), new_point);
+        }
+    }
     pub fn change_point_position(&mut self, from_position: usize, to_position: usize) {
         //Update the state
         //Wnen dragging below the last element to_position gets len+0 so we have to compensate

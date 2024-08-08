@@ -1,6 +1,8 @@
+use chrono::NaiveDate;
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
+use std::collections::HashMap;
 use std::path::PathBuf;
 mod config;
 mod gui_elements;
@@ -39,6 +41,7 @@ struct Point {
     content: String,
     source: String,
     images: Vec<ImageStruct>,
+    date: NaiveDate,
 }
 
 impl Default for Point {
@@ -48,6 +51,7 @@ impl Default for Point {
             content: String::new(),
             source: String::new(),
             images: Vec::new(),
+            date: NaiveDate::default(),
         }
     }
 }
@@ -85,6 +89,8 @@ struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
     title_loaded: bool,
+    all_point_ids: Vec<String>,
+    all_points: HashMap<String, Point>,
     current_title_index: usize,
     current_points: Vec<Point>,
     show_confirm_delete_popup: bool,
@@ -114,7 +120,8 @@ struct Structurer {
     tags_actively_filtering: Vec<bool>,
     tags_in_filter: Vec<String>,
     show_timeline_popup: bool,
-    show_select_datetime_popup: bool,
+    show_point_datetime_popup: bool,
+    point_date_time: NaiveDate,
 }
 
 impl Default for Structurer {
@@ -125,6 +132,8 @@ impl Default for Structurer {
             title_loaded: false,
             current_title_index: 0,
             current_points: Vec::new(),
+            all_point_ids: Vec::new(),
+            all_points: HashMap::new(),
             show_confirm_delete_popup: false,
             point_requesting_action_index: 0,
             show_share_point_popup: false,
@@ -152,7 +161,8 @@ impl Default for Structurer {
             tags_actively_filtering: Vec::new(),
             tags_in_filter: Vec::new(),
             show_timeline_popup: false,
-            show_select_datetime_popup: false,
+            show_point_datetime_popup: false,
+            point_date_time: NaiveDate::default(),
         }
     }
 }
@@ -289,6 +299,12 @@ impl eframe::App for Structurer {
         }
         if self.show_tags_popup {
             self.tags_popup(ctx);
+        }
+        if self.show_timeline_popup {
+            self.timeline_popup(ctx);
+        }
+        if self.show_point_datetime_popup {
+            self.point_datetime_popup(ctx);
         }
     }
 }

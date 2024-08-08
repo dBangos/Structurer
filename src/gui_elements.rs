@@ -327,11 +327,11 @@ impl Structurer {
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         let mut index: usize = 0;
         ui.vertical(|ui| {
-            ui.add_space(5.0);
             let response = dnd(ui, "dnd2").show(
                 self.current_points.iter_mut(),
                 |ui, point, handle, _state| {
                     // Container for elements of each point
+                    ui.add_space(5.0);
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
                             handle.ui(ui, |ui| {
@@ -364,7 +364,8 @@ impl Structurer {
                                         }
                                         if ui.button("📆 Date").clicked() {
                                             self.point_requesting_action_index = index;
-                                            self.show_select_datetime_popup = true;
+                                            self.point_date_time = point.date;
+                                            self.show_point_datetime_popup = true;
                                         }
                                     });
                                 });
