@@ -144,7 +144,8 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
                     if split_line[1] == "" {
                         new_point.time = None;
                     } else {
-                        if let Ok(parsed_time) = NaiveTime::parse_from_str(&split_line[1], "%H%M%S")
+                        if let Ok(parsed_time) =
+                            NaiveTime::parse_from_str(&split_line[1], "%H:%M:%S")
                         {
                             new_point.time = Some(parsed_time);
                         } else {

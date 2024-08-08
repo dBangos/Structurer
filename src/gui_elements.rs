@@ -7,6 +7,7 @@ use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Point, Title};
+use chrono::{Datelike, Timelike};
 use eframe::egui::{self, Button, RichText, TextWrapMode};
 use egui::{Id, Vec2};
 use egui_dnd::{dnd, DragDropItem};
@@ -365,7 +366,14 @@ impl Structurer {
                                         if ui.button("📆 Date").clicked() {
                                             self.point_requesting_action_index = index;
                                             if let Some(date) = point.date {
-                                                self.point_date = date;
+                                                self.point_popup_fields.0 = date.year();
+                                                self.point_popup_fields.1 = date.month();
+                                                self.point_popup_fields.2 = date.day();
+                                            }
+                                            if let Some(time) = point.time {
+                                                self.point_popup_fields.3 = time.hour();
+                                                self.point_popup_fields.4 = time.minute();
+                                                self.point_popup_fields.5 = time.second();
                                             }
                                             self.show_point_datetime_popup = true;
                                         }

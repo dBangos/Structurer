@@ -136,8 +136,7 @@ struct Structurer {
     tags_in_filter: Vec<String>,
     show_timeline_popup: bool,
     show_point_datetime_popup: bool,
-    point_date: NaiveDate,
-    point_time: NaiveTime,
+    point_popup_fields: (i32, u32, u32, u32, u32, u32),
 }
 
 impl Default for Structurer {
@@ -178,8 +177,7 @@ impl Default for Structurer {
             tags_in_filter: Vec::new(),
             show_timeline_popup: false,
             show_point_datetime_popup: false,
-            point_date: NaiveDate::default(),
-            point_time: NaiveTime::default(),
+            point_popup_fields: (2024, 1, 1, 0, 0, 0),
         }
     }
 }
