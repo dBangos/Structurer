@@ -119,9 +119,17 @@ impl Structurer {
             }
             ui.separator();
             if ui.button("📅 Timeline").clicked() {
+                //Update the points to make sure the points are up to date
+                self.get_all_points();
+                //Filter and sort the points by date and time
+                self.all_points.retain(|x| x.date != None);
+                self.all_points
+                    .sort_by(|a, b| a.date.cmp(&b.date).then(a.time.cmp(&b.time)));
                 self.show_timeline_popup = true;
             }
             ui.separator();
+            //ui.label("Search:");
+            //ui.text_edit_singleline(&mut self.searching_string);
         });
         //If filtering based on tags
         if self.tags_actively_filtering.iter().any(|&x| x == true) {

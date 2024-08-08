@@ -2,7 +2,6 @@ use chrono::{NaiveDate, NaiveTime};
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
-use std::collections::HashMap;
 use std::path::PathBuf;
 mod config;
 mod gui_elements;
@@ -104,8 +103,7 @@ struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
     title_loaded: bool,
-    all_point_ids: Vec<String>,
-    all_points: HashMap<String, Point>,
+    all_points: Vec<Point>,
     current_title_index: usize,
     current_points: Vec<Point>,
     show_confirm_delete_popup: bool,
@@ -137,6 +135,7 @@ struct Structurer {
     show_timeline_popup: bool,
     show_point_datetime_popup: bool,
     point_popup_fields: (i32, u32, u32, u32, u32, u32),
+    searching_string: String,
 }
 
 impl Default for Structurer {
@@ -147,8 +146,7 @@ impl Default for Structurer {
             title_loaded: false,
             current_title_index: 0,
             current_points: Vec::new(),
-            all_point_ids: Vec::new(),
-            all_points: HashMap::new(),
+            all_points: Vec::new(),
             show_confirm_delete_popup: false,
             point_requesting_action_index: 0,
             show_share_point_popup: false,
@@ -178,6 +176,7 @@ impl Default for Structurer {
             show_timeline_popup: false,
             show_point_datetime_popup: false,
             point_popup_fields: (2024, 1, 1, 0, 0, 0),
+            searching_string: String::new(),
         }
     }
 }
@@ -272,16 +271,20 @@ impl eframe::App for Structurer {
                     }
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                //Render stuff only if a title is loaded
-                if self.title_loaded == true {
-                    ui.vertical_centered(|ui| {
-                        self.title_layout(ui);
-                        ui.separator();
+                if self.searching_string == "" {
+                    //Render stuff only if a title is loaded
+                    if self.title_loaded == true {
+                        ui.vertical_centered(|ui| {
+                            self.title_layout(ui);
+                            ui.separator();
 
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            self.points_layout(ui);
+                            egui::ScrollArea::vertical().show(ui, |ui| {
+                                self.points_layout(ui);
+                            });
                         });
-                    });
+                    }
+                } else {
+                    //If searching show the results instead
                 }
             });
         });

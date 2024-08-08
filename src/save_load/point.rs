@@ -15,6 +15,7 @@ use uuid::Uuid;
 impl Structurer {
     pub fn get_all_points(&mut self) {
         let mut point_id_vec: Vec<String> = Vec::new();
+        self.all_points = Vec::new();
         for title in self.titles.iter() {
             for point_id in &title.point_ids {
                 if !point_id_vec.contains(&point_id) {
@@ -22,13 +23,13 @@ impl Structurer {
                 }
             }
         }
-        self.all_point_ids = point_id_vec;
-        for point_id in &self.all_point_ids {
+        for point_id in point_id_vec {
             let new_point: Point =
                 get_point_content_from_file(self.project_directory.clone(), point_id.clone());
-            self.all_points.insert(point_id.to_string(), new_point);
+            self.all_points.push(new_point);
         }
     }
+
     pub fn change_point_position(&mut self, from_position: usize, to_position: usize) {
         //Update the state
         //Wnen dragging below the last element to_position gets len+0 so we have to compensate
