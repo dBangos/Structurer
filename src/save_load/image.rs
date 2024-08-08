@@ -64,29 +64,3 @@ pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Im
         content.join("\n"),
     );
 }
-
-pub fn get_point_images(project_dir: PathBuf, point_id: String) -> Vec<ImageStruct> {
-    let mut return_vec: Vec<ImageStruct> = Vec::new();
-    let file_path: PathBuf = [
-        project_dir.clone(),
-        PathBuf::from(point_id.clone() + ".txt"),
-    ]
-    .iter()
-    .collect();
-    let file =
-        File::open(&file_path).expect("Error while opening file from delete_image_from_point");
-    for line in BufReader::new(file).lines() {
-        if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
-            if split_line.len() == 3 {
-                if split_line[0] == "Image" {
-                    let mut new_image: ImageStruct = ImageStruct::default();
-                    new_image.path = split_line[1].clone();
-                    new_image.description = split_line[2].clone();
-                    return_vec.push(new_image);
-                }
-            }
-        }
-    }
-    return return_vec;
-}

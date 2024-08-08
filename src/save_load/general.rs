@@ -1,4 +1,3 @@
-use crate::save_load::image::get_point_images;
 use crate::save_load::link::get_linked_pairs;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{get_point_content_from_file, save_point};
@@ -299,11 +298,8 @@ pub fn save_old_add_new_points(
         save_point(project_directory.clone(), point);
     }
     for new_point_id in new_title.point_ids.into_iter() {
-        let mut new_point: Point = Point::default();
-        new_point.id = new_point_id.to_string();
-        new_point.content =
-            get_point_content_from_file(project_directory.clone(), new_point.id.clone());
-        new_point.images = get_point_images(project_directory.clone(), new_point_id.clone());
+        let new_point: Point =
+            get_point_content_from_file(project_directory.clone(), new_point_id.clone());
         return_current_points.push(new_point);
     }
     return return_current_points;

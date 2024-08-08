@@ -5,7 +5,6 @@ use crate::save_load::share::share_unshare_point;
 use crate::save_load::source::update_source;
 use crate::save_load::title::{delete_title, save_title};
 use crate::{left_panel_labels, Structurer};
-use chrono::NaiveDate;
 use eframe::egui::{self, RichText};
 use rfd::FileDialog;
 impl Structurer {
@@ -45,13 +44,19 @@ impl Structurer {
                 .show(ctx, |ui| {
                     ui.vertical_centered_justified(|ui| {
                         ui.horizontal(|ui| {
-                            ui.add(egui_extras::DatePickerButton::new(
-                                &mut self.point_date_time,
-                            ));
+                            ui.add(egui_extras::DatePickerButton::new(&mut self.point_date));
                         });
-                        if ui.button("✖ Close").clicked() {
-                            self.show_point_datetime_popup = false;
-                        }
+                        ui.horizontal(|ui| {
+                            if ui.button("✅ Ok").clicked() {
+                                self.show_point_datetime_popup = false;
+                                self.current_points[self.point_requesting_action_index].date =
+                                    Some(self.point_date);
+                            }
+
+                            if ui.button("✖ Close").clicked() {
+                                self.show_point_datetime_popup = false;
+                            }
+                        });
                     });
                 });
             self.show_point_datetime_popup &= show_popup;

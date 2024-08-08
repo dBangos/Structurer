@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use chrono::{NaiveDate, NaiveTime};
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
@@ -41,7 +41,8 @@ struct Point {
     content: String,
     source: String,
     images: Vec<ImageStruct>,
-    date: NaiveDate,
+    date: Option<NaiveDate>,
+    time: Option<NaiveTime>,
 }
 
 impl Default for Point {
@@ -51,7 +52,8 @@ impl Default for Point {
             content: String::new(),
             source: String::new(),
             images: Vec::new(),
-            date: NaiveDate::default(),
+            date: None,
+            time: None,
         }
     }
 }
@@ -121,7 +123,8 @@ struct Structurer {
     tags_in_filter: Vec<String>,
     show_timeline_popup: bool,
     show_point_datetime_popup: bool,
-    point_date_time: NaiveDate,
+    point_date: NaiveDate,
+    point_time: NaiveTime,
 }
 
 impl Default for Structurer {
@@ -162,7 +165,8 @@ impl Default for Structurer {
             tags_in_filter: Vec::new(),
             show_timeline_popup: false,
             show_point_datetime_popup: false,
-            point_date_time: NaiveDate::default(),
+            point_date: NaiveDate::default(),
+            point_time: NaiveTime::default(),
         }
     }
 }

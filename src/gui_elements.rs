@@ -364,7 +364,9 @@ impl Structurer {
                                         }
                                         if ui.button("📆 Date").clicked() {
                                             self.point_requesting_action_index = index;
-                                            self.point_date_time = point.date;
+                                            if let Some(date) = point.date {
+                                                self.point_date = date;
+                                            }
                                             self.show_point_datetime_popup = true;
                                         }
                                     });
