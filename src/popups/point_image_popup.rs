@@ -12,8 +12,8 @@ impl Structurer {
                 .open(&mut show_popup)
                 .show(ctx, |ui| {
                     //If there is an image attached, replace the placeholder
-                    let file_path = self.current_points[self.point_image_requesting_popup.0].images
-                        [self.point_image_requesting_popup.1]
+                    let file_path = self.current_points[self.point_requesting_action_index].images
+                        [self.point_image_requesting_popup]
                         .path
                         .clone();
                     let image = egui::Image::new(format!("file://{file_path}"))
@@ -23,26 +23,26 @@ impl Structurer {
                     ui.label("Description");
                     ui.horizontal(|ui| {
                         ui.text_edit_multiline(
-                            &mut self.current_points[self.point_image_requesting_popup.0].images
-                                [self.point_image_requesting_popup.1]
+                            &mut self.current_points[self.point_requesting_action_index].images
+                                [self.point_image_requesting_popup]
                                 .description,
                         );
 
                         if ui.button("Delete").clicked() {
                             delete_image_from_point(
                                 self.project_directory.clone(),
-                                self.current_points[self.point_image_requesting_popup.0]
+                                self.current_points[self.point_requesting_action_index]
                                     .id
                                     .clone(),
-                                self.current_points[self.point_image_requesting_popup.0].images
-                                    [self.point_image_requesting_popup.1]
+                                self.current_points[self.point_requesting_action_index].images
+                                    [self.point_image_requesting_popup]
                                     .clone(),
                             );
                             self.show_point_image_popup = false;
                             //Removing the item from state
-                            self.current_points[self.point_image_requesting_popup.0]
+                            self.current_points[self.point_requesting_action_index]
                                 .images
-                                .remove(self.point_image_requesting_popup.1);
+                                .remove(self.point_image_requesting_popup);
                         }
                     });
                 });

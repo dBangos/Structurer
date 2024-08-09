@@ -447,8 +447,8 @@ impl Structurer {
                                                 .sense(egui::Sense::click());
 
                                         if ui.add(curr_image).clicked() {
-                                            self.point_image_requesting_popup =
-                                                (index, image_index);
+                                            self.point_requesting_action_index = index;
+                                            self.point_image_requesting_popup = image_index;
                                             self.show_point_image_popup = true;
                                         }
                                     }

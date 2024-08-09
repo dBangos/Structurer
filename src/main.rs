@@ -117,7 +117,7 @@ struct Structurer {
     show_point_image_popup: bool,
     show_title_edit_popup: bool,
     show_add_tags_popup: bool,
-    point_image_requesting_popup: (usize, usize), //Index of point in title, index of image in point
+    point_image_requesting_popup: usize, //Index of point in title, index of image in point
     drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
     initialized: bool,
@@ -159,7 +159,7 @@ impl Default for Structurer {
             show_point_image_popup: false,
             show_title_edit_popup: false,
             show_add_tags_popup: false,
-            point_image_requesting_popup: (0, 0),
+            point_image_requesting_popup: 0,
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             linked_pairs: Vec::new(),
             initialized: false,
@@ -287,7 +287,9 @@ impl eframe::App for Structurer {
                     }
                 } else {
                     //If searching show the results instead
-                    self.search_layout(ui);
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        self.search_layout(ui);
+                    });
                 }
             });
         });
