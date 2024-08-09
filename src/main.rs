@@ -2,7 +2,9 @@ use chrono::{NaiveDate, NaiveTime};
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
+use std::collections::HashMap;
 use std::path::PathBuf;
+use std::usize;
 mod config;
 mod gui_elements;
 mod node_controls;
@@ -15,9 +17,8 @@ mod popups {
     pub mod point_datetime_popup;
     pub mod point_image_popup;
     pub mod point_source_popup;
-    pub mod share_point_lint_title_popup;
+    pub mod share_point_link_title_popup;
     pub mod tags_popup;
-    pub mod timeline_popup;
     pub mod title_delete_popup;
     pub mod title_edit_popup;
     pub mod title_image_popup;
@@ -98,16 +99,21 @@ impl Default for Title {
         }
     }
 }
+enum StateType {
+    Empty,
+    Title,
+    Search,
+    Timeline,
+}
 
 struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
-    title_loaded: bool,
-    all_points: Vec<Point>,
+    points: HashMap<String, Point>,
     current_title_index: usize,
-    current_points: Vec<Point>,
+    current_point_ids: Vec<String>,
     show_confirm_delete_popup: bool,
-    point_requesting_action_index: usize,
+    point_requesting_action_id: String,
     show_share_point_popup: bool,
     titles_receiving_shared_point: Vec<bool>,
     show_title_delete_popup: bool,
@@ -117,7 +123,7 @@ struct Structurer {
     show_point_image_popup: bool,
     show_title_edit_popup: bool,
     show_add_tags_popup: bool,
-    point_image_requesting_popup: usize, //Index of point in title, index of image in point
+    point_image_requesting_popup: usize,
     drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
     initialized: bool,
@@ -132,53 +138,54 @@ struct Structurer {
     show_tags_popup: bool,
     tags_actively_filtering: Vec<bool>,
     tags_in_filter: Vec<String>,
-    show_timeline_popup: bool,
     show_point_datetime_popup: bool,
     point_popup_fields: (i32, u32, u32, u32, u32, u32),
     searching_string: String,
-    search_active: bool,
+    current_state: StateType,
+    next_page_point_ids: Vec<String>,
 }
 
 impl Default for Structurer {
     fn default() -> Self {
         Self {
+            current_state: StateType::Empty,
             project_directory: Default::default(),
             titles: Vec::new(),
-            title_loaded: false,
             current_title_index: 0,
-            current_points: Vec::new(),
-            all_points: Vec::new(),
-            show_confirm_delete_popup: false,
-            point_requesting_action_index: 0,
-            show_share_point_popup: false,
+            current_point_ids: Vec::new(),
+            points: HashMap::new(),
+            point_requesting_action_id: String::new(),
             titles_receiving_shared_point: Vec::new(),
+            point_image_requesting_popup: 0,
+            linked_pairs: Vec::new(),
+            initialized: false,
+            all_tags: Vec::new(),
+            current_title_tag_bools: Vec::new(),
+            possible_new_tag: String::new(),
+            tags_actively_filtering: Vec::new(),
+            tags_in_filter: Vec::new(),
+            point_popup_fields: (2024, 1, 1, 0, 0, 0),
+            searching_string: String::new(),
+            next_page_point_ids: Vec::new(),
+            //Node view
+            drag_distance: Vec2 { x: 0.0, y: 0.0 },
+            stop_clicked_nodes: false,
+            center_current_node: true,
+            node_view_start_stop_physics: true,
+            view_scale: 0.85,
+            //Popup bools
+            show_confirm_delete_popup: false,
             show_title_delete_popup: false,
+            show_point_datetime_popup: false,
+            show_node_view_popup: false,
             show_link_title_popup: false,
             show_source_popup: false,
             show_title_image_popup: false,
             show_point_image_popup: false,
             show_title_edit_popup: false,
             show_add_tags_popup: false,
-            point_image_requesting_popup: 0,
-            drag_distance: Vec2 { x: 0.0, y: 0.0 },
-            linked_pairs: Vec::new(),
-            initialized: false,
-            view_scale: 0.85,
-            stop_clicked_nodes: false,
-            all_tags: Vec::new(),
-            current_title_tag_bools: Vec::new(),
-            possible_new_tag: String::new(),
-            node_view_start_stop_physics: true,
-            center_current_node: true,
-            show_node_view_popup: false,
+            show_share_point_popup: false,
             show_tags_popup: false,
-            tags_actively_filtering: Vec::new(),
-            tags_in_filter: Vec::new(),
-            show_timeline_popup: false,
-            show_point_datetime_popup: false,
-            point_popup_fields: (2024, 1, 1, 0, 0, 0),
-            searching_string: String::new(),
-            search_active: false,
         }
     }
 }
@@ -273,9 +280,9 @@ impl eframe::App for Structurer {
                     }
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                if !self.search_active {
-                    //Render stuff only if a title is loaded
-                    if self.title_loaded == true {
+                match self.current_state {
+                    StateType::Empty => (),
+                    StateType::Title => {
                         ui.vertical_centered(|ui| {
                             self.title_layout(ui);
                             ui.separator();
@@ -285,11 +292,12 @@ impl eframe::App for Structurer {
                             });
                         });
                     }
-                } else {
-                    //If searching show the results instead
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        self.search_layout(ui);
-                    });
+                    StateType::Search | StateType::Timeline => {
+                        //If searching show the results instead
+                        egui::ScrollArea::vertical().show(ui, |ui| {
+                            self.points_layout(ui);
+                        });
+                    }
                 }
             });
         });
@@ -326,9 +334,6 @@ impl eframe::App for Structurer {
         }
         if self.show_tags_popup {
             self.tags_popup(ctx);
-        }
-        if self.show_timeline_popup {
-            self.timeline_popup(ctx);
         }
         if self.show_point_datetime_popup {
             self.point_datetime_popup(ctx);

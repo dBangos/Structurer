@@ -1,10 +1,10 @@
-use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
+use crate::StateType;
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Point, Title};
 use chrono::{Datelike, Timelike};
@@ -36,11 +36,12 @@ impl Structurer {
                     self.current_title_index = 0;
                     self.view_scale = 0.85;
                     self.project_directory = dir_path;
-                    self.current_points = Vec::new();
-                    self.title_loaded = false;
+                    self.current_state = StateType::Empty;
+                    self.current_point_ids = Vec::new();
                     let _ = self.save_to_config();
                     self.create_library_files();
                     self.load_from_library();
+                    self.get_all_points();
                     ui.ctx().forget_all_images();
                 }
             }
@@ -49,8 +50,11 @@ impl Structurer {
                     self.project_directory.clone(),
                     self.titles[self.current_title_index].clone(),
                 ) {
-                    for point in self.current_points.clone() {
-                        save_point(self.project_directory.clone(), point);
+                    for point_id in self.current_point_ids.clone() {
+                        save_point(
+                            self.project_directory.clone(),
+                            self.points[&point_id].clone(),
+                        );
                     }
                     //Saving here so save button updates the point_text_size on the json file
                     let _ = self.save_to_config();
@@ -70,26 +74,32 @@ impl Structurer {
                 //Add point to the new title
                 let temp_point = add_point(self.project_directory.clone(), temp_title.id.clone());
                 if let Some(p) = temp_point {
-                    self.current_points.push(p.clone());
+                    self.points.insert(p.id.clone(), p.clone());
                     //Add new point to state
                     temp_title.point_ids.push(p.id);
                 }
                 //Switch focus to the new title page
                 self.titles.push(temp_title);
-                if self.title_loaded {
-                    self.current_points = save_old_add_new_points(
-                        self.project_directory.clone(),
-                        self.titles[self.current_title_index].clone(),
-                        self.current_points.clone(),
-                        self.titles[self.titles.len() - 1].clone(),
-                    );
-                } else {
-                    self.current_points = save_old_add_new_points(
-                        self.project_directory.clone(),
-                        Title::default(),
-                        self.current_points.clone(),
-                        self.titles[0].clone(),
-                    );
+                let last_idx = self.titles.len() - 1;
+                match self.current_state {
+                    StateType::Title => {
+                        self.change_title(last_idx);
+                    }
+                    _ => {
+                        let last_idx = self.titles.len() - 1;
+                        if self.center_current_node {
+                            self.drag_distance = -1.0
+                                * self.titles[self.titles.len() - 1].node_physics_position
+                                * self.view_scale;
+                        }
+                        self.next_page_point_ids = self.titles[last_idx].point_ids.clone();
+                        self.save_old_add_new_points();
+                        self.current_title_index = last_idx;
+                        self.titles[last_idx].links = title_is_linked_with(
+                            self.project_directory.clone(),
+                            self.titles[last_idx].id.clone(),
+                        );
+                    }
                 }
                 self.current_title_index = self.titles.len() - 1;
             }
@@ -101,16 +111,25 @@ impl Structurer {
                 self.show_link_title_popup = true;
             }
             if ui.button("🗑 Delete Title").clicked() {
-                self.show_title_delete_popup = true;
+                match self.current_state {
+                    StateType::Title => self.show_title_delete_popup = true,
+                    _ => (),
+                }
             }
             ui.separator();
             if ui.button("+ Add Point").clicked() {
-                if let Some(p) = add_point(
-                    self.project_directory.clone(),
-                    self.titles[self.current_title_index].id.clone(),
-                ) {
-                    self.current_points.push(p.clone());
-                    self.titles[self.current_title_index].point_ids.push(p.id);
+                match self.current_state {
+                    StateType::Title => {
+                        if let Some(p) = add_point(
+                            self.project_directory.clone(),
+                            self.titles[self.current_title_index].id.clone(),
+                        ) {
+                            self.points.insert(p.id.clone(), p.clone());
+                            self.current_point_ids.push(p.id.clone());
+                            self.titles[self.current_title_index].point_ids.push(p.id);
+                        }
+                    }
+                    _ => (),
                 }
             }
             ui.separator();
@@ -119,65 +138,92 @@ impl Structurer {
             }
             ui.separator();
             if ui.button("📅 Timeline").clicked() {
+                for id in self.current_point_ids.clone() {
+                    save_point(self.project_directory.clone(), self.points[&id].clone());
+                }
+                self.current_state = StateType::Timeline;
                 //Update the points to make sure the points are up to date
-                self.get_all_points();
                 //Filter and sort the points by date and time
-                self.all_points.retain(|x| x.date != None);
-                self.all_points
-                    .sort_by(|a, b| a.date.cmp(&b.date).then(a.time.cmp(&b.time)));
-                self.show_timeline_popup = true;
+                self.current_point_ids = Vec::new();
+                for (key, val) in self.points.iter() {
+                    if let Some(_date) = val.date {
+                        self.current_point_ids.push(key.to_string());
+                    }
+                }
+                self.current_point_ids.sort_by(|a, b| {
+                    self.points[a]
+                        .date
+                        .cmp(&self.points[b].date)
+                        .then(self.points[a].time.cmp(&self.points[b].time))
+                });
             }
             ui.separator();
             ui.text_edit_singleline(&mut self.searching_string);
             //User can erase the string to end the search
             if self.searching_string == "" {
-                self.search_active = false
+                match self.current_state {
+                    StateType::Search => self.current_state = StateType::Empty,
+                    _ => (),
+                }
             }
             if ui.button("🔎 Search").clicked() {
                 if self.searching_string != "" {
-                    self.get_all_points();
-                    self.all_points
-                        .retain(|x| x.content.contains(&self.searching_string));
-                    self.search_active = true;
+                    self.current_state = StateType::Search;
+                    for id in self.current_point_ids.clone() {
+                        save_point(self.project_directory.clone(), self.points[&id].clone());
+                    }
+                    //Filter and sort the points by date and time
+                    self.current_point_ids = Vec::new();
+                    for (key, val) in self.points.iter() {
+                        if val.content.contains(&self.searching_string) {
+                            self.current_point_ids.push(key.to_string());
+                        }
+                    }
                 }
             }
             ui.separator();
         });
         //If filtering based on tags
-        if self.tags_actively_filtering.iter().any(|&x| x == true) {
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.label("Only showing titles with tags:");
-                self.tags_in_filter = Vec::new();
-                for (tag_bool, tag) in self
-                    .tags_actively_filtering
-                    .iter_mut()
-                    .zip(self.all_tags.clone())
-                {
-                    if *tag_bool {
-                        ui.checkbox(tag_bool, tag.clone());
-                        self.tags_in_filter.push(tag);
+        match self.current_state {
+            StateType::Title => {
+                if self.tags_actively_filtering.iter().any(|&x| x == true) {
+                    ui.separator();
+                    ui.horizontal(|ui| {
+                        ui.label("Only showing titles with tags:");
+                        self.tags_in_filter = Vec::new();
+                        for (tag_bool, tag) in self
+                            .tags_actively_filtering
+                            .iter_mut()
+                            .zip(self.all_tags.clone())
+                        {
+                            if *tag_bool {
+                                ui.checkbox(tag_bool, tag.clone());
+                                self.tags_in_filter.push(tag);
+                            }
+                        }
+                        if ui.button("↺ Reset").clicked() {
+                            self.tags_actively_filtering = vec![false; self.all_tags.len()];
+                            self.tags_in_filter = Vec::new();
+                        }
+                    });
+                    ui.add_space(2.0);
+                }
+            }
+            StateType::Search => {
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.label(format!(
+                        "Searching for points containing {}",
+                        self.searching_string
+                    ));
+                    if ui.button("↺ Reset").clicked() {
+                        self.current_state = StateType::Empty;
+                        self.searching_string = String::new();
                     }
-                }
-                if ui.button("↺ Reset").clicked() {
-                    self.tags_actively_filtering = vec![false; self.all_tags.len()];
-                    self.tags_in_filter = Vec::new();
-                }
-            });
-            ui.add_space(2.0);
-        } else if self.search_active {
-            ui.separator();
-            ui.horizontal(|ui| {
-                ui.label(format!(
-                    "Searching for points containing {}",
-                    self.searching_string
-                ));
-                if ui.button("↺ Reset").clicked() {
-                    self.search_active = false;
-                    self.searching_string = String::new();
-                }
-            });
-            ui.add_space(2.0);
+                });
+                ui.add_space(2.0);
+            }
+            _ => (),
         }
     }
 
@@ -197,11 +243,12 @@ impl Structurer {
             let response =
                 dnd(ui, "dnd").show(self.titles.iter_mut(), |ui, title, handle, _state| {
                     //If the filter is active and the title has the tags
-                    if tag_filter
+                    if (tag_filter
                         && self
                             .tags_in_filter
                             .iter()
-                            .all(|item| title.tags.contains(item))
+                            .all(|item| title.tags.contains(item)))
+                        || !tag_filter
                     {
                         handle.ui(ui, |ui| {
                             if ui
@@ -211,27 +258,12 @@ impl Structurer {
                                 )
                                 .clicked()
                             {
-                                if self.title_loaded == false {
-                                    self.title_loaded = true;
-                                    self.current_title_index = index;
-                                }
-                                index_of_button_clicked = Some(index);
-                            }
-                            index += 1;
-                        });
-                    // If the filter isn't active
-                    } else if !tag_filter {
-                        handle.ui(ui, |ui| {
-                            if ui
-                                .add(
-                                    Button::new(title.name.clone())
-                                        .wrap_mode(TextWrapMode::Truncate),
-                                )
-                                .clicked()
-                            {
-                                if self.title_loaded == false {
-                                    self.title_loaded = true;
-                                    self.current_title_index = index;
+                                match self.current_state {
+                                    StateType::Title => (),
+                                    _ => {
+                                        self.current_state = StateType::Title;
+                                        self.current_title_index = index;
+                                    }
                                 }
                                 index_of_button_clicked = Some(index);
                             }
@@ -258,26 +290,29 @@ impl Structurer {
         ui.separator();
         ui.vertical(|ui| {
             //Binding each title button to loading the corresponding points
-            if self.title_loaded {
-                for (index, is_linked) in self.titles[self.current_title_index]
-                    .links
-                    .clone()
-                    .into_iter()
-                    .enumerate()
-                {
-                    if is_linked {
-                        //Binding each title button to loading the corresponding points
-                        if ui
-                            .add(
-                                Button::new(self.titles[index].name.clone())
-                                    .wrap_mode(TextWrapMode::Truncate),
-                            )
-                            .clicked()
-                        {
-                            self.change_title(index);
+            match self.current_state {
+                StateType::Title => {
+                    for (index, is_linked) in self.titles[self.current_title_index]
+                        .links
+                        .clone()
+                        .into_iter()
+                        .enumerate()
+                    {
+                        if is_linked {
+                            //Binding each title button to loading the corresponding points
+                            if ui
+                                .add(
+                                    Button::new(self.titles[index].name.clone())
+                                        .wrap_mode(TextWrapMode::Truncate),
+                                )
+                                .clicked()
+                            {
+                                self.change_title(index);
+                            }
                         }
                     }
                 }
+                _ => (),
             }
         });
     }
@@ -359,76 +394,94 @@ impl Structurer {
 
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
-        let mut index: usize = 0;
         ui.vertical(|ui| {
             let response = dnd(ui, "dnd2").show(
-                self.current_points.iter_mut(),
-                |ui, point, handle, _state| {
+                self.current_point_ids.iter_mut(),
+                |ui, point_id, handle, _state| {
                     // Container for elements of each point
                     ui.add_space(5.0);
+                    match self.current_state {
+                        StateType::Timeline => {
+                            if let Some(date) = self.points[point_id].date {
+                                if let Some(time) = self.points[point_id].time {
+                                    ui.label(format!(
+                                        "{} - {}",
+                                        date.to_string(),
+                                        time.to_string()
+                                    ));
+                                } else {
+                                    ui.label(format!("{}", date.to_string()));
+                                }
+                            }
+                        }
+                        _ => (),
+                    }
                     ui.horizontal(|ui| {
-                        ui.vertical(|ui| {
-                            ui.horizontal(|ui| {
-                                handle.ui(ui, |ui| {
-                                    ui.label("↕");
-                                });
-                                ui.menu_button("⏷ More", |ui| {
-                                    if ui.button("🖼 Add Images").clicked() {
-                                        ui.close_menu();
-                                        if let Some(files) = FileDialog::new()
-                                            .add_filter("image", &["jpeg", "jpg", "png", "webp"])
-                                            .set_directory(self.project_directory.clone())
-                                            .pick_files()
-                                        {
-                                            for file in files {
-                                                let mut new_image: ImageStruct =
-                                                    ImageStruct::default();
-                                                new_image.path = file.to_string_lossy().to_string();
-                                                point.images.push(new_image.clone());
-                                                add_image_to_point(
-                                                    self.project_directory.clone(),
-                                                    point.id.clone(),
-                                                    new_image,
-                                                );
-                                            }
+                        //Buttons
+                        ui.horizontal(|ui| {
+                            handle.ui(ui, |ui| {
+                                ui.label("↕");
+                            });
+                            ui.menu_button("⏷ More", |ui| {
+                                if ui.button("🖼 Add Images").clicked() {
+                                    ui.close_menu();
+                                    if let Some(files) = FileDialog::new()
+                                        .add_filter("image", &["jpeg", "jpg", "png", "webp"])
+                                        .set_directory(self.project_directory.clone())
+                                        .pick_files()
+                                    {
+                                        for file in files {
+                                            let mut new_image: ImageStruct = ImageStruct::default();
+                                            new_image.path = file.to_string_lossy().to_string();
+                                            self.points
+                                                .get_mut(point_id)
+                                                .unwrap()
+                                                .images
+                                                .push(new_image.clone());
+                                            add_image_to_point(
+                                                self.project_directory.clone(),
+                                                point_id.clone(),
+                                                new_image,
+                                            );
                                         }
                                     }
-                                    if ui.button("📆 Add Date").clicked() {
-                                        self.point_requesting_action_index = index;
-                                        if let Some(date) = point.date {
-                                            self.point_popup_fields.0 = date.year();
-                                            self.point_popup_fields.1 = date.month();
-                                            self.point_popup_fields.2 = date.day();
-                                        }
-                                        if let Some(time) = point.time {
-                                            self.point_popup_fields.3 = time.hour();
-                                            self.point_popup_fields.4 = time.minute();
-                                            self.point_popup_fields.5 = time.second();
-                                        }
-                                        self.show_point_datetime_popup = true;
+                                }
+                                if ui.button("📆 Add Date").clicked() {
+                                    self.point_requesting_action_id = point_id.to_string();
+                                    if let Some(date) = self.points[point_id].date {
+                                        self.point_popup_fields.0 = date.year();
+                                        self.point_popup_fields.1 = date.month();
+                                        self.point_popup_fields.2 = date.day();
                                     }
-                                    if ui.button("🔀 Share").clicked() {
-                                        self.titles_receiving_shared_point = point_is_shared_with(
-                                            self.project_directory.clone(),
-                                            point.id.clone(),
-                                        );
-                                        self.point_requesting_action_index = index;
-                                        self.show_share_point_popup = true;
+                                    if let Some(time) = self.points[point_id].time {
+                                        self.point_popup_fields.3 = time.hour();
+                                        self.point_popup_fields.4 = time.minute();
+                                        self.point_popup_fields.5 = time.second();
                                     }
-                                    if ui.button("ℹ Source").clicked() {
-                                        self.point_requesting_action_index = index;
+                                    self.show_point_datetime_popup = true;
+                                }
+                                if ui.button("🔀 Share").clicked() {
+                                    self.titles_receiving_shared_point = point_is_shared_with(
+                                        self.project_directory.clone(),
+                                        point_id.clone(),
+                                    );
+                                    self.point_requesting_action_id = point_id.to_string();
+                                    self.show_share_point_popup = true;
+                                }
+                                if ui.button("ℹ Source").clicked() {
+                                    self.point_requesting_action_id = point_id.to_string();
 
-                                        point.source = get_point_source(
+                                    self.points.get_mut(point_id).unwrap().source =
+                                        get_point_source(
                                             self.project_directory.clone(),
-                                            point.id.clone(),
+                                            point_id.clone(),
                                         );
-                                        self.show_source_popup = true;
-                                    }
-                                    if ui.button("🗑 Delete").clicked() {
-                                        self.point_requesting_action_index = index;
-                                        self.show_confirm_delete_popup = true;
-                                    }
-                                });
+                                    self.show_source_popup = true;
+                                }
+                                if ui.button("🗑 Delete").clicked() {
+                                    self.point_requesting_action_id = point_id.to_string();
+                                    self.show_confirm_delete_popup = true;
+                                }
                             });
                         });
                         ui.vertical(|ui| {
@@ -437,7 +490,7 @@ impl Structurer {
                                 egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
                                 |ui| {
                                     for (image_index, image) in
-                                        point.images.clone().into_iter().enumerate()
+                                        self.points[point_id].images.clone().into_iter().enumerate()
                                     {
                                         let file_path = image.path.clone();
                                         let curr_image =
@@ -447,49 +500,27 @@ impl Structurer {
                                                 .sense(egui::Sense::click());
 
                                         if ui.add(curr_image).clicked() {
-                                            self.point_requesting_action_index = index;
+                                            self.point_requesting_action_id = point_id.to_string();
                                             self.point_image_requesting_popup = image_index;
                                             self.show_point_image_popup = true;
                                         }
                                     }
                                 },
                             );
-
                             ui.add_sized(
                                 ui.available_size(),
-                                egui::TextEdit::multiline(&mut point.content).desired_rows(2),
+                                egui::TextEdit::multiline(
+                                    &mut self.points.get_mut(point_id).unwrap().content,
+                                )
+                                .desired_rows(2),
                             );
                         });
                     });
-                    index += 1;
                 },
             );
             if let Some(update) = response.final_update() {
                 self.change_point_position(update.from, update.to);
             }
         });
-    }
-    pub fn search_layout(&mut self, ui: &mut egui::Ui) {
-        for point in self.all_points.clone() {
-            ui.vertical(|ui| {
-                ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
-                ui.with_layout(
-                    egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
-                    |ui| {
-                        for image in point.images.clone() {
-                            let file_path = image.path.clone();
-                            let curr_image = egui::Image::new(format!("file://{file_path}"))
-                                .fit_to_original_size(2.0)
-                                .max_height(70.0)
-                                .sense(egui::Sense::click());
-                            ui.add(curr_image);
-                        }
-                    },
-                );
-
-                ui.label(point.content);
-            });
-            ui.separator();
-        }
     }
 }

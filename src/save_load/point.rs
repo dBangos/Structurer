@@ -4,6 +4,7 @@ use crate::save_load::general::{
 };
 use crate::{ImageStruct, Point, Structurer};
 use chrono::{NaiveDate, NaiveTime};
+use std::collections::HashMap;
 use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
@@ -15,7 +16,7 @@ use uuid::Uuid;
 impl Structurer {
     pub fn get_all_points(&mut self) {
         let mut point_id_vec: Vec<String> = Vec::new();
-        self.all_points = Vec::new();
+        self.points = HashMap::new();
         for title in self.titles.iter() {
             for point_id in &title.point_ids {
                 if !point_id_vec.contains(&point_id) {
@@ -26,7 +27,7 @@ impl Structurer {
         for point_id in point_id_vec {
             let new_point: Point =
                 get_point_content_from_file(self.project_directory.clone(), point_id.clone());
-            self.all_points.push(new_point);
+            self.points.insert(point_id, new_point);
         }
     }
 
@@ -54,11 +55,7 @@ impl Structurer {
             new_line,
             "Library".to_string(),
         );
-        //Reloading the points
-        self.current_points = load_points_from_title_id(
-            self.project_directory.clone(),
-            self.titles[self.current_title_index].id.clone(),
-        );
+        self.current_point_ids = self.titles[self.current_title_index].point_ids.clone();
     }
 }
 //Adds a point to the current page/title, create the corresponding file and adds it to the library.
@@ -185,29 +182,4 @@ pub fn save_point(project_dir: PathBuf, point: Point) {
         point.id.to_string(),
         content.join("\n"),
     );
-}
-
-//Gets a title_id, loads the corresponding point_ids and point_content
-pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<Point> {
-    let mut result: Vec<Point> = Vec::new();
-    let mut library_line: Vec<String> = Vec::new();
-    let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Library.txt")]
-        .iter()
-        .collect();
-    let file =
-        File::open(&file_path).expect("Error while opening file from load_points_from_title_id");
-    for line in BufReader::new(file).lines() {
-        if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
-            if split_line[0] == title_id {
-                library_line = split_line[2..].to_vec();
-                break;
-            }
-        }
-    }
-    for point in library_line.into_iter() {
-        let new_point: Point = get_point_content_from_file(project_dir.clone(), point.clone());
-        result.push(new_point);
-    }
-    return result;
 }

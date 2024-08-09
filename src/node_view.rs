@@ -1,6 +1,7 @@
-use crate::save_load::general::save_old_add_new_points;
 use crate::save_load::link::title_is_linked_with;
-use crate::{Structurer, Title};
+use crate::save_load::point::save_point;
+use crate::save_load::title::save_title;
+use crate::{StateType, Structurer, Title};
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;
 use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
@@ -59,8 +60,9 @@ impl Structurer {
             //Temp value to store current title in case a node is clicked and the title needs to be
             //changeed
             let mut temp_curr_title = Title::default();
-            if self.title_loaded {
-                temp_curr_title = self.titles[self.current_title_index].clone();
+            match self.current_state {
+                StateType::Title => temp_curr_title = self.titles[self.current_title_index].clone(),
+                _ => (),
             }
             for (index, title) in self.titles.iter_mut().enumerate() {
                 let point_in_screen = to_screen.transform_pos(title.node_screen_position);
@@ -118,19 +120,26 @@ impl Structurer {
                     let point_response_click = ui.interact(point_rect, point_id, Sense::click());
 
                     if point_response_click.clicked() {
-                        self.current_points = save_old_add_new_points(
-                            self.project_directory.clone(),
-                            temp_curr_title.clone(),
-                            self.current_points.clone(),
-                            title.clone(),
-                        );
-                        self.current_title_index = index;
-                        title.links =
-                            title_is_linked_with(self.project_directory.clone(), title.id.clone());
+                        match self.current_state {
+                            StateType::Title => {
+                                save_title(self.project_directory.clone(), temp_curr_title.clone());
+                            }
+                            _ => (),
+                        }
+                        self.current_state = StateType::Title;
                         if self.center_current_node {
                             self.drag_distance =
                                 -1.0 * title.node_physics_position * self.view_scale;
                         }
+                        //Saving the title of the curent page before switching
+                        for id in self.current_point_ids.clone() {
+                            save_point(self.project_directory.clone(), self.points[&id].clone());
+                        }
+                        self.current_point_ids = title.point_ids.clone();
+                        self.next_page_point_ids = Vec::new();
+                        self.current_title_index = index;
+                        title.links =
+                            title_is_linked_with(self.project_directory.clone(), title.id.clone());
                     }
                     //Creating the rectangle to add it to painter
                     //It has to be calculated again as the previous one is needed for the interaction

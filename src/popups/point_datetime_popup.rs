@@ -210,9 +210,13 @@ impl Structurer {
                                         self.point_popup_fields.5,
                                     ) {
                                         self.show_point_datetime_popup = false;
-                                        self.current_points[self.point_requesting_action_index]
+                                        self.points
+                                            .get_mut(&self.point_requesting_action_id)
+                                            .unwrap()
                                             .date = Some(temp_date);
-                                        self.current_points[self.point_requesting_action_index]
+                                        self.points
+                                            .get_mut(&self.point_requesting_action_id)
+                                            .unwrap()
                                             .time = Some(temp_time);
                                     }
                                 }

@@ -5,7 +5,6 @@ use crate::Structurer;
 use eframe::egui::{self};
 impl Structurer {
     pub fn show_share_point_or_link_title_popup(&mut self, ctx: &egui::Context) {
-        assert!(self.current_points.len() > self.point_requesting_action_index);
         egui::Window::new("")
             .resizable(false)
             .default_pos([700.0, 200.0])
@@ -29,13 +28,9 @@ impl Structurer {
                     ui.horizontal(|ui| {
                         ui.add_space(70.0);
                         if ui.button("✅ Share").clicked() {
-                            let temp_point_id = self.current_points
-                                [self.point_requesting_action_index]
-                                .id
-                                .clone();
                             share_unshare_point(
                                 self.project_directory.clone(),
-                                temp_point_id.clone(),
+                                self.point_requesting_action_id.clone(),
                                 self.titles_receiving_shared_point.clone(),
                             );
                             //Adding the point to shared in state, removing from unshared in
@@ -45,10 +40,18 @@ impl Structurer {
                                 .iter_mut()
                                 .zip(self.titles_receiving_shared_point.clone())
                             {
-                                if is_shared && !title.point_ids.contains(&temp_point_id) {
-                                    title.point_ids.push(temp_point_id.clone());
-                                } else if !is_shared && title.point_ids.contains(&temp_point_id) {
-                                    title.point_ids.retain(|x| *x != temp_point_id.clone());
+                                if is_shared
+                                    && !title.point_ids.contains(&self.point_requesting_action_id)
+                                {
+                                    title
+                                        .point_ids
+                                        .push(self.point_requesting_action_id.clone());
+                                } else if !is_shared
+                                    && title.point_ids.contains(&self.point_requesting_action_id)
+                                {
+                                    title
+                                        .point_ids
+                                        .retain(|x| *x != self.point_requesting_action_id.clone());
                                 }
                             }
                             //If the point is not shared to any titles, delete it
@@ -57,10 +60,15 @@ impl Structurer {
                                 .iter()
                                 .all(|c| *c == false)
                             {
-                                delete_point(self.project_directory.clone(), temp_point_id.clone());
+                                delete_point(
+                                    self.project_directory.clone(),
+                                    self.point_requesting_action_id.clone(),
+                                );
                                 //Removing the point from all titles in state
                                 for title in self.titles.iter_mut() {
-                                    title.point_ids.retain(|x| *x != temp_point_id)
+                                    title
+                                        .point_ids
+                                        .retain(|x| *x != self.point_requesting_action_id)
                                 }
                             }
                             //Refresh the current title

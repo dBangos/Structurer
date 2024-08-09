@@ -49,6 +49,7 @@ impl Structurer {
         self.node_view_start_stop_physics = new_config.node_view_start_stop_physics;
         self.stop_clicked_nodes = new_config.stop_clicked_nodes;
         self.load_from_library();
+        self.get_all_points();
     }
 
     //Saving stuff to the config file in the default OS location

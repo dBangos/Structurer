@@ -1,9 +1,9 @@
 use crate::save_load::link::get_linked_pairs;
 use crate::save_load::link::title_is_linked_with;
-use crate::save_load::point::{get_point_content_from_file, save_point};
+use crate::save_load::point::save_point;
 use crate::save_load::tag::get_all_tags;
 use crate::save_load::title::save_title;
-use crate::{Point, Structurer, Title};
+use crate::{Structurer, Title};
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -212,12 +212,12 @@ impl Structurer {
         if self.center_current_node {
             self.drag_distance = -1.0 * self.titles[index].node_physics_position * self.view_scale;
         }
-        self.current_points = save_old_add_new_points(
+        save_title(
             self.project_directory.clone(),
             self.titles[self.current_title_index].clone(),
-            self.current_points.clone(),
-            self.titles[index].clone(),
         );
+        self.next_page_point_ids = self.titles[index].point_ids.clone();
+        self.save_old_add_new_points();
         self.current_title_index = index;
         self.titles[index].links = title_is_linked_with(
             self.project_directory.clone(),
@@ -281,26 +281,15 @@ impl Structurer {
         self.tags_actively_filtering = vec![false; self.all_tags.len()];
         self.add_tags_to_titles();
     }
-}
 
-//Helper function that saves and updates state
-//Turned this into a function instead of a method on Structurerto avoid borrow conflicts
-pub fn save_old_add_new_points(
-    project_directory: PathBuf,
-    current_title: Title,
-    current_points: Vec<Point>,
-    new_title: Title,
-) -> Vec<Point> {
-    //Saving the title of the curent page before switching
-    save_title(project_directory.clone(), current_title);
-    let mut return_current_points: Vec<Point> = Vec::new();
-    for point in current_points.clone() {
-        save_point(project_directory.clone(), point);
+    //Helper function that saves and updates state
+    //Turned this into a function instead of a method on Structurerto avoid borrow conflicts
+    pub fn save_old_add_new_points(&mut self) {
+        //Saving the title of the curent page before switching
+        for id in self.current_point_ids.clone() {
+            save_point(self.project_directory.clone(), self.points[&id].clone());
+        }
+        self.current_point_ids = self.next_page_point_ids.clone();
+        self.next_page_point_ids = Vec::new();
     }
-    for new_point_id in new_title.point_ids.into_iter() {
-        let new_point: Point =
-            get_point_content_from_file(project_directory.clone(), new_point_id.clone());
-        return_current_points.push(new_point);
-    }
-    return return_current_points;
 }
