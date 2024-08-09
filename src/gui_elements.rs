@@ -133,7 +133,7 @@ impl Structurer {
             if self.searching_string == "" {
                 self.search_active = false
             }
-            if ui.button("Search").clicked() {
+            if ui.button("🔎 Search").clicked() {
                 if self.searching_string != "" {
                     self.get_all_points();
                     self.all_points
@@ -141,6 +141,7 @@ impl Structurer {
                     self.search_active = true;
                 }
             }
+            ui.separator();
         });
         //If filtering based on tags
         if self.tags_actively_filtering.iter().any(|&x| x == true) {
@@ -371,8 +372,8 @@ impl Structurer {
                                 handle.ui(ui, |ui| {
                                     ui.label("↕");
                                 });
-                                ui.menu_button("➕ Add..", |ui| {
-                                    if ui.button("🖼 Images").clicked() {
+                                ui.menu_button("⏷ More", |ui| {
+                                    if ui.button("🖼 Add Images").clicked() {
                                         ui.close_menu();
                                         if let Some(files) = FileDialog::new()
                                             .add_filter("image", &["jpeg", "jpg", "png", "webp"])
@@ -392,7 +393,7 @@ impl Structurer {
                                             }
                                         }
                                     }
-                                    if ui.button("📆 Date").clicked() {
+                                    if ui.button("📆 Add Date").clicked() {
                                         self.point_requesting_action_index = index;
                                         if let Some(date) = point.date {
                                             self.point_popup_fields.0 = date.year();
@@ -406,29 +407,29 @@ impl Structurer {
                                         }
                                         self.show_point_datetime_popup = true;
                                     }
+                                    if ui.button("🔀 Share").clicked() {
+                                        self.titles_receiving_shared_point = point_is_shared_with(
+                                            self.project_directory.clone(),
+                                            point.id.clone(),
+                                        );
+                                        self.point_requesting_action_index = index;
+                                        self.show_share_point_popup = true;
+                                    }
+                                    if ui.button("ℹ Source").clicked() {
+                                        self.point_requesting_action_index = index;
+
+                                        point.source = get_point_source(
+                                            self.project_directory.clone(),
+                                            point.id.clone(),
+                                        );
+                                        self.show_source_popup = true;
+                                    }
+                                    if ui.button("🗑 Delete").clicked() {
+                                        self.point_requesting_action_index = index;
+                                        self.show_confirm_delete_popup = true;
+                                    }
                                 });
                             });
-                            if ui.button("🗑 Delete").clicked() {
-                                self.point_requesting_action_index = index;
-                                self.show_confirm_delete_popup = true;
-                            }
-                            if ui.button("🔀 Share").clicked() {
-                                self.titles_receiving_shared_point = point_is_shared_with(
-                                    self.project_directory.clone(),
-                                    point.id.clone(),
-                                );
-                                self.point_requesting_action_index = index;
-                                self.show_share_point_popup = true;
-                            }
-                            if ui.button("ℹ Source").clicked() {
-                                self.point_requesting_action_index = index;
-
-                                point.source = get_point_source(
-                                    self.project_directory.clone(),
-                                    point.id.clone(),
-                                );
-                                self.show_source_popup = true;
-                            }
                         });
                         ui.vertical(|ui| {
                             ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
@@ -456,7 +457,7 @@ impl Structurer {
 
                             ui.add_sized(
                                 ui.available_size(),
-                                egui::TextEdit::multiline(&mut point.content),
+                                egui::TextEdit::multiline(&mut point.content).desired_rows(2),
                             );
                         });
                     });

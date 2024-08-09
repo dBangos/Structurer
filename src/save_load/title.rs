@@ -65,7 +65,7 @@ pub fn add_title(project_dir: PathBuf) -> String {
         .append(true)
         .open(file_path)
         .expect("Error while opening library file from add_title");
-    file.write(("\n".to_string() + &new_id.to_string() + "@New title").as_bytes())
+    file.write(("\n".to_string() + &new_id.to_string() + "|--|New title").as_bytes())
         .expect("Error while writing to library file from add_title");
     file_path = [project_dir.clone(), PathBuf::from("Links.txt")]
         .iter()
@@ -83,7 +83,7 @@ pub fn add_title(project_dir: PathBuf) -> String {
         .append(true)
         .open(file_path)
         .expect("Error while opening image file from add_title");
-    file.write(("\n".to_string() + &new_id.to_string() + "@").as_bytes())
+    file.write(("\n".to_string() + &new_id.to_string() + "|--|").as_bytes())
         .expect("Error while writing to image file from add_title");
     file_path = [project_dir.clone(), PathBuf::from("Tags.txt")]
         .iter()
@@ -92,7 +92,7 @@ pub fn add_title(project_dir: PathBuf) -> String {
         .append(true)
         .open(file_path)
         .expect("Error while opening tags file from add_title");
-    file.write(("\n".to_string() + &new_id.to_string() + "@").as_bytes())
+    file.write(("\n".to_string() + &new_id.to_string() + "|--|").as_bytes())
         .expect("Error while writing to image file from add_title");
     return new_id.to_string();
 }
@@ -109,9 +109,9 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
     let file = File::open(&file_path).expect("Error while opening file from delete_title");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] != title_id {
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             } else {
                 for item in &split_line[2..] {
                     deleted_line.push((item.to_string(), false));
@@ -132,7 +132,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
     //Checking for points only on this title
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             for (point_id, is_shared) in deleted_line.iter_mut() {
                 if *is_shared == false {
                     if split_line.contains(&point_id) {
@@ -153,7 +153,7 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
 pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
     if project_dir != PathBuf::new() && title.id != String::new() {
         //Updating the Image file
-        let image_string = title.image.path + "@" + &title.image.description;
+        let image_string = title.image.path + "|--|" + &title.image.description;
         replace_line(
             project_dir.clone(),
             title.id.clone(),
@@ -164,7 +164,7 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
         replace_line(
             project_dir.clone(),
             title.id.clone(),
-            title.tags.join("@"),
+            title.tags.join("|--|"),
             "Tags".to_string(),
         );
         //Updating the library file
@@ -176,11 +176,11 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
             File::open(&file_path).expect("Error while opening the library file from save_title");
         for line in BufReader::new(file).lines() {
             if let Ok(l) = line {
-                let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                 if split_line[0] == title.id && split_line.len() > 1 {
                     split_line[1] = title.name.clone();
                 }
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             }
         }
         save_to_filename(

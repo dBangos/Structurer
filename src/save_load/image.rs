@@ -16,15 +16,15 @@ pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: ImageSt
     let file = File::open(&file_path).expect("Error while opening file from add_image_to_point");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == "Image" {
                 continue;
             } else if image_added == false {
-                let new_image_line = "Image@".to_string() + &image.path + "@" + &image.description;
+                let new_image_line = "Image|--|".to_string() + &image.path + "|--|" + &image.description;
                 content.push(new_image_line);
                 image_added = true;
             }
-            content.push(split_line.join("@"));
+            content.push(split_line.join("|--|"));
         }
     }
     save_to_filename(
@@ -46,7 +46,7 @@ pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Im
         File::open(&file_path).expect("Error while opening file from delete_image_from_point");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             //If the line contains the requested image, don't push it to content
             if split_line.len() == 3 {
                 if image_removed == false && split_line[0] == "Image" && split_line[1] == image.path
@@ -54,7 +54,7 @@ pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Im
                     image_removed = true;
                 }
             } else {
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             }
         }
     }

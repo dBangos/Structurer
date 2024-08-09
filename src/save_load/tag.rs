@@ -16,7 +16,7 @@ pub fn get_all_tags(project_dir: PathBuf) -> Vec<String> {
         let file = File::open(&file_path).expect("Error while opening file from get_all_tags");
         for line in BufReader::new(file).lines() {
             if let Ok(l) = line {
-                let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                 for tag in split_line.into_iter().skip(1) {
                     if tag != "" && !tag_list.contains(&tag) {
                         tag_list.push(tag);
@@ -41,7 +41,7 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
                     if title_index < self.titles.len() {
-                        let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                        let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                         if split_line[0] == self.titles[title_index].id && split_line.len() > 1 {
                             for tag in split_line.into_iter().skip(1) {
                                 if tag != "" {

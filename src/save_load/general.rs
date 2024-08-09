@@ -28,11 +28,11 @@ pub fn add_element_to_line(
     let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == line_identifier {
                 split_line.push(element.to_string());
             }
-            content.push(split_line.join("@"));
+            content.push(split_line.join("|--|"));
         }
     }
     let _ = save_to_filename(
@@ -53,9 +53,9 @@ pub fn delete_line_from_file(project_dir: PathBuf, identifier: String, file_name
     let file = File::open(&file_path).expect("Error while opening file from delete_line_from_file");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0].to_string() != identifier {
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             }
         }
     }
@@ -84,11 +84,11 @@ pub fn delete_all_mentions_from_file(
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
             let split_line: Vec<String> = l
-                .split("@")
+                .split("|--|")
                 .map(|s| s.to_string())
                 .filter(|s| *s != identifier)
                 .collect();
-            content.push(split_line.join("@"));
+            content.push(split_line.join("|--|"));
         }
     }
     let _ = save_to_filename(project_dir.clone(), file_name, content.join("\n"));
@@ -114,13 +114,13 @@ pub fn insert_line_at_position(
     let file = File::open(&file_path).expect("Error while opening file from delete_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] != "" {
                 if current_line == position && line_inserted == false {
                     content.push(new_line.clone());
                     line_inserted = true;
                 }
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
                 current_line += 1;
             }
         }
@@ -149,11 +149,11 @@ pub fn delete_line(project_dir: PathBuf, file_name: String, line_identifier: Str
     let file = File::open(&file_path).expect("Error while opening file from delete_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] != line_identifier {
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             } else {
-                deleted_line = split_line.join("@");
+                deleted_line = split_line.join("|--|");
             }
         }
     }
@@ -183,13 +183,13 @@ pub fn replace_line(
     let file = File::open(&file_path).expect("Error while opening file from replace_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == line_identifier {
                 split_line = Vec::new();
                 split_line.push(line_identifier.clone());
                 split_line.push(element.to_string());
             }
-            content.push(split_line.join("@"));
+            content.push(split_line.join("|--|"));
         }
     }
     let _ = save_to_filename(
@@ -228,7 +228,7 @@ impl Structurer {
     //Loading the titles and corresponding points from the Libary.txt file.
     //This file has a title_id being the first word of each line
     //the title being the second word,
-    //followed by the "@" symbol befgre each point.
+    //followed by the "|--|" symbol befgre each point.
     pub fn load_from_library(&mut self) -> () {
         let file_path: PathBuf = [self.project_directory.clone(), PathBuf::from("Library.txt")]
             .iter()
@@ -239,7 +239,7 @@ impl Structurer {
             self.titles = Vec::new();
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
-                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                     if split_line.len() > 1 {
                         let mut temp_title: Title = Title::default();
                         temp_title.id = split_line[0].clone();
@@ -262,7 +262,7 @@ impl Structurer {
                 .expect("Error while opening Images file from load_from_library");
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
-                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                     if split_line.len() == 3 && split_line[0] != "" {
                         //If this is too slow replace it with a hashmap
                         for title in self.titles.iter_mut() {

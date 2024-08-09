@@ -12,11 +12,11 @@ pub fn update_source(project_dir: PathBuf, point_id: String, new_source: String)
     let file = File::open(&file_path).expect("Error while opening file from update_sources");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == point_id.clone() {
                 split_line = vec![point_id.clone(), new_source.clone()];
             }
-            content.push(split_line.join("@"));
+            content.push(split_line.join("|--|"));
         }
     }
     let _ = save_to_filename(
@@ -34,7 +34,7 @@ pub fn get_point_source(project_dir: PathBuf, point_id: String) -> String {
     let file = File::open(&file_path).expect("Error while opening file from update_sources");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == point_id.clone() && split_line.len() > 1 {
                 return split_line[1].to_string();
             }

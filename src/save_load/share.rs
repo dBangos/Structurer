@@ -13,7 +13,7 @@ pub fn point_is_shared_with(project_dir: PathBuf, point_id: String) -> Vec<bool>
         .expect("Error while opening the library file from point_is_shared_with");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line.len() > 1 {
                 result.push(split_line.contains(&point_id));
             }
@@ -35,14 +35,14 @@ pub fn share_unshare_point(project_dir: PathBuf, point_id: String, checklist: Ve
     let mut checklist_index: usize = 0;
     for line_read in BufReader::new(file).lines() {
         if let Ok(line) = line_read {
-            let mut split_line: Vec<String> = line.split("@").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<String> = line.split("|--|").map(|s| s.to_string()).collect();
             if split_line.len() > 1 && split_line[0] != "" {
                 if checklist[checklist_index] && !split_line.contains(&point_id) {
                     split_line.push(point_id.clone());
                 } else if !checklist[checklist_index] && split_line.contains(&point_id) {
                     split_line.retain(|value| *value != point_id);
                 }
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
                 checklist_index += 1;
             }
         }

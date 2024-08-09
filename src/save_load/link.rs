@@ -34,7 +34,7 @@ pub fn all_titles_links(project_dir: PathBuf) -> Vec<(String, Vec<String>)> {
         for line in BufReader::new(file).lines() {
             if let Ok(l) = line {
                 if l != "" {
-                    let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                    let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                     if split_line.len() > 1 && split_line[1] != "" {
                         result.push((split_line[0].to_string(), split_line[1..].to_vec()));
                     } else {
@@ -58,7 +58,7 @@ pub fn title_is_linked_with(project_dir: PathBuf, title_id: String) -> Vec<bool>
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
             if l != "" {
-                let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+                let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
                 result.push(split_line.contains(&title_id));
             }
         }
@@ -96,7 +96,7 @@ pub fn link_unlink_title(
     let mut empty_line_offset: usize = 0;
     for (initial_index, line) in BufReader::new(file).lines().enumerate() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == "" {
                 empty_line_offset += 1;
             } else {
@@ -123,7 +123,7 @@ pub fn link_unlink_title(
                             .retain(|value| *value != title_list[curr_title_index].id.clone());
                     }
                 }
-                content.push(split_line.join("@"));
+                content.push(split_line.join("|--|"));
             }
         }
     }

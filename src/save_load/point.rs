@@ -46,8 +46,8 @@ impl Structurer {
         }
         //Update the library file
         let new_line = self.titles[self.current_title_index].name.clone()
-            + "@"
-            + &self.titles[self.current_title_index].point_ids.join("@");
+            + "|--|"
+            + &self.titles[self.current_title_index].point_ids.join("|--|");
         replace_line(
             self.project_directory.clone(),
             self.titles[self.current_title_index].id.clone(),
@@ -81,7 +81,7 @@ pub fn add_point(project_dir: PathBuf, title_id: String) -> Option<Point> {
             .append(true)
             .open(file_path)
             .expect("Error while opening sources file from add_point");
-        file.write(("\n".to_string() + &id.to_string() + "@").as_bytes())
+        file.write(("\n".to_string() + &id.to_string() + "|--|").as_bytes())
             .expect("Error while writing to sourcse file from add_point");
         let mut new_point: Point = Point::default();
         new_point.id = id.to_string();
@@ -116,7 +116,7 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
         File::open(&file_path).expect("Error while opening file from get_point_content_from_file");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == "" {
                 continue;
             } else if split_line[0] == "Image" {
@@ -155,7 +155,7 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
                     }
                 }
             } else {
-                new_point.content = new_point.content + &split_line.join("@") + "\n";
+                new_point.content = new_point.content + &split_line.join("|--|") + "\n";
             }
         }
     }
@@ -165,18 +165,19 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
 pub fn save_point(project_dir: PathBuf, point: Point) {
     let mut content: Vec<String> = Vec::new();
     for image in point.images {
-        let new_string: String = "Image@".to_string() + &image.path + "@" + &image.description;
+        let new_string: String =
+            "Image|--|".to_string() + &image.path + "|--|" + &image.description;
         content.push(new_string);
     }
     if let Some(date) = point.date {
-        content.push("Date@".to_string() + &date.to_string());
+        content.push("Date|--|".to_string() + &date.to_string());
     } else {
-        content.push("Date@".to_string());
+        content.push("Date|--|".to_string());
     }
     if let Some(time) = point.time {
-        content.push("Time@".to_string() + &time.to_string());
+        content.push("Time|--|".to_string() + &time.to_string());
     } else {
-        content.push("Time@".to_string());
+        content.push("Time|--|".to_string());
     }
     content.push(point.content);
     let _ = save_to_filename(
@@ -197,7 +198,7 @@ pub fn load_points_from_title_id(project_dir: PathBuf, title_id: String) -> Vec<
         File::open(&file_path).expect("Error while opening file from load_points_from_title_id");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let split_line: Vec<String> = l.split("@").map(|s| s.to_string()).collect();
+            let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             if split_line[0] == title_id {
                 library_line = split_line[2..].to_vec();
                 break;
