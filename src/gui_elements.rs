@@ -367,49 +367,45 @@ impl Structurer {
                     ui.add_space(5.0);
                     ui.horizontal(|ui| {
                         ui.vertical(|ui| {
-                            handle.ui(ui, |ui| {
-                                ui.horizontal(|ui| {
+                            ui.horizontal(|ui| {
+                                handle.ui(ui, |ui| {
                                     ui.label("↕");
-                                    ui.menu_button("➕ Add..", |ui| {
-                                        if ui.button("🖼 Images").clicked() {
-                                            ui.close_menu();
-                                            if let Some(files) = FileDialog::new()
-                                                .add_filter(
-                                                    "image",
-                                                    &["jpeg", "jpg", "png", "webp"],
-                                                )
-                                                .set_directory(self.project_directory.clone())
-                                                .pick_files()
-                                            {
-                                                for file in files {
-                                                    let mut new_image: ImageStruct =
-                                                        ImageStruct::default();
-                                                    new_image.path =
-                                                        file.to_string_lossy().to_string();
-                                                    point.images.push(new_image.clone());
-                                                    add_image_to_point(
-                                                        self.project_directory.clone(),
-                                                        point.id.clone(),
-                                                        new_image,
-                                                    );
-                                                }
+                                });
+                                ui.menu_button("➕ Add..", |ui| {
+                                    if ui.button("🖼 Images").clicked() {
+                                        ui.close_menu();
+                                        if let Some(files) = FileDialog::new()
+                                            .add_filter("image", &["jpeg", "jpg", "png", "webp"])
+                                            .set_directory(self.project_directory.clone())
+                                            .pick_files()
+                                        {
+                                            for file in files {
+                                                let mut new_image: ImageStruct =
+                                                    ImageStruct::default();
+                                                new_image.path = file.to_string_lossy().to_string();
+                                                point.images.push(new_image.clone());
+                                                add_image_to_point(
+                                                    self.project_directory.clone(),
+                                                    point.id.clone(),
+                                                    new_image,
+                                                );
                                             }
                                         }
-                                        if ui.button("📆 Date").clicked() {
-                                            self.point_requesting_action_index = index;
-                                            if let Some(date) = point.date {
-                                                self.point_popup_fields.0 = date.year();
-                                                self.point_popup_fields.1 = date.month();
-                                                self.point_popup_fields.2 = date.day();
-                                            }
-                                            if let Some(time) = point.time {
-                                                self.point_popup_fields.3 = time.hour();
-                                                self.point_popup_fields.4 = time.minute();
-                                                self.point_popup_fields.5 = time.second();
-                                            }
-                                            self.show_point_datetime_popup = true;
+                                    }
+                                    if ui.button("📆 Date").clicked() {
+                                        self.point_requesting_action_index = index;
+                                        if let Some(date) = point.date {
+                                            self.point_popup_fields.0 = date.year();
+                                            self.point_popup_fields.1 = date.month();
+                                            self.point_popup_fields.2 = date.day();
                                         }
-                                    });
+                                        if let Some(time) = point.time {
+                                            self.point_popup_fields.3 = time.hour();
+                                            self.point_popup_fields.4 = time.minute();
+                                            self.point_popup_fields.5 = time.second();
+                                        }
+                                        self.show_point_datetime_popup = true;
+                                    }
                                 });
                             });
                             if ui.button("🗑 Delete").clicked() {
