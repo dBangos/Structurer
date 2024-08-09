@@ -128,8 +128,19 @@ impl Structurer {
                 self.show_timeline_popup = true;
             }
             ui.separator();
-            //ui.label("Search:");
-            //ui.text_edit_singleline(&mut self.searching_string);
+            ui.text_edit_singleline(&mut self.searching_string);
+            //User can erase the string to end the search
+            if self.searching_string == "" {
+                self.search_active = false
+            }
+            if ui.button("Search").clicked() {
+                if self.searching_string != "" {
+                    self.get_all_points();
+                    self.all_points
+                        .retain(|x| x.content.contains(&self.searching_string));
+                    self.search_active = true;
+                }
+            }
         });
         //If filtering based on tags
         if self.tags_actively_filtering.iter().any(|&x| x == true) {
@@ -150,6 +161,19 @@ impl Structurer {
                 if ui.button("↺ Reset").clicked() {
                     self.tags_actively_filtering = vec![false; self.all_tags.len()];
                     self.tags_in_filter = Vec::new();
+                }
+            });
+            ui.add_space(2.0);
+        } else if self.search_active {
+            ui.separator();
+            ui.horizontal(|ui| {
+                ui.label(format!(
+                    "Searching for points containing {}",
+                    self.searching_string
+                ));
+                if ui.button("↺ Reset").clicked() {
+                    self.search_active = false;
+                    self.searching_string = String::new();
                 }
             });
             ui.add_space(2.0);
@@ -447,5 +471,28 @@ impl Structurer {
                 self.change_point_position(update.from, update.to);
             }
         });
+    }
+    pub fn search_layout(&mut self, ui: &mut egui::Ui) {
+        for point in self.all_points.clone() {
+            ui.vertical(|ui| {
+                ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
+                ui.with_layout(
+                    egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
+                    |ui| {
+                        for image in point.images.clone() {
+                            let file_path = image.path.clone();
+                            let curr_image = egui::Image::new(format!("file://{file_path}"))
+                                .fit_to_original_size(2.0)
+                                .max_height(70.0)
+                                .sense(egui::Sense::click());
+                            ui.add(curr_image);
+                        }
+                    },
+                );
+
+                ui.label(point.content);
+            });
+            ui.separator();
+        }
     }
 }

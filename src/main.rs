@@ -136,6 +136,7 @@ struct Structurer {
     show_point_datetime_popup: bool,
     point_popup_fields: (i32, u32, u32, u32, u32, u32),
     searching_string: String,
+    search_active: bool,
 }
 
 impl Default for Structurer {
@@ -177,6 +178,7 @@ impl Default for Structurer {
             show_point_datetime_popup: false,
             point_popup_fields: (2024, 1, 1, 0, 0, 0),
             searching_string: String::new(),
+            search_active: false,
         }
     }
 }
@@ -271,7 +273,7 @@ impl eframe::App for Structurer {
                     }
                 });
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                if self.searching_string == "" {
+                if !self.search_active {
                     //Render stuff only if a title is loaded
                     if self.title_loaded == true {
                         ui.vertical_centered(|ui| {
@@ -285,9 +287,14 @@ impl eframe::App for Structurer {
                     }
                 } else {
                     //If searching show the results instead
+                    self.search_layout(ui);
                 }
             });
         });
+        //Having all these ifs is ugly,but:
+        //// They are different bools so I can &= easily with the bools for the x close button
+        //// This might still be more elegant than using sth like a u8 and having to track which is which
+        ////// Or using strings and doing more expensive comparisons:w
         if self.show_confirm_delete_popup {
             self.confirm_deletion_popup(ctx);
         }
