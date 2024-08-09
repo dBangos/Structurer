@@ -8,6 +8,7 @@ use crate::StateType;
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Point, Title};
 use chrono::{Datelike, Timelike};
+use core::f32;
 use eframe::egui::{self, Button, RichText, TextWrapMode};
 use egui::{Id, Vec2};
 use egui_dnd::{dnd, DragDropItem};
@@ -267,9 +268,9 @@ impl Structurer {
                                 }
                                 index_of_button_clicked = Some(index);
                             }
-                            index += 1;
                         });
                     }
+                    index += 1;
                 });
             if let Some(update) = response.final_update() {
                 self.change_title_position(update.from, update.to);
@@ -507,11 +508,11 @@ impl Structurer {
                                     }
                                 },
                             );
-                            ui.add_sized(
-                                ui.available_size(),
+                            ui.add(
                                 egui::TextEdit::multiline(
                                     &mut self.points.get_mut(point_id).unwrap().content,
                                 )
+                                .desired_width(f32::INFINITY)
                                 .desired_rows(2),
                             );
                         });

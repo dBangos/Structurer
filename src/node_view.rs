@@ -12,6 +12,7 @@ impl Structurer {
                 Vec2::new(ui.available_width(), ui.available_height()),
                 Sense::click_and_drag(),
             );
+            ui.set_clip_rect(response.rect);
             // Allow dragging the background
             if response.dragged() {
                 self.drag_distance += response.drag_delta();

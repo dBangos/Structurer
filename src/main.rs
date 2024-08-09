@@ -259,12 +259,10 @@ impl eframe::App for Structurer {
                 .width_range(80.0..=400.0)
                 .show_inside(ui, |ui| {
                     egui::ScrollArea::vertical().show(ui, |ui| {
-                        ui.vertical(|ui| {
-                            ui.add_space(15.0);
-                            self.title_buttons(ui);
-                            ui.add_space(15.0);
-                            self.linked_titles_buttons(ui);
-                        });
+                        ui.add_space(15.0);
+                        self.title_buttons(ui);
+                        ui.add_space(15.0);
+                        self.linked_titles_buttons(ui);
                     });
                 });
             egui::SidePanel::right("right_panel")
