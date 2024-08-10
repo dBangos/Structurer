@@ -1,4 +1,5 @@
 use chrono::{NaiveDate, NaiveTime};
+use core::ops::Range;
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
@@ -143,6 +144,8 @@ struct Structurer {
     searching_string: String,
     current_state: StateType,
     next_page_point_ids: Vec<String>,
+    point_id_being_edited: Option<String>,
+    text_edit_cursor_range: Option<Range<usize>>,
 }
 
 impl Default for Structurer {
@@ -186,6 +189,8 @@ impl Default for Structurer {
             show_add_tags_popup: false,
             show_share_point_popup: false,
             show_tags_popup: false,
+            point_id_being_edited: None,
+            text_edit_cursor_range: None,
         }
     }
 }
@@ -285,16 +290,12 @@ impl eframe::App for Structurer {
                             self.title_layout(ui);
                             ui.separator();
 
-                            egui::ScrollArea::vertical().show(ui, |ui| {
-                                self.points_layout(ui);
-                            });
+                            self.points_layout(ui);
                         });
                     }
                     StateType::Search | StateType::Timeline => {
                         //If searching show the results instead
-                        egui::ScrollArea::vertical().show(ui, |ui| {
-                            self.points_layout(ui);
-                        });
+                        self.points_layout(ui);
                     }
                 }
             });

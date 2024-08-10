@@ -184,7 +184,6 @@ impl Structurer {
             }
             ui.separator();
         });
-        //If filtering based on tags
         match self.current_state {
             StateType::Title => {
                 if self.tags_actively_filtering.iter().any(|&x| x == true) {
@@ -225,6 +224,30 @@ impl Structurer {
                 ui.add_space(2.0);
             }
             _ => (),
+        }
+        if let Some(point_id) = &self.point_id_being_edited.clone() {
+            ui.horizontal(|ui| {
+                if ui.button("Bold").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert(range.start, '*');
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert(range.end + 1, '*');
+                    }
+                }
+                if ui.button("Italics").clicked() {}
+                if ui.button("Underline").clicked() {}
+                if ui.button("Highlight").clicked() {}
+                if ui.button("URL").clicked() {}
+                ui.separator();
+                if ui.button("Bullet point").clicked() {}
+            });
         }
     }
 
@@ -395,133 +418,180 @@ impl Structurer {
 
     //Contains all the points and their buttons
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            let response = dnd(ui, "dnd2").show(
-                self.current_point_ids.iter_mut(),
-                |ui, point_id, handle, _state| {
-                    // Container for elements of each point
-                    ui.add_space(5.0);
-                    match self.current_state {
-                        StateType::Timeline => {
-                            if let Some(date) = self.points[point_id].date {
-                                if let Some(time) = self.points[point_id].time {
-                                    ui.label(format!(
-                                        "{} - {}",
-                                        date.to_string(),
-                                        time.to_string()
-                                    ));
-                                } else {
-                                    ui.label(format!("{}", date.to_string()));
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            //Adding an element to force the scrollbar to be on the left edge
+            ui.add_sized([ui.available_size().x, 0.01], egui::Label::new(""));
+            ui.vertical(|ui| {
+                let response = dnd(ui, "dnd2").show(
+                    self.current_point_ids.iter_mut(),
+                    |ui, point_id, handle, _state| {
+                        // Container for elements of each point
+                        ui.add_space(5.0);
+                        match self.current_state {
+                            StateType::Timeline => {
+                                if let Some(date) = self.points[point_id].date {
+                                    if let Some(time) = self.points[point_id].time {
+                                        ui.label(format!(
+                                            "{} - {}",
+                                            date.to_string(),
+                                            time.to_string()
+                                        ));
+                                    } else {
+                                        ui.label(format!("{}", date.to_string()));
+                                    }
                                 }
                             }
+                            _ => (),
                         }
-                        _ => (),
-                    }
-                    ui.horizontal(|ui| {
-                        //Buttons
                         ui.horizontal(|ui| {
-                            handle.ui(ui, |ui| {
-                                ui.label("↕");
-                            });
-                            ui.menu_button("⏷ More", |ui| {
-                                if ui.button("🖼 Add Images").clicked() {
-                                    ui.close_menu();
-                                    if let Some(files) = FileDialog::new()
-                                        .add_filter("image", &["jpeg", "jpg", "png", "webp"])
-                                        .set_directory(self.project_directory.clone())
-                                        .pick_files()
-                                    {
-                                        for file in files {
-                                            let mut new_image: ImageStruct = ImageStruct::default();
-                                            new_image.path = file.to_string_lossy().to_string();
-                                            self.points
-                                                .get_mut(point_id)
-                                                .unwrap()
-                                                .images
-                                                .push(new_image.clone());
-                                            add_image_to_point(
-                                                self.project_directory.clone(),
-                                                point_id.clone(),
-                                                new_image,
-                                            );
+                            //Buttons
+                            ui.horizontal(|ui| {
+                                handle.ui(ui, |ui| {
+                                    ui.label("↕");
+                                });
+                                ui.vertical(|ui| {
+                                    ui.menu_button("⏷ More", |ui| {
+                                        if ui.button("🖼 Add Images").clicked() {
+                                            ui.close_menu();
+                                            if let Some(files) = FileDialog::new()
+                                                .add_filter(
+                                                    "image",
+                                                    &["jpeg", "jpg", "png", "webp"],
+                                                )
+                                                .set_directory(self.project_directory.clone())
+                                                .pick_files()
+                                            {
+                                                for file in files {
+                                                    let mut new_image: ImageStruct =
+                                                        ImageStruct::default();
+                                                    new_image.path =
+                                                        file.to_string_lossy().to_string();
+                                                    self.points
+                                                        .get_mut(point_id)
+                                                        .unwrap()
+                                                        .images
+                                                        .push(new_image.clone());
+                                                    add_image_to_point(
+                                                        self.project_directory.clone(),
+                                                        point_id.clone(),
+                                                        new_image,
+                                                    );
+                                                }
+                                            }
                                         }
-                                    }
-                                }
-                                if ui.button("📆 Add Date").clicked() {
-                                    self.point_requesting_action_id = point_id.to_string();
-                                    if let Some(date) = self.points[point_id].date {
-                                        self.point_popup_fields.0 = date.year();
-                                        self.point_popup_fields.1 = date.month();
-                                        self.point_popup_fields.2 = date.day();
-                                    }
-                                    if let Some(time) = self.points[point_id].time {
-                                        self.point_popup_fields.3 = time.hour();
-                                        self.point_popup_fields.4 = time.minute();
-                                        self.point_popup_fields.5 = time.second();
-                                    }
-                                    self.show_point_datetime_popup = true;
-                                }
-                                if ui.button("🔀 Share").clicked() {
-                                    self.titles_receiving_shared_point = point_is_shared_with(
-                                        self.project_directory.clone(),
-                                        point_id.clone(),
-                                    );
-                                    self.point_requesting_action_id = point_id.to_string();
-                                    self.show_share_point_popup = true;
-                                }
-                                if ui.button("ℹ Source").clicked() {
-                                    self.point_requesting_action_id = point_id.to_string();
-
-                                    self.points.get_mut(point_id).unwrap().source =
-                                        get_point_source(
-                                            self.project_directory.clone(),
-                                            point_id.clone(),
-                                        );
-                                    self.show_source_popup = true;
-                                }
-                                if ui.button("🗑 Delete").clicked() {
-                                    self.point_requesting_action_id = point_id.to_string();
-                                    self.show_confirm_delete_popup = true;
-                                }
-                            });
-                        });
-                        ui.vertical(|ui| {
-                            ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
-                            ui.with_layout(
-                                egui::Layout::left_to_right(egui::Align::LEFT).with_main_wrap(true),
-                                |ui| {
-                                    for (image_index, image) in
-                                        self.points[point_id].images.clone().into_iter().enumerate()
-                                    {
-                                        let file_path = image.path.clone();
-                                        let curr_image =
-                                            egui::Image::new(format!("file://{file_path}"))
-                                                .fit_to_original_size(2.0)
-                                                .max_height(70.0)
-                                                .sense(egui::Sense::click());
-
-                                        if ui.add(curr_image).clicked() {
+                                        if ui.button("📆 Add Date").clicked() {
                                             self.point_requesting_action_id = point_id.to_string();
-                                            self.point_image_requesting_popup = image_index;
-                                            self.show_point_image_popup = true;
+                                            if let Some(date) = self.points[point_id].date {
+                                                self.point_popup_fields.0 = date.year();
+                                                self.point_popup_fields.1 = date.month();
+                                                self.point_popup_fields.2 = date.day();
+                                            }
+                                            if let Some(time) = self.points[point_id].time {
+                                                self.point_popup_fields.3 = time.hour();
+                                                self.point_popup_fields.4 = time.minute();
+                                                self.point_popup_fields.5 = time.second();
+                                            }
+                                            self.show_point_datetime_popup = true;
+                                        }
+                                        if ui.button("🔀 Share").clicked() {
+                                            self.titles_receiving_shared_point =
+                                                point_is_shared_with(
+                                                    self.project_directory.clone(),
+                                                    point_id.clone(),
+                                                );
+                                            self.point_requesting_action_id = point_id.to_string();
+                                            self.show_share_point_popup = true;
+                                        }
+                                        if ui.button("ℹ Source").clicked() {
+                                            self.point_requesting_action_id = point_id.to_string();
+
+                                            self.points.get_mut(point_id).unwrap().source =
+                                                get_point_source(
+                                                    self.project_directory.clone(),
+                                                    point_id.clone(),
+                                                );
+                                            self.show_source_popup = true;
+                                        }
+                                        if ui.button("🗑 Delete").clicked() {
+                                            self.point_requesting_action_id = point_id.to_string();
+                                            self.show_confirm_delete_popup = true;
+                                        }
+                                    });
+                                    match self.point_id_being_edited.clone() {
+                                        Some(p_id) if p_id == *point_id => {
+                                            if ui.button("✅ Ok").clicked() {
+                                                self.point_id_being_edited = None;
+                                            }
+                                        }
+                                        _ => {
+                                            if ui.button("✏ Edit").clicked() {
+                                                self.point_id_being_edited =
+                                                    Some(point_id.to_string());
+                                            }
                                         }
                                     }
-                                },
-                            );
-                            ui.add(
-                                egui::TextEdit::multiline(
-                                    &mut self.points.get_mut(point_id).unwrap().content,
-                                )
-                                .desired_width(f32::INFINITY)
-                                .desired_rows(2),
-                            );
+                                });
+                            });
+                            ui.vertical(|ui| {
+                                ui.style_mut().spacing.item_spacing = Vec2::new(1.0, 1.0);
+                                ui.with_layout(
+                                    egui::Layout::left_to_right(egui::Align::LEFT)
+                                        .with_main_wrap(true),
+                                    |ui| {
+                                        for (image_index, image) in self.points[point_id]
+                                            .images
+                                            .clone()
+                                            .into_iter()
+                                            .enumerate()
+                                        {
+                                            let file_path = image.path.clone();
+                                            let curr_image =
+                                                egui::Image::new(format!("file://{file_path}"))
+                                                    .fit_to_original_size(2.0)
+                                                    .max_height(70.0)
+                                                    .sense(egui::Sense::click());
+
+                                            if ui.add(curr_image).clicked() {
+                                                self.point_requesting_action_id =
+                                                    point_id.to_string();
+                                                self.point_image_requesting_popup = image_index;
+                                                self.show_point_image_popup = true;
+                                            }
+                                        }
+                                    },
+                                );
+                                //Avoiding borrowing self again
+                                //Only show the editor for the clicked point
+                                match self.point_id_being_edited.clone() {
+                                    Some(p_id) if p_id == *point_id => {
+                                        let output = egui::TextEdit::multiline(
+                                            &mut self.points.get_mut(point_id).unwrap().content,
+                                        )
+                                        .desired_width(f32::INFINITY)
+                                        .desired_rows(2)
+                                        .show(ui);
+                                        //Passing the option to unwrap later doesn't work so leave
+                                        //it like this
+                                        if let Some(text_cursor_range) = output.cursor_range {
+                                            self.text_edit_cursor_range =
+                                                Some(text_cursor_range.as_sorted_char_range());
+                                        }
+                                    }
+                                    _ => {
+                                        egui_demo_lib::easy_mark::easy_mark(
+                                            ui,
+                                            &self.points[point_id].content,
+                                        );
+                                    }
+                                }
+                            });
                         });
-                    });
-                },
-            );
-            if let Some(update) = response.final_update() {
-                self.change_point_position(update.from, update.to);
-            }
+                    },
+                );
+                if let Some(update) = response.final_update() {
+                    self.change_point_position(update.from, update.to);
+                }
+            });
         });
     }
 }
