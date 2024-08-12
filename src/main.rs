@@ -30,7 +30,6 @@ mod save_load {
     pub mod link;
     pub mod point;
     pub mod share;
-    pub mod source;
     pub mod tag;
     pub mod title;
 }

@@ -154,18 +154,13 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
     if project_dir != PathBuf::new() && title.id != String::new() {
         //Updating the Image file
         let image_string = title.image.path + "|--|" + &title.image.description;
-        replace_line(
-            project_dir.clone(),
-            title.id.clone(),
-            image_string,
-            "Images".to_string(),
-        );
+        replace_line(project_dir.clone(), &title.id, &image_string, "Images");
         //Updating the Tags file
         replace_line(
             project_dir.clone(),
-            title.id.clone(),
-            title.tags.join("|--|"),
-            "Tags".to_string(),
+            &title.id,
+            &title.tags.join("|--|"),
+            "Tags",
         );
         //Updating the library file
         let mut content: Vec<String> = Vec::new();
@@ -176,9 +171,9 @@ pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
             File::open(&file_path).expect("Error while opening the library file from save_title");
         for line in BufReader::new(file).lines() {
             if let Ok(l) = line {
-                let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
+                let mut split_line: Vec<&str> = l.split("|--|").collect();
                 if split_line[0] == title.id && split_line.len() > 1 {
-                    split_line[1] = title.name.clone();
+                    split_line[1] = &title.name;
                 }
                 content.push(split_line.join("|--|"));
             }

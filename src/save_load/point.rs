@@ -51,9 +51,9 @@ impl Structurer {
             + &self.titles[self.current_title_index].point_ids.join("|--|");
         replace_line(
             self.project_directory.clone(),
-            self.titles[self.current_title_index].id.clone(),
-            new_line,
-            "Library".to_string(),
+            &self.titles[self.current_title_index].id,
+            &new_line,
+            "Library",
         );
         self.current_point_ids = self.titles[self.current_title_index].point_ids.clone();
     }
@@ -147,6 +147,10 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
                         }
                     }
                 }
+            } else if split_line[0] == "Source" {
+                if split_line.len() == 2 {
+                    new_point.source = split_line[1].clone();
+                }
             } else {
                 new_point.content = new_point.content + &split_line.join("|--|") + "\n";
             }
@@ -162,6 +166,7 @@ pub fn save_point(project_dir: PathBuf, point: Point) {
             "Image|--|".to_string() + &image.path + "|--|" + &image.description;
         content.push(new_string);
     }
+    content.push("Source|--|".to_string() + &point.source);
     if let Some(date) = point.date {
         content.push("Date|--|".to_string() + &date.to_string());
     } else {

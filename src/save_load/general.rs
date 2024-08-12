@@ -168,14 +168,14 @@ pub fn delete_line(project_dir: PathBuf, file_name: String, line_identifier: Str
 //Gets file, line and element. Deletes line and replace is with new line
 pub fn replace_line(
     project_dir: PathBuf,
-    line_identifier: String,
-    element: String,
-    file_name: String,
+    line_identifier: &str,
+    element: &str,
+    file_name: &str,
 ) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [
         project_dir.clone(),
-        PathBuf::from(file_name.clone() + ".txt"),
+        PathBuf::from(file_name.to_owned() + ".txt"),
     ]
     .iter()
     .collect();
@@ -183,11 +183,11 @@ pub fn replace_line(
     let file = File::open(&file_path).expect("Error while opening file from replace_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<&str> = l.split("|--|").collect();
             if split_line[0] == line_identifier {
                 split_line = Vec::new();
-                split_line.push(line_identifier.clone());
-                split_line.push(element.to_string());
+                split_line.push(line_identifier);
+                split_line.push(element);
             }
             content.push(split_line.join("|--|"));
         }

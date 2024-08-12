@@ -7,7 +7,7 @@ use egui::{text::LayoutJob, Color32, FontId, Stroke, TextFormat};
 pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
     let mut result: Vec<(String, Vec<bool>)> = Vec::new();
     let mut italic: bool = false;
-    let mut bold: bool = false;
+    let mut highlight: bool = false;
     let mut underline: bool = false;
     let chars: Vec<char> = input_string.chars().collect();
     if chars.len() < 3 {
@@ -19,11 +19,11 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
     while index < chars.len() - 3 {
         if chars[index] == '[' && chars[index + 1] == '!' && chars[index + 3] == ']' {
             if current_string.len() > 0 {
-                result.push((current_string.clone(), vec![italic, bold, underline]));
+                result.push((current_string.clone(), vec![italic, highlight, underline]));
                 current_string = String::new();
             }
-            if chars[index + 2] == 'b' {
-                bold = !bold;
+            if chars[index + 2] == 'h' {
+                highlight = !highlight;
             } else if chars[index + 2] == 'i' {
                 italic = !italic;
             } else if chars[index + 2] == 'u' {
@@ -54,13 +54,14 @@ pub fn markup_construct_job(input: Vec<(String, Vec<bool>)>) -> egui::text::Layo
     for (in_str, in_bools) in input {
         let mut text_format: TextFormat = TextFormat::default();
         text_format.font_id = FontId::proportional(20.0);
+        text_format.color = Color32::WHITE;
         if in_bools[0] {
             //italic
             text_format.italics = true;
         }
         if in_bools[1] {
-            //bold
-            text_format.color = Color32::WHITE;
+            //highlight
+            text_format.background = Color32::DARK_GRAY;
         }
         if in_bools[2] {
             //underline

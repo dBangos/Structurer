@@ -3,7 +3,6 @@ use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
-use crate::save_load::source::get_point_source;
 use crate::save_load::title::{add_title, save_title};
 use crate::StateType;
 use crate::{left_panel_labels, title_style, Structurer};
@@ -229,20 +228,6 @@ impl Structurer {
         if let Some(point_id) = &self.point_id_being_edited.clone() {
             ui.separator();
             ui.horizontal(|ui| {
-                if ui.button("Bold").clicked() {
-                    if let Some(range) = &self.text_edit_cursor_range {
-                        self.points
-                            .get_mut(point_id)
-                            .unwrap()
-                            .content
-                            .insert_str(range.start, "[!b]");
-                        self.points
-                            .get_mut(point_id)
-                            .unwrap()
-                            .content
-                            .insert_str(range.end + 4, "[!b]");
-                    }
-                }
                 if ui.button("Italic").clicked() {
                     if let Some(range) = &self.text_edit_cursor_range {
                         self.points
@@ -271,7 +256,20 @@ impl Structurer {
                             .insert_str(range.end + 4, "[!u]");
                     }
                 }
-                if ui.button("Highlight").clicked() {}
+                if ui.button("Highlight").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "[!h]");
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.end + 4, "[!h]");
+                    }
+                }
                 ui.separator();
                 if ui.button("Bullet point").clicked() {
                     if let Some(range) = &self.text_edit_cursor_range {
@@ -567,12 +565,6 @@ impl Structurer {
                                         }
                                         if ui.button("ℹ Source").clicked() {
                                             self.point_requesting_action_id = point_id.to_string();
-
-                                            self.points.get_mut(point_id).unwrap().source =
-                                                get_point_source(
-                                                    self.project_directory.clone(),
-                                                    point_id.clone(),
-                                                );
                                             self.show_source_popup = true;
                                         }
                                         if ui.button("🗑 Delete").clicked() {

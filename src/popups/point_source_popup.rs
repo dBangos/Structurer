@@ -1,5 +1,4 @@
-use crate::save_load::source::update_source;
-use crate::Structurer;
+use crate::{save_load::point::save_point, Structurer};
 use eframe::egui::{self};
 impl Structurer {
     pub fn point_source_popup(&mut self, ctx: &egui::Context) {
@@ -30,10 +29,9 @@ impl Structurer {
                                 .source,
                         );
                         if ui.button("✅ Add Source").clicked() {
-                            update_source(
+                            save_point(
                                 self.project_directory.clone(),
-                                &self.points[&self.point_requesting_action_id].id,
-                                &self.points[&self.point_requesting_action_id].source,
+                                self.points[&self.point_requesting_action_id].clone(),
                             );
                             self.show_source_popup = false;
                         }
