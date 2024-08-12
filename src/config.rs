@@ -76,7 +76,7 @@ impl Structurer {
 
     //If a library file doesn't exist, create it
     pub fn create_library_files(&mut self) {
-        let file_vec: Vec<&str> = vec!["Library", "Sources", "Images", "Links", "Tags"];
+        let file_vec: Vec<&str> = vec!["Library", "Images", "Links", "Tags"];
         for file_name in file_vec {
             let file_path: PathBuf = [
                 self.project_directory.clone(),

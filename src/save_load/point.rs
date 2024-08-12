@@ -1,11 +1,9 @@
 use crate::save_load::general::{
-    add_element_to_line, delete_all_mentions_from_file, delete_line_from_file, replace_line,
-    save_to_filename,
+    add_element_to_line, delete_all_mentions_from_file, replace_line, save_to_filename,
 };
 use crate::{ImageStruct, Point, Structurer};
 use chrono::{NaiveDate, NaiveTime};
 use std::collections::HashMap;
-use std::fs::OpenOptions;
 use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -65,16 +63,6 @@ pub fn add_point(project_dir: PathBuf, title_id: &str) -> Option<Point> {
         let id = Uuid::new_v4();
         save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
         add_element_to_line(project_dir.clone(), &title_id, &id.to_string(), "Library");
-
-        let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
-            .iter()
-            .collect();
-        let mut file = OpenOptions::new()
-            .append(true)
-            .open(file_path)
-            .expect("Error while opening sources file from add_point");
-        file.write(("\n".to_string() + &id.to_string() + "|--|").as_bytes())
-            .expect("Error while writing to sourcse file from add_point");
         let mut new_point: Point = Point::default();
         new_point.id = id.to_string();
         new_point.content = "New point".to_string();
@@ -93,7 +81,6 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     .collect();
     let _ = remove_file(file_path);
     delete_all_mentions_from_file(project_dir.clone(), point_id.clone(), "Library".to_string());
-    delete_line_from_file(project_dir.clone(), point_id.clone(), "Sources".to_string());
 }
 
 pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Point {
