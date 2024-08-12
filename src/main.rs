@@ -34,6 +34,7 @@ mod save_load {
     pub mod tag;
     pub mod title;
 }
+mod markup;
 
 #[derive(Clone)]
 struct ImageStruct {

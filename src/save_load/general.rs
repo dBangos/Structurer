@@ -13,14 +13,14 @@ use std::usize;
 //Gets file, line and element. Appends element to the line
 pub fn add_element_to_line(
     project_dir: PathBuf,
-    line_identifier: String,
-    element: String,
-    file_name: String,
+    line_identifier: &str,
+    element: &str,
+    file_name: &str,
 ) -> () {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [
         project_dir.clone(),
-        PathBuf::from(file_name.clone() + ".txt"),
+        PathBuf::from(file_name.to_owned() + ".txt"),
     ]
     .iter()
     .collect();
@@ -28,9 +28,9 @@ pub fn add_element_to_line(
     let file = File::open(&file_path).expect("Error while opening file from add_element_to_line");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
+            let mut split_line: Vec<&str> = l.split("|--|").collect();
             if split_line[0] == line_identifier {
-                split_line.push(element.to_string());
+                split_line.push(element);
             }
             content.push(split_line.join("|--|"));
         }

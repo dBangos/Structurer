@@ -4,7 +4,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
 //Get a string and a point, updates the source of that point
-pub fn update_source(project_dir: PathBuf, point_id: String, new_source: String) {
+pub fn update_source(project_dir: PathBuf, point_id: &str, new_source: &str) {
     let mut content: Vec<String> = Vec::new();
     let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
         .iter()
@@ -12,9 +12,9 @@ pub fn update_source(project_dir: PathBuf, point_id: String, new_source: String)
     let file = File::open(&file_path).expect("Error while opening file from update_sources");
     for line in BufReader::new(file).lines() {
         if let Ok(l) = line {
-            let mut split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
-            if split_line[0] == point_id.clone() {
-                split_line = vec![point_id.clone(), new_source.clone()];
+            let mut split_line: Vec<&str> = l.split("|--|").collect();
+            if split_line[0] == point_id {
+                split_line = vec![point_id, new_source];
             }
             content.push(split_line.join("|--|"));
         }

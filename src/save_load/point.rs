@@ -60,16 +60,11 @@ impl Structurer {
 }
 //Adds a point to the current page/title, create the corresponding file and adds it to the library.
 //Returns a tuple(id,content)
-pub fn add_point(project_dir: PathBuf, title_id: String) -> Option<Point> {
-    if title_id != String::new() && project_dir != PathBuf::new() {
+pub fn add_point(project_dir: PathBuf, title_id: &str) -> Option<Point> {
+    if title_id != "" && project_dir != PathBuf::new() {
         let id = Uuid::new_v4();
         save_to_filename(project_dir.clone(), id.to_string(), "New point".to_string());
-        add_element_to_line(
-            project_dir.clone(),
-            title_id,
-            id.to_string(),
-            "Library".to_string(),
-        );
+        add_element_to_line(project_dir.clone(), &title_id, &id.to_string(), "Library");
 
         let file_path: PathBuf = [project_dir.clone(), PathBuf::from("Sources.txt")]
             .iter()
@@ -100,6 +95,7 @@ pub fn delete_point(project_dir: PathBuf, point_id: String) -> () {
     delete_all_mentions_from_file(project_dir.clone(), point_id.clone(), "Library".to_string());
     delete_line_from_file(project_dir.clone(), point_id.clone(), "Sources".to_string());
 }
+
 pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Point {
     let mut new_point: Point = Point::default();
     new_point.id = point_id.clone();

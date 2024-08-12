@@ -1,3 +1,4 @@
+use crate::markup::{markup_construct_job, markup_parse_string};
 use crate::save_load::image::add_image_to_point;
 use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
@@ -73,7 +74,7 @@ impl Structurer {
                 temp_title.id = new_title_id.clone();
                 temp_title.name = "New title".to_string();
                 //Add point to the new title
-                let temp_point = add_point(self.project_directory.clone(), temp_title.id.clone());
+                let temp_point = add_point(self.project_directory.clone(), &temp_title.id);
                 if let Some(p) = temp_point {
                     self.points.insert(p.id.clone(), p.clone());
                     //Add new point to state
@@ -123,7 +124,7 @@ impl Structurer {
                     StateType::Title => {
                         if let Some(p) = add_point(
                             self.project_directory.clone(),
-                            self.titles[self.current_title_index].id.clone(),
+                            &self.titles[self.current_title_index].id,
                         ) {
                             self.points.insert(p.id.clone(), p.clone());
                             self.current_point_ids.push(p.id.clone());
@@ -226,6 +227,7 @@ impl Structurer {
             _ => (),
         }
         if let Some(point_id) = &self.point_id_being_edited.clone() {
+            ui.separator();
             ui.horizontal(|ui| {
                 if ui.button("Bold").clicked() {
                     if let Some(range) = &self.text_edit_cursor_range {
@@ -233,21 +235,82 @@ impl Structurer {
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert(range.start, '*');
+                            .insert_str(range.start, "[!b]");
                         self.points
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert(range.end + 1, '*');
+                            .insert_str(range.end + 4, "[!b]");
                     }
                 }
-                if ui.button("Italics").clicked() {}
-                if ui.button("Underline").clicked() {}
+                if ui.button("Italic").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "[!i]");
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.end + 4, "[!i]");
+                    }
+                }
+                if ui.button("Underline").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "[!u]");
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.end + 4, "[!u]");
+                    }
+                }
                 if ui.button("Highlight").clicked() {}
-                if ui.button("URL").clicked() {}
                 ui.separator();
-                if ui.button("Bullet point").clicked() {}
+                if ui.button("Bullet point").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "\n* ");
+                    }
+                }
+                if ui.button("Heading 1").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "\n# ");
+                    }
+                }
+                if ui.button("Heading 2").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "\n## ");
+                    }
+                }
+                if ui.button("Blockquote").clicked() {
+                    if let Some(range) = &self.text_edit_cursor_range {
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.start, "\n> ");
+                    }
+                }
             });
+            ui.add_space(2.0);
         }
     }
 
@@ -578,10 +641,13 @@ impl Structurer {
                                         }
                                     }
                                     _ => {
-                                        egui_demo_lib::easy_mark::easy_mark(
-                                            ui,
-                                            &self.points[point_id].content,
-                                        );
+                                        let response =
+                                            ui.label(markup_construct_job(markup_parse_string(
+                                                self.points[point_id].content.clone(),
+                                            )));
+                                        if response.clicked() {
+                                            self.point_id_being_edited = Some(point_id.to_string());
+                                        }
                                     }
                                 }
                             });

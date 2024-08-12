@@ -32,8 +32,8 @@ impl Structurer {
                         if ui.button("✅ Add Source").clicked() {
                             update_source(
                                 self.project_directory.clone(),
-                                self.points[&self.point_requesting_action_id].id.clone(),
-                                self.points[&self.point_requesting_action_id].source.clone(),
+                                &self.points[&self.point_requesting_action_id].id,
+                                &self.points[&self.point_requesting_action_id].source,
                             );
                             self.show_source_popup = false;
                         }
