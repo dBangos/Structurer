@@ -28,7 +28,7 @@ pub fn get_all_tags(project_dir: PathBuf) -> Vec<String> {
     return tag_list;
 }
 
-impl Structurer {
+impl Structurer<'_> {
     //Adds tags to each title in self.titles
     //This assumes title_ids in the Tags.txt file and in the self struct are in the same order
     pub fn add_tags_to_titles(&mut self) {
@@ -41,7 +41,8 @@ impl Structurer {
             for line in BufReader::new(file).lines() {
                 if let Ok(l) = line {
                     if title_index < self.titles.len() {
-                        let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
+                        let split_line: Vec<String> =
+                            l.split("|--|").map(|s| s.to_string()).collect();
                         if split_line[0] == self.titles[title_index].id && split_line.len() > 1 {
                             for tag in split_line.into_iter().skip(1) {
                                 if tag != "" {

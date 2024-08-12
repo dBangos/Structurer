@@ -26,7 +26,7 @@ impl Default for Config {
     }
 }
 
-impl Structurer {
+impl Structurer<'_> {
     //Everything that needs to get the program ready at startup
     pub fn start_routine(&mut self) -> () {
         //Check if there is a Structurer directory and if so read the config
@@ -50,6 +50,7 @@ impl Structurer {
         self.stop_clicked_nodes = new_config.stop_clicked_nodes;
         self.load_from_library();
         self.get_all_points();
+        self.load_title_images();
     }
 
     //Saving stuff to the config file in the default OS location

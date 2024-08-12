@@ -3,7 +3,7 @@ use crate::save_load::point::delete_point;
 use crate::save_load::share::share_unshare_point;
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer {
+impl Structurer<'_> {
     pub fn show_share_point_or_link_title_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("")
             .resizable(false)

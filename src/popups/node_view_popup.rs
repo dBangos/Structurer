@@ -1,6 +1,6 @@
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer {
+impl Structurer<'_> {
     pub fn node_view_popup(&mut self, ctx: &egui::Context) {
         ctx.show_viewport_immediate(
             egui::ViewportId::from_hash_of("immediate_viewport"),

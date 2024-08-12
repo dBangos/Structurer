@@ -1,7 +1,7 @@
 use crate::Structurer;
 use eframe::egui::{self};
 use rfd::FileDialog;
-impl Structurer {
+impl Structurer<'_> {
     pub fn title_image_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("")
             .resizable(false)

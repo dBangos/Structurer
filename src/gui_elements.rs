@@ -25,7 +25,7 @@ impl DragDropItem for &mut Point {
         Id::new(&self.id)
     }
 }
-impl Structurer {
+impl Structurer<'_> {
     //Button line that contains most basic functions
     pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
@@ -43,6 +43,7 @@ impl Structurer {
                     self.create_library_files();
                     self.load_from_library();
                     self.get_all_points();
+                    self.load_title_images();
                     ui.ctx().forget_all_images();
                 }
             }

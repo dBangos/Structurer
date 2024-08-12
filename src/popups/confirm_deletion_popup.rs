@@ -1,7 +1,7 @@
 use crate::save_load::point::delete_point;
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer {
+impl Structurer<'_> {
     pub fn confirm_deletion_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("Confirm Deletion")
             .resizable(false)

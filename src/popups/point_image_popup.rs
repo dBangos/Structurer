@@ -1,7 +1,7 @@
 use crate::save_load::image::delete_image_from_point;
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer {
+impl Structurer<'_> {
     pub fn point_image_popup(&mut self, ctx: &egui::Context) {
         if self.show_point_image_popup {
             //Local bool to use for .open() so X in top right corner can be used
