@@ -170,6 +170,8 @@ impl Default for Structurer {
             point_popup_fields: (2024, 1, 1, 0, 0, 0),
             searching_string: String::new(),
             next_page_point_ids: Vec::new(),
+            point_id_being_edited: None,
+            text_edit_cursor_range: None,
             //Node view
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             stop_clicked_nodes: false,
@@ -189,8 +191,6 @@ impl Default for Structurer {
             show_add_tags_popup: false,
             show_share_point_popup: false,
             show_tags_popup: false,
-            point_id_being_edited: None,
-            text_edit_cursor_range: None,
         }
     }
 }
@@ -288,7 +288,6 @@ impl eframe::App for Structurer {
                     StateType::Title => {
                         ui.vertical_centered(|ui| {
                             self.title_layout(ui);
-                            ui.separator();
 
                             self.points_layout(ui);
                         });

@@ -62,9 +62,6 @@ impl Structurer {
                 }
             }
             ui.separator();
-            //if ui.button("Save Page As:").clicked() {
-            //    //
-            //}
             if ui.button("➕ Add Title").clicked() {
                 //Create new title files
                 let new_title_id = add_title(self.project_directory.clone());
@@ -481,7 +478,7 @@ impl Structurer {
     pub fn points_layout(&mut self, ui: &mut egui::Ui) {
         egui::ScrollArea::vertical().show(ui, |ui| {
             //Adding an element to force the scrollbar to be on the left edge
-            ui.add_sized([ui.available_size().x, 0.01], egui::Label::new(""));
+            ui.add_sized([ui.available_size().x, 0.01], egui::Separator::default());
             ui.vertical(|ui| {
                 let response = dnd(ui, "dnd2").show(
                     self.current_point_ids.iter_mut(),

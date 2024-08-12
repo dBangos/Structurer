@@ -8,12 +8,14 @@ use std::fs::{remove_file, File};
 use std::io::prelude::*;
 use std::io::BufReader;
 use std::path::PathBuf;
-use std::usize;
+use std::{thread, usize};
+
 use uuid::Uuid;
 
 impl Structurer {
     pub fn get_all_points(&mut self) {
         let mut point_id_vec: Vec<String> = Vec::new();
+        let mut handles = Vec::new();
         self.points = HashMap::new();
         for title in self.titles.iter() {
             for point_id in &title.point_ids {
@@ -23,9 +25,16 @@ impl Structurer {
             }
         }
         for point_id in point_id_vec {
-            let new_point: Point =
-                get_point_content_from_file(self.project_directory.clone(), point_id.clone());
-            self.points.insert(point_id, new_point);
+            let proj_dir = self.project_directory.clone();
+            let handle = thread::spawn(move || {
+                let new_point: Point = get_point_content_from_file(proj_dir, point_id.clone());
+                new_point
+            });
+            handles.push(handle);
+        }
+        for handle in handles {
+            let new_point = handle.join().unwrap();
+            self.points.insert(new_point.id.clone(), new_point);
         }
     }
 
