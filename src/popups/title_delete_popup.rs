@@ -1,6 +1,6 @@
 use crate::save_load::title::delete_title;
-use crate::Structurer;
 use crate::{save_load::link::get_linked_pairs, PopupActive};
+use crate::{StateType, Structurer};
 use eframe::egui::{self};
 impl Structurer {
     pub fn title_delete_popup(&mut self, ctx: &egui::Context) {
@@ -16,8 +16,13 @@ impl Structurer {
                         ui.add_space(85.0);
                         if ui.button("🗑 Delete").clicked() {
                             let delete_title_index = self.current_title_index;
-                            self.change_title(0);
-                            self.current_title_index = 0;
+                            if self.titles.len() == 1 {
+                                self.current_state = StateType::Empty;
+                                self.current_title_index = 0;
+                            } else {
+                                self.change_title(0);
+                                self.current_title_index = 0;
+                            }
                             delete_title(
                                 self.project_directory.clone(),
                                 self.titles[delete_title_index].id.clone(),

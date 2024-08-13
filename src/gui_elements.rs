@@ -102,11 +102,16 @@ impl Structurer {
                 self.current_title_index = self.titles.len() - 1;
             }
             if ui.button("↔ Link Title").clicked() {
-                self.titles[self.current_title_index].links = title_is_linked_with(
-                    self.project_directory.clone(),
-                    self.titles[self.current_title_index].id.clone(),
-                );
-                self.popup_active = PopupActive::LinkTitle;
+                match self.current_state {
+                    StateType::Title => {
+                        self.titles[self.current_title_index].links = title_is_linked_with(
+                            self.project_directory.clone(),
+                            self.titles[self.current_title_index].id.clone(),
+                        );
+                        self.popup_active = PopupActive::LinkTitle;
+                    }
+                    _ => (),
+                }
             }
             if ui.button("🗑 Delete Title").clicked() {
                 match self.current_state {
@@ -366,22 +371,24 @@ impl Structurer {
             //Binding each title button to loading the corresponding points
             match self.current_state {
                 StateType::Title => {
-                    for (index, is_linked) in self.titles[self.current_title_index]
-                        .links
-                        .clone()
-                        .into_iter()
-                        .enumerate()
-                    {
-                        if is_linked {
-                            //Binding each title button to loading the corresponding points
-                            if ui
-                                .add(
-                                    Button::new(self.titles[index].name.clone())
-                                        .wrap_mode(TextWrapMode::Truncate),
-                                )
-                                .clicked()
-                            {
-                                self.change_title(index);
+                    if self.titles.len() > 0 {
+                        for (index, is_linked) in self.titles[self.current_title_index]
+                            .links
+                            .clone()
+                            .into_iter()
+                            .enumerate()
+                        {
+                            if is_linked && index < self.titles.len() {
+                                //Binding each title button to loading the corresponding points
+                                if ui
+                                    .add(
+                                        Button::new(self.titles[index].name.clone())
+                                            .wrap_mode(TextWrapMode::Truncate),
+                                    )
+                                    .clicked()
+                                {
+                                    self.change_title(index);
+                                }
                             }
                         }
                     }

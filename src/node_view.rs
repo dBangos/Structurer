@@ -62,7 +62,11 @@ impl Structurer {
             //changeed
             let mut temp_curr_title = Title::default();
             match self.current_state {
-                StateType::Title => temp_curr_title = self.titles[self.current_title_index].clone(),
+                StateType::Title => {
+                    if self.titles.len() > 0 {
+                        temp_curr_title = self.titles[self.current_title_index].clone()
+                    }
+                }
                 _ => (),
             }
             for (index, title) in self.titles.iter_mut().enumerate() {
