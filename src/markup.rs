@@ -18,6 +18,7 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
     }
     let mut current_string: String = String::new();
     let mut index = 0;
+    let mut last_indexed_char = 0;
     while index < chars.len() - 3 {
         if chars[index] == '[' && chars[index + 1] == '!' && chars[index + 3] == ']' {
             if current_string.len() > 0 {
@@ -39,6 +40,7 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
                 heading1 = !heading1;
             }
             index += 4;
+            last_indexed_char = index;
         } else {
             if index == chars.len() - 4 {
                 current_string.push(chars[index]);
@@ -51,7 +53,18 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
             index += 1;
         }
     }
+    //Leftover string that didnt get pushed
     if current_string.len() > 0 {
+        result.push((
+            current_string.clone(),
+            vec![false, false, false, false, false],
+        ));
+    }
+    //If a [!] appears before the last or the last two characters
+    if last_indexed_char > chars.len() - 3 {
+        for index in last_indexed_char..chars.len() {
+            current_string.push(chars[index]);
+        }
         result.push((
             current_string.clone(),
             vec![false, false, false, false, false],

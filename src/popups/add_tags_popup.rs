@@ -50,11 +50,13 @@ impl Structurer {
 
                                 ui.text_edit_singleline(&mut self.possible_new_tag);
                                 if ui.button("Create").clicked() {
-                                    if self.possible_new_tag != String::new() {
-                                        self.all_tags.push(self.possible_new_tag.clone());
-                                        self.tags_actively_filtering.push(false);
-                                        self.current_title_tag_bools.push(true);
-                                        self.possible_new_tag = String::new();
+                                    if !self.all_tags.contains(&self.possible_new_tag) {
+                                        if self.possible_new_tag != String::new() {
+                                            self.all_tags.push(self.possible_new_tag.clone());
+                                            self.tags_actively_filtering.push(false);
+                                            self.current_title_tag_bools.push(true);
+                                            self.possible_new_tag = String::new();
+                                        }
                                     }
                                 }
                             });

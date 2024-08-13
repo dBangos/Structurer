@@ -18,11 +18,10 @@ impl Structurer {
                             let delete_title_index = self.current_title_index;
                             if self.titles.len() == 1 {
                                 self.current_state = StateType::Empty;
-                                self.current_title_index = 0;
                             } else {
                                 self.change_title(0);
-                                self.current_title_index = 0;
                             }
+                            self.current_title_index = 0;
                             delete_title(
                                 self.project_directory.clone(),
                                 self.titles[delete_title_index].id.clone(),
