@@ -1,6 +1,6 @@
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer<'_> {
+impl Structurer {
     pub fn title_edit_popup(&mut self, ctx: &egui::Context) {
         if self.show_title_edit_popup {
             //Local bool to use for .open() so X in top right corner can be used

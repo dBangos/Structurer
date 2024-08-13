@@ -2,7 +2,7 @@ use crate::save_load::link::get_linked_pairs;
 use crate::save_load::title::delete_title;
 use crate::Structurer;
 use eframe::egui::{self};
-impl Structurer<'_> {
+impl Structurer {
     pub fn title_delete_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("Confirm Deletion")
             .resizable(false)

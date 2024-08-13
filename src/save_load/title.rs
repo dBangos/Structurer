@@ -12,7 +12,7 @@ use std::io::BufReader;
 use std::path::PathBuf;
 use uuid::Uuid;
 
-impl Structurer<'_> {
+impl Structurer {
     //Gets a title and a position, reorders titles in state and files
     pub fn change_title_position(&mut self, from_position: usize, to_position: usize) {
         self.titles[from_position].links = title_is_linked_with(

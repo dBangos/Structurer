@@ -12,7 +12,7 @@ use std::{thread, usize};
 
 use uuid::Uuid;
 
-impl Structurer<'_> {
+impl Structurer {
     pub fn get_all_points(&mut self) {
         let mut point_id_vec: Vec<String> = Vec::new();
         let mut handles = Vec::new();

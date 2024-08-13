@@ -2,7 +2,7 @@ use crate::Structurer;
 use chrono::{NaiveDate, NaiveTime};
 use eframe::egui::{self};
 use egui::DragValue;
-impl Structurer<'_> {
+impl Structurer {
     pub fn point_datetime_popup(&mut self, ctx: &egui::Context) {
         if self.show_point_datetime_popup {
             //Local bool to use for .open() so X in top right corner can be used

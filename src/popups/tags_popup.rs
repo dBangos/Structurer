@@ -1,6 +1,6 @@
 use crate::{left_panel_labels, Structurer};
 use eframe::egui::{self, RichText};
-impl Structurer<'_> {
+impl Structurer {
     pub fn tags_popup(&mut self, ctx: &egui::Context) {
         if self.show_tags_popup {
             //Local bool to use for .open() so X in top right corner can be used

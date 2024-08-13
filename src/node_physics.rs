@@ -1,7 +1,7 @@
 use crate::egui::Vec2;
 use crate::Structurer;
 use rand::Rng;
-impl Structurer<'_> {
+impl Structurer {
     pub fn node_physics(&mut self) {
         // Physics code based on https://editor.p5js.org/JeromePaddick/sketches/bjA_UOPip
         let divider: f32 = 7.0;

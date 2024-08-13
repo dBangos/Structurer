@@ -1,7 +1,7 @@
 use crate::Structurer;
 use eframe::egui;
 
-impl Structurer<'_> {
+impl Structurer {
     pub fn node_controls(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             if ui.button("▶ Resume").clicked() {

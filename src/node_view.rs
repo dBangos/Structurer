@@ -5,7 +5,7 @@ use crate::{StateType, Structurer, Title};
 use eframe::egui::{self, Pos2};
 use egui::emath::RectTransform;
 use egui::{Color32, FontId, Frame, Rect, Rounding, Sense, Shape, Stroke, Vec2};
-impl Structurer<'_> {
+impl Structurer {
     pub fn node_view(&mut self, ui: &mut egui::Ui) {
         Frame::canvas(ui.style()).show(ui, |ui| {
             let (response, painter) = ui.allocate_painter(
@@ -81,7 +81,8 @@ impl Structurer<'_> {
 
                     //Adding the image if there is one available
                     if title.image.path.len() > 0 {
-                        let image = self.title_images_map[&title.id].clone();
+                        let file_path = title.image.path.clone();
+                        let image = egui::Image::new(format!("file://{file_path}"));
                         let image_size = image
                             .load_and_calc_size(
                                 ui,

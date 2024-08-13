@@ -1,6 +1,6 @@
 use crate::{save_load::point::save_point, Structurer};
 use eframe::egui::{self};
-impl Structurer<'_> {
+impl Structurer {
     pub fn point_source_popup(&mut self, ctx: &egui::Context) {
         egui::Window::new("Add source to point")
             .resizable(false)

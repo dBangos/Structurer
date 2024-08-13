@@ -207,7 +207,7 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
     let _ = file.write_all(content.as_bytes());
 }
 
-impl Structurer<'_> {
+impl Structurer {
     pub fn change_title(&mut self, index: usize) {
         if self.center_current_node {
             self.drag_distance = -1.0 * self.titles[index].node_physics_position * self.view_scale;

@@ -107,7 +107,7 @@ enum StateType {
     Timeline,
 }
 
-struct Structurer<'a> {
+struct Structurer {
     project_directory: PathBuf,
     titles: Vec<Title>,
     points: HashMap<String, Point>,
@@ -146,10 +146,9 @@ struct Structurer<'a> {
     next_page_point_ids: Vec<String>,
     point_id_being_edited: Option<String>,
     text_edit_cursor_range: Option<Range<usize>>,
-    title_images_map: HashMap<String, egui::Image<'a>>,
 }
 
-impl Default for Structurer<'_> {
+impl Default for Structurer {
     fn default() -> Self {
         Self {
             current_state: StateType::Empty,
@@ -173,7 +172,6 @@ impl Default for Structurer<'_> {
             next_page_point_ids: Vec::new(),
             point_id_being_edited: None,
             text_edit_cursor_range: None,
-            title_images_map: HashMap::new(),
             //Node view
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             stop_clicked_nodes: false,
@@ -244,7 +242,7 @@ fn main() -> Result<(), eframe::Error> {
         }),
     )
 }
-impl eframe::App for Structurer<'_> {
+impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.initialized {
             self.start_routine();
