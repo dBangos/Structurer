@@ -1,9 +1,9 @@
-use crate::save_load::image::delete_image_from_point;
 use crate::Structurer;
+use crate::{save_load::image::delete_image_from_point, PopupActive};
 use eframe::egui::{self};
 impl Structurer {
     pub fn point_image_popup(&mut self, ctx: &egui::Context) {
-        if self.show_point_image_popup {
+        if self.popup_active == PopupActive::PointImage {
             //Local bool to use for .open() so X in top right corner can be used
             let mut show_popup = true;
             egui::Window::new("")
@@ -39,7 +39,7 @@ impl Structurer {
                                     [self.point_image_requesting_popup]
                                     .clone(),
                             );
-                            self.show_point_image_popup = false;
+                            self.popup_active = PopupActive::Empty;
                             //Removing the item from state
                             self.points
                                 .get_mut(&self.point_requesting_action_id)
@@ -49,7 +49,9 @@ impl Structurer {
                         }
                     });
                 });
-            self.show_point_image_popup &= show_popup;
+            if !show_popup {
+                self.popup_active = PopupActive::Empty;
+            }
         }
     }
 }

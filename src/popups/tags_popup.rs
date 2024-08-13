@@ -1,8 +1,8 @@
-use crate::{left_panel_labels, Structurer};
+use crate::{left_panel_labels, PopupActive, Structurer};
 use eframe::egui::{self, RichText};
 impl Structurer {
     pub fn tags_popup(&mut self, ctx: &egui::Context) {
-        if self.show_tags_popup {
+        if self.popup_active == PopupActive::TagsPopup {
             //Local bool to use for .open() so X in top right corner can be used
             let mut show_popup = true;
             egui::Window::new("Tags")
@@ -42,11 +42,13 @@ impl Structurer {
                         });
                         if ui.button("✖ Close").clicked() {
                             self.possible_new_tag = String::new();
-                            self.show_tags_popup = false;
+                            self.popup_active = PopupActive::Empty;
                         }
                     });
                 });
-            self.show_tags_popup &= show_popup;
+            if !show_popup {
+                self.popup_active = PopupActive::Empty;
+            }
         }
     }
 }

@@ -1,8 +1,8 @@
-use crate::Structurer;
+use crate::{PopupActive, Structurer};
 use eframe::egui::{self};
 impl Structurer {
     pub fn title_edit_popup(&mut self, ctx: &egui::Context) {
-        if self.show_title_edit_popup {
+        if self.popup_active == PopupActive::TitleEdit {
             //Local bool to use for .open() so X in top right corner can be used
             let mut show_popup = true;
             egui::Window::new("Please enter a new name")
@@ -19,12 +19,14 @@ impl Structurer {
                                     self.titles[self.current_title_index].name =
                                         "New title".to_string();
                                 }
-                                self.show_title_edit_popup = false;
+                                self.popup_active = PopupActive::Empty;
                             }
                         });
                     });
                 });
-            self.show_title_edit_popup &= show_popup;
+            if !show_popup {
+                self.popup_active = PopupActive::Empty;
+            }
         }
     }
 }

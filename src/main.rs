@@ -100,11 +100,28 @@ impl Default for Title {
         }
     }
 }
+
 enum StateType {
     Empty,
     Title,
     Search,
     Timeline,
+}
+
+#[derive(PartialEq)]
+enum PopupActive {
+    Empty,
+    ConfirmPointDeletion,
+    ConfirmTitleDeletion,
+    PointDateTime,
+    LinkTitle,
+    PointSource,
+    TitleImage,
+    PointImage,
+    TitleEdit,
+    AddTags,
+    TagsPopup,
+    SharePoint,
 }
 
 struct Structurer {
@@ -113,17 +130,8 @@ struct Structurer {
     points: HashMap<String, Point>,
     current_title_index: usize,
     current_point_ids: Vec<String>,
-    show_confirm_delete_popup: bool,
     point_requesting_action_id: String,
-    show_share_point_popup: bool,
     titles_receiving_shared_point: Vec<bool>,
-    show_title_delete_popup: bool,
-    show_link_title_popup: bool,
-    show_source_popup: bool,
-    show_title_image_popup: bool,
-    show_point_image_popup: bool,
-    show_title_edit_popup: bool,
-    show_add_tags_popup: bool,
     point_image_requesting_popup: usize,
     drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
@@ -136,16 +144,15 @@ struct Structurer {
     node_view_start_stop_physics: bool,
     center_current_node: bool,
     show_node_view_popup: bool,
-    show_tags_popup: bool,
     tags_actively_filtering: Vec<bool>,
     tags_in_filter: Vec<String>,
-    show_point_datetime_popup: bool,
     point_popup_fields: (i32, u32, u32, u32, u32, u32),
     searching_string: String,
     current_state: StateType,
     next_page_point_ids: Vec<String>,
     point_id_being_edited: Option<String>,
     text_edit_cursor_range: Option<Range<usize>>,
+    popup_active: PopupActive,
 }
 
 impl Default for Structurer {
@@ -178,19 +185,8 @@ impl Default for Structurer {
             center_current_node: true,
             node_view_start_stop_physics: true,
             view_scale: 0.85,
-            //Popup bools
-            show_confirm_delete_popup: false,
-            show_title_delete_popup: false,
-            show_point_datetime_popup: false,
             show_node_view_popup: false,
-            show_link_title_popup: false,
-            show_source_popup: false,
-            show_title_image_popup: false,
-            show_point_image_popup: false,
-            show_title_edit_popup: false,
-            show_add_tags_popup: false,
-            show_share_point_popup: false,
-            show_tags_popup: false,
+            popup_active: PopupActive::Empty,
         }
     }
 }
@@ -299,42 +295,24 @@ impl eframe::App for Structurer {
                 }
             });
         });
-        //Having all these ifs is ugly,but:
-        //// They are different bools so I can &= easily with the bools for the x close button
-        //// This might still be more elegant than using sth like a u8 and having to track which is which
-        ////// Or using strings and doing more expensive comparisons:w
-        if self.show_confirm_delete_popup {
-            self.confirm_deletion_popup(ctx);
-        }
-        if self.show_share_point_popup || self.show_link_title_popup {
-            self.show_share_point_or_link_title_popup(ctx);
-        }
-        if self.show_title_delete_popup {
-            self.title_delete_popup(ctx);
-        }
-        if self.show_source_popup {
-            self.point_source_popup(ctx);
-        }
-        if self.show_title_image_popup {
-            self.title_image_popup(ctx);
-        }
-        if self.show_point_image_popup {
-            self.point_image_popup(ctx);
-        }
-        if self.show_title_edit_popup {
-            self.title_edit_popup(ctx);
-        }
-        if self.show_add_tags_popup {
-            self.add_tags_popup(ctx);
-        }
+        //This is a window instead of a popup
+        //Should be able to be active while another popup is active
         if self.show_node_view_popup {
             self.node_view_popup(ctx);
         }
-        if self.show_tags_popup {
-            self.tags_popup(ctx);
-        }
-        if self.show_point_datetime_popup {
-            self.point_datetime_popup(ctx);
+        match self.popup_active {
+            PopupActive::Empty => (),
+            PopupActive::ConfirmTitleDeletion => self.title_delete_popup(ctx),
+            PopupActive::ConfirmPointDeletion => self.confirm_deletion_popup(ctx),
+            PopupActive::LinkTitle => self.show_share_point_or_link_title_popup(ctx),
+            PopupActive::SharePoint => self.show_share_point_or_link_title_popup(ctx),
+            PopupActive::PointSource => self.point_source_popup(ctx),
+            PopupActive::AddTags => self.add_tags_popup(ctx),
+            PopupActive::TagsPopup => self.tags_popup(ctx),
+            PopupActive::TitleImage => self.title_image_popup(ctx),
+            PopupActive::PointImage => self.point_image_popup(ctx),
+            PopupActive::PointDateTime => self.point_datetime_popup(ctx),
+            PopupActive::TitleEdit => self.title_edit_popup(ctx),
         }
     }
 }

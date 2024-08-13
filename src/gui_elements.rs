@@ -4,9 +4,9 @@ use crate::save_load::link::title_is_linked_with;
 use crate::save_load::point::{add_point, save_point};
 use crate::save_load::share::point_is_shared_with;
 use crate::save_load::title::{add_title, save_title};
-use crate::StateType;
 use crate::{left_panel_labels, title_style, Structurer};
 use crate::{ImageStruct, Point, Title};
+use crate::{PopupActive, StateType};
 use chrono::{Datelike, Timelike};
 use core::f32;
 use eframe::egui::{self, Button, RichText, TextWrapMode};
@@ -106,11 +106,11 @@ impl Structurer {
                     self.project_directory.clone(),
                     self.titles[self.current_title_index].id.clone(),
                 );
-                self.show_link_title_popup = true;
+                self.popup_active = PopupActive::LinkTitle;
             }
             if ui.button("🗑 Delete Title").clicked() {
                 match self.current_state {
-                    StateType::Title => self.show_title_delete_popup = true,
+                    StateType::Title => self.popup_active = PopupActive::ConfirmTitleDeletion,
                     _ => (),
                 }
             }
@@ -132,7 +132,7 @@ impl Structurer {
             }
             ui.separator();
             if ui.button("📑 Tags").clicked() {
-                self.show_tags_popup = true;
+                self.popup_active = PopupActive::TagsPopup;
             }
             ui.separator();
             if ui.button("📅 Timeline").clicked() {
@@ -412,7 +412,7 @@ impl Structurer {
                     .maintain_aspect_ratio(true)
                     .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
-                    self.show_title_image_popup = true;
+                    self.popup_active = PopupActive::TitleImage;
                 }
             } else {
                 let image =
@@ -420,7 +420,7 @@ impl Structurer {
                         .fit_to_exact_size([220.0, 220.0].into())
                         .sense(egui::Sense::click());
                 if ui.add(image).clicked() {
-                    self.show_title_image_popup = true;
+                    self.popup_active = PopupActive::TitleImage;
                 }
             }
             ui.add_space(10.0);
@@ -433,7 +433,7 @@ impl Structurer {
                     )
                     .clicked()
                 {
-                    self.show_title_edit_popup = true;
+                    self.popup_active = PopupActive::TitleEdit;
                 }
                 ui.horizontal(|ui| {
                     //Add tag buttons
@@ -467,7 +467,7 @@ impl Structurer {
                                 self.current_title_tag_bools.push(false);
                             }
                         }
-                        self.show_add_tags_popup = true;
+                        self.popup_active = PopupActive::AddTags;
                     }
                 });
             });
@@ -549,7 +549,7 @@ impl Structurer {
                                                 self.point_popup_fields.4 = time.minute();
                                                 self.point_popup_fields.5 = time.second();
                                             }
-                                            self.show_point_datetime_popup = true;
+                                            self.popup_active = PopupActive::PointDateTime;
                                         }
                                         if ui.button("🔀 Share").clicked() {
                                             self.titles_receiving_shared_point =
@@ -558,15 +558,15 @@ impl Structurer {
                                                     point_id.clone(),
                                                 );
                                             self.point_requesting_action_id = point_id.to_string();
-                                            self.show_share_point_popup = true;
+                                            self.popup_active = PopupActive::SharePoint;
                                         }
                                         if ui.button("ℹ Source").clicked() {
                                             self.point_requesting_action_id = point_id.to_string();
-                                            self.show_source_popup = true;
+                                            self.popup_active = PopupActive::PointSource;
                                         }
                                         if ui.button("🗑 Delete").clicked() {
                                             self.point_requesting_action_id = point_id.to_string();
-                                            self.show_confirm_delete_popup = true;
+                                            self.popup_active = PopupActive::ConfirmPointDeletion;
                                         }
                                     });
                                     match self.point_id_being_edited.clone() {
@@ -607,7 +607,7 @@ impl Structurer {
                                                 self.point_requesting_action_id =
                                                     point_id.to_string();
                                                 self.point_image_requesting_popup = image_index;
-                                                self.show_point_image_popup = true;
+                                                self.popup_active = PopupActive::PointImage;
                                             }
                                         }
                                     },

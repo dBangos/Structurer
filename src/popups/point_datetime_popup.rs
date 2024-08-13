@@ -1,10 +1,10 @@
-use crate::Structurer;
+use crate::{PopupActive, Structurer};
 use chrono::{NaiveDate, NaiveTime};
 use eframe::egui::{self};
 use egui::DragValue;
 impl Structurer {
     pub fn point_datetime_popup(&mut self, ctx: &egui::Context) {
-        if self.show_point_datetime_popup {
+        if self.popup_active == PopupActive::PointDateTime {
             //Local bool to use for .open() so X in top right corner can be used
             let mut show_popup = true;
             egui::Window::new("Add Date and Time")
@@ -209,7 +209,7 @@ impl Structurer {
                                         self.point_popup_fields.4,
                                         self.point_popup_fields.5,
                                     ) {
-                                        self.show_point_datetime_popup = false;
+                                        self.popup_active = PopupActive::Empty;
                                         self.points
                                             .get_mut(&self.point_requesting_action_id)
                                             .unwrap()
@@ -222,12 +222,14 @@ impl Structurer {
                                 }
                             }
                             if ui.button("✖ Close").clicked() {
-                                self.show_point_datetime_popup = false;
+                                self.popup_active = PopupActive::Empty;
                             }
                         });
                     });
                 });
-            self.show_point_datetime_popup &= show_popup;
+            if !show_popup {
+                self.popup_active = PopupActive::Empty;
+            }
         }
     }
 }

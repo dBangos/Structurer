@@ -1,9 +1,9 @@
 use crate::save_load::title::save_title;
-use crate::{left_panel_labels, Structurer};
+use crate::{left_panel_labels, PopupActive, Structurer};
 use eframe::egui::{self, RichText};
 impl Structurer {
     pub fn add_tags_popup(&mut self, ctx: &egui::Context) {
-        if self.show_add_tags_popup {
+        if self.popup_active == PopupActive::AddTags {
             //Local bool to use for .open() so X in top right corner can be used
             let mut show_popup = true;
             egui::Window::new("Tags")
@@ -79,16 +79,18 @@ impl Structurer {
                                     self.project_directory.clone(),
                                     self.titles[self.current_title_index].clone(),
                                 );
-                                self.show_add_tags_popup = false;
+                                self.popup_active = PopupActive::Empty;
                             }
                             if ui.button("✖ Cancel").clicked() {
                                 self.possible_new_tag = String::new();
-                                self.show_add_tags_popup = false;
+                                self.popup_active = PopupActive::Empty;
                             }
                         });
                     });
                 });
-            self.show_add_tags_popup &= show_popup;
+            if !show_popup {
+                self.popup_active = PopupActive::Empty;
+            }
         }
     }
 }
