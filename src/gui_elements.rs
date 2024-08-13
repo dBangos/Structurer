@@ -259,31 +259,27 @@ impl Structurer {
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert_str(range.start, "[!h]");
+                            .insert_str(range.start, "[!l]");
                         self.points
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert_str(range.end + 4, "[!h]");
+                            .insert_str(range.end + 4, "[!l]");
                     }
                 }
                 ui.separator();
-                if ui.button("Bullet point").clicked() {
-                    if let Some(range) = &self.text_edit_cursor_range {
-                        self.points
-                            .get_mut(point_id)
-                            .unwrap()
-                            .content
-                            .insert_str(range.start, "\n* ");
-                    }
-                }
                 if ui.button("Heading 1").clicked() {
                     if let Some(range) = &self.text_edit_cursor_range {
                         self.points
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert_str(range.start, "\n# ");
+                            .insert_str(range.start, "\n[!H] ");
+                        self.points
+                            .get_mut(point_id)
+                            .unwrap()
+                            .content
+                            .insert_str(range.end + 6, "[!H]");
                     }
                 }
                 if ui.button("Heading 2").clicked() {
@@ -292,16 +288,12 @@ impl Structurer {
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert_str(range.start, "\n## ");
-                    }
-                }
-                if ui.button("Blockquote").clicked() {
-                    if let Some(range) = &self.text_edit_cursor_range {
+                            .insert_str(range.start, "\n[!h] ");
                         self.points
                             .get_mut(point_id)
                             .unwrap()
                             .content
-                            .insert_str(range.start, "\n> ");
+                            .insert_str(range.end + 6, "[!h]");
                     }
                 }
             });

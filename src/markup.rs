@@ -9,9 +9,11 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
     let mut italic: bool = false;
     let mut highlight: bool = false;
     let mut underline: bool = false;
+    let mut heading1: bool = false;
+    let mut heading2: bool = false;
     let chars: Vec<char> = input_string.chars().collect();
     if chars.len() < 3 {
-        result.push((input_string, vec![false, false, false]));
+        result.push((input_string, vec![false, false, false, false, false]));
         return result;
     }
     let mut current_string: String = String::new();
@@ -19,15 +21,22 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
     while index < chars.len() - 3 {
         if chars[index] == '[' && chars[index + 1] == '!' && chars[index + 3] == ']' {
             if current_string.len() > 0 {
-                result.push((current_string.clone(), vec![italic, highlight, underline]));
+                result.push((
+                    current_string.clone(),
+                    vec![italic, highlight, underline, heading1, heading2],
+                ));
                 current_string = String::new();
             }
-            if chars[index + 2] == 'h' {
+            if chars[index + 2] == 'l' {
                 highlight = !highlight;
             } else if chars[index + 2] == 'i' {
                 italic = !italic;
             } else if chars[index + 2] == 'u' {
                 underline = !underline;
+            } else if chars[index + 2] == 'h' {
+                heading2 = !heading2;
+            } else if chars[index + 2] == 'H' {
+                heading1 = !heading1;
             }
             index += 4;
         } else {
@@ -43,7 +52,10 @@ pub fn markup_parse_string(input_string: String) -> Vec<(String, Vec<bool>)> {
         }
     }
     if current_string.len() > 0 {
-        result.push((current_string.clone(), vec![false, false, false]));
+        result.push((
+            current_string.clone(),
+            vec![false, false, false, false, false],
+        ));
     }
     return result;
 }
@@ -67,6 +79,14 @@ pub fn markup_construct_job(input: Vec<(String, Vec<bool>)>) -> egui::text::Layo
             //underline
             text_format.underline = Stroke::new(1.0, Color32::WHITE);
         }
+        if in_bools[3] {
+            //heading1
+            text_format.font_id = FontId::proportional(30.0);
+        }
+        if in_bools[4] {
+            //heading2
+            text_format.font_id = FontId::proportional(25.0);
+        }
         result.append(&in_str, 0.0, text_format);
     }
     return result;
@@ -81,14 +101,14 @@ mod tests {
     fn test_empty() {
         assert_eq!(
             markup_parse_string("".to_string()),
-            vec![("".to_string(), vec![false, false, false])]
+            vec![("".to_string(), vec![false, false, false, false, false])]
         );
     }
     #[test]
     fn test_small() {
         assert_eq!(
             markup_parse_string("a".to_string()),
-            vec![("a".to_string(), vec![false, false, false])]
+            vec![("a".to_string(), vec![false, false, false, false, false])]
         );
     }
     #[test]
@@ -96,8 +116,11 @@ mod tests {
         assert_eq!(
             markup_parse_string("[!b]bold[!b]not bold".to_string()),
             vec![
-                ("bold".to_string(), vec![false, true, false]),
-                ("not bold".to_string(), vec![false, false, false])
+                ("bold".to_string(), vec![false, true, false, false, false]),
+                (
+                    "not bold".to_string(),
+                    vec![false, false, false, false, false]
+                )
             ]
         );
     }
@@ -105,7 +128,7 @@ mod tests {
     fn test_bold_exact() {
         assert_eq!(
             markup_parse_string("[!b]bold[!b]".to_string()),
-            vec![("bold".to_string(), vec![false, true, false])]
+            vec![("bold".to_string(), vec![false, true, false, false, false])]
         );
     }
     #[test]
@@ -113,19 +136,28 @@ mod tests {
         assert_eq!(
             markup_parse_string("[!b]bold[!i]bold and italic[!b]".to_string()),
             vec![
-                ("bold".to_string(), vec![false, true, false]),
-                ("bold and italic".to_string(), vec![true, true, false])
+                ("bold".to_string(), vec![false, true, false, false, false]),
+                (
+                    "bold and italic".to_string(),
+                    vec![true, true, false, false, false]
+                )
             ]
         );
     }
     #[test]
     fn test_overlapping_more() {
         assert_eq!(
-            markup_parse_string("nothing[!b]bold[!i]bold and italic[!b]".to_string()),
+            markup_parse_string("nothing[!l]bold[!i]bold and italic[!l]".to_string()),
             vec![
-                ("nothing".to_string(), vec![false, false, false]),
-                ("bold".to_string(), vec![false, true, false]),
-                ("bold and italic".to_string(), vec![true, true, false])
+                (
+                    "nothing".to_string(),
+                    vec![false, false, false, false, false]
+                ),
+                ("bold".to_string(), vec![false, true, false, false, false]),
+                (
+                    "bold and italic".to_string(),
+                    vec![true, true, false, false, false]
+                )
             ]
         );
     }
