@@ -241,7 +241,7 @@ fn main() -> Result<(), eframe::Error> {
 impl eframe::App for Structurer {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         if !self.initialized {
-            self.start_routine();
+            self.start_routine(ctx);
             self.initialized = true;
         }
         configure_text_styles(ctx);
@@ -251,7 +251,7 @@ impl eframe::App for Structurer {
                 .min_height(32.0)
                 .show_inside(ui, |ui| {
                     ui.vertical_centered(|ui| {
-                        self.main_button_line(ui);
+                        self.main_button_line(ui, ctx);
                     });
                 });
             egui::SidePanel::left("left_panel")

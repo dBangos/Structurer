@@ -27,7 +27,7 @@ impl DragDropItem for &mut Point {
 }
 impl Structurer {
     //Button line that contains most basic functions
-    pub fn main_button_line(&mut self, ui: &mut egui::Ui) {
+    pub fn main_button_line(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         ui.horizontal(|ui| {
             if ui.button("🗀 Set Project Directory").clicked() {
                 if let Some(dir_path) = rfd::FileDialog::new().pick_folder() {
@@ -39,7 +39,7 @@ impl Structurer {
                     self.project_directory = dir_path;
                     self.current_state = StateType::Empty;
                     self.current_point_ids = Vec::new();
-                    let _ = self.save_to_config();
+                    let _ = self.save_to_config(ctx);
                     self.create_library_files();
                     self.load_from_library();
                     self.get_all_points();
@@ -58,7 +58,7 @@ impl Structurer {
                         );
                     }
                     //Saving here so save button updates the point_text_size on the json file
-                    let _ = self.save_to_config();
+                    let _ = self.save_to_config(ctx);
                 }
             }
             ui.separator();

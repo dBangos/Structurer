@@ -1,5 +1,6 @@
 use crate::save_load::general::save_to_filename;
 use crate::Structurer;
+use egui::ViewportInfo;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
 use std::io::Read;
@@ -12,6 +13,7 @@ struct Config {
     center_current_node: bool,
     node_view_start_stop_physics: bool,
     stop_clicked_nodes: bool,
+    window_state: ViewportInfo,
 }
 impl Default for Config {
     fn default() -> Self {
@@ -22,13 +24,14 @@ impl Default for Config {
             center_current_node: true,
             node_view_start_stop_physics: true,
             stop_clicked_nodes: false,
+            window_state: ViewportInfo::default(),
         }
     }
 }
 
 impl Structurer {
     //Everything that needs to get the program ready at startup
-    pub fn start_routine(&mut self) -> () {
+    pub fn start_routine(&mut self, ctx: &egui::Context) -> () {
         //Check if there is a Structurer directory and if so read the config
         //If not, create the directory and file
         let mut dir_path: PathBuf = [dirs::config_dir().unwrap(), PathBuf::from("Structurer")]
@@ -48,12 +51,19 @@ impl Structurer {
         self.center_current_node = new_config.center_current_node;
         self.node_view_start_stop_physics = new_config.node_view_start_stop_physics;
         self.stop_clicked_nodes = new_config.stop_clicked_nodes;
+
+        let window_state = new_config.window_state;
+        if let Some(maximized) = window_state.maximized {
+            if maximized {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Maximized(true));
+            }
+        }
         self.load_from_library();
         self.get_all_points();
     }
 
     //Saving stuff to the config file in the default OS location
-    pub fn save_to_config(&mut self) -> Result<()> {
+    pub fn save_to_config(&mut self, ctx: &egui::Context) -> Result<()> {
         let current_config = Config {
             project_directory: self.project_directory.clone(),
             //title_loaded: self.title_loaded,
@@ -61,6 +71,7 @@ impl Structurer {
             center_current_node: self.center_current_node,
             node_view_start_stop_physics: self.node_view_start_stop_physics,
             stop_clicked_nodes: self.stop_clicked_nodes,
+            window_state: ctx.input(|i: &egui::InputState| i.viewport().clone()),
         };
         let dir_path: PathBuf = [
             dirs::config_dir().unwrap(),
