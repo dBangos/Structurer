@@ -10,7 +10,7 @@ use crate::{PopupActive, StateType};
 use chrono::{Datelike, Timelike};
 use core::f32;
 use eframe::egui::{self, Button, RichText, TextWrapMode};
-use egui::{Id, Vec2};
+use egui::{Id, Key, TextEdit, Vec2};
 use egui_dnd::{dnd, DragDropItem};
 use rfd::FileDialog;
 
@@ -46,7 +46,7 @@ impl Structurer {
                     ui.ctx().forget_all_images();
                 }
             }
-            if ui.button("💾 Save").clicked() {
+            if ui.button("💾 Save").on_hover_text_at_pointer("Save data to file").clicked() {
                 if let Some(()) = save_title(
                     self.project_directory.clone(),
                     self.titles[self.current_title_index].clone(),
@@ -62,7 +62,7 @@ impl Structurer {
                 }
             }
             ui.separator();
-            if ui.button("➕ Add Title").clicked() {
+            if ui.button("➕ Add Title").on_hover_text_at_pointer("Add a new title to this project").clicked() {
                 //Create new title files
                 let new_title_id = add_title(self.project_directory.clone());
                 //Add new title to state
@@ -101,7 +101,7 @@ impl Structurer {
                 }
                 self.current_title_index = self.titles.len() - 1;
             }
-            if ui.button("↔ Link Title").clicked() {
+            if ui.button("↔ Link Title").on_hover_text_at_pointer("Create a link between this title and another").clicked() {
                 match self.current_state {
                     StateType::Title => {
                         self.titles[self.current_title_index].links = title_is_linked_with(
@@ -113,14 +113,14 @@ impl Structurer {
                     _ => (),
                 }
             }
-            if ui.button("🗑 Delete Title").clicked() {
+            if ui.button("🗑 Delete Title").on_hover_text_at_pointer("Permanently delete the current title. Any data not shared with other titles will also be deleted").clicked() {
                 match self.current_state {
                     StateType::Title => self.popup_active = PopupActive::ConfirmTitleDeletion,
                     _ => (),
                 }
             }
             ui.separator();
-            if ui.button("+ Add Point").clicked() {
+            if ui.button("+ Add Point").on_hover_text_at_pointer("Add a new point to the current title").clicked() {
                 match self.current_state {
                     StateType::Title => {
                         if let Some(p) = add_point(
@@ -136,11 +136,11 @@ impl Structurer {
                 }
             }
             ui.separator();
-            if ui.button("📑 Tags").clicked() {
+            if ui.button("📑 Tags").on_hover_text_at_pointer("Open the tags menu").clicked() {
                 self.popup_active = PopupActive::TagsPopup;
             }
             ui.separator();
-            if ui.button("📅 Timeline").clicked() {
+            if ui.button("📅 Timeline").on_hover_text_at_pointer("See the points in chronological order").clicked() {
                 for id in self.current_point_ids.clone() {
                     save_point(self.project_directory.clone(), self.points[&id].clone());
                 }
@@ -161,7 +161,7 @@ impl Structurer {
                 });
             }
             ui.separator();
-            ui.text_edit_singleline(&mut self.searching_string);
+            let search_field = ui.add(TextEdit::singleline(&mut self.searching_string));
             //User can erase the string to end the search
             if self.searching_string == "" {
                 match self.current_state {
@@ -169,7 +169,8 @@ impl Structurer {
                     _ => (),
                 }
             }
-            if ui.button("🔎 Search").clicked() {
+            if ui.button("🔎 Search").on_hover_text_at_pointer("Search through the text of all points").clicked()
+                || (search_field.lost_focus() && ui.input(|x| x.key_pressed(Key::Enter))){
                 if self.searching_string != "" {
                     self.current_state = StateType::Search;
                     for id in self.current_point_ids.clone() {
@@ -430,6 +431,7 @@ impl Structurer {
                             .text_style(title_style())
                             .strong(),
                     )
+                    .on_hover_text_at_pointer("Click to modify")
                     .clicked()
                 {
                     self.popup_active = PopupActive::TitleEdit;
@@ -504,7 +506,9 @@ impl Structurer {
                             //Buttons
                             ui.horizontal(|ui| {
                                 handle.ui(ui, |ui| {
-                                    ui.label("↕");
+                                    ui.label("↕").on_hover_text_at_pointer(
+                                        "Click and drag to change the point's position",
+                                    );
                                 });
                                 ui.vertical(|ui| {
                                     ui.menu_button("⏷ More", |ui| {
@@ -633,7 +637,10 @@ impl Structurer {
                                             ui.label(markup_construct_job(markup_parse_string(
                                                 self.points[point_id].content.clone(),
                                             )));
-                                        if response.clicked() {
+                                        if response
+                                            .on_hover_text_at_pointer("Click to modify")
+                                            .clicked()
+                                        {
                                             self.point_id_being_edited = Some(point_id.to_string());
                                         }
                                     }

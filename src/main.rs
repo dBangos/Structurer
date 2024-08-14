@@ -200,7 +200,7 @@ fn title_style() -> TextStyle {
     TextStyle::Name("TitleStyle".into())
 }
 
-fn configure_text_styles(ctx: &egui::Context) {
+fn configure_style(ctx: &egui::Context) {
     use FontFamily::Proportional;
 
     let mut style = (*ctx.style()).clone();
@@ -213,6 +213,10 @@ fn configure_text_styles(ctx: &egui::Context) {
         (TextStyle::Small, FontId::new(8.0, Proportional)),
     ]
     .into();
+    //style.interaction = egui::style::Interaction {
+    //
+    //    ..Default::default()
+    //};
     ctx.set_style(style);
 }
 
@@ -244,7 +248,7 @@ impl eframe::App for Structurer {
             self.start_routine(ctx);
             self.initialized = true;
         }
-        configure_text_styles(ctx);
+        configure_style(ctx);
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::TopBottomPanel::top("top_panel")
                 .resizable(false)
