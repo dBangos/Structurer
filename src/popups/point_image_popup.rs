@@ -21,16 +21,22 @@ impl Structurer {
                         .sense(egui::Sense::click());
                     ui.add(image);
                     ui.label("Description");
-                    ui.horizontal(|ui| {
-                        ui.text_edit_multiline(
+                    ui.add(
+                        egui::TextEdit::multiline(
                             &mut self
                                 .points
                                 .get_mut(&self.point_requesting_action_id)
                                 .unwrap()
                                 .images[self.point_image_requesting_popup]
                                 .description,
-                        );
-
+                        )
+                        .desired_width(f32::INFINITY),
+                    );
+                    ui.horizontal(|ui| {
+                        ui.add_space(ui.available_width() / 2.0 - 60.0);
+                        if ui.button("✅ Ok").clicked() {
+                            self.popup_active = PopupActive::Empty;
+                        }
                         if ui.button("Delete").clicked() {
                             delete_image_from_point(
                                 self.project_directory.clone(),
