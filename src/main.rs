@@ -14,6 +14,7 @@ mod node_view;
 mod popups {
     pub mod add_tags_popup;
     pub mod confirm_deletion_popup;
+    pub mod export_popup;
     pub mod node_view_popup;
     pub mod point_datetime_popup;
     pub mod point_image_popup;
@@ -122,6 +123,7 @@ enum PopupActive {
     AddTags,
     TagsPopup,
     SharePoint,
+    Export,
 }
 
 struct Structurer {
@@ -153,6 +155,8 @@ struct Structurer {
     point_id_being_edited: Option<String>,
     text_edit_cursor_range: Option<Range<usize>>,
     popup_active: PopupActive,
+    export_directory: Option<PathBuf>,
+    export_bools: [bool; 4],
 }
 
 impl Default for Structurer {
@@ -179,6 +183,8 @@ impl Default for Structurer {
             next_page_point_ids: Vec::new(),
             point_id_being_edited: None,
             text_edit_cursor_range: None,
+            export_directory: None,
+            export_bools: [false, false, false, false],
             //Node view
             drag_distance: Vec2 { x: 0.0, y: 0.0 },
             stop_clicked_nodes: false,
@@ -213,10 +219,6 @@ fn configure_style(ctx: &egui::Context) {
         (TextStyle::Small, FontId::new(8.0, Proportional)),
     ]
     .into();
-    //style.interaction = egui::style::Interaction {
-    //
-    //    ..Default::default()
-    //};
     ctx.set_style(style);
 }
 
@@ -317,6 +319,7 @@ impl eframe::App for Structurer {
             PopupActive::PointImage => self.point_image_popup(ctx),
             PopupActive::PointDateTime => self.point_datetime_popup(ctx),
             PopupActive::TitleEdit => self.title_edit_popup(ctx),
+            PopupActive::Export => self.export_popup(ctx),
         }
     }
 }

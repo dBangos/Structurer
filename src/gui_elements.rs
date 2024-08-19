@@ -61,6 +61,12 @@ impl Structurer {
                     let _ = self.save_to_config(ctx);
                 }
             }
+            if ui.button("⤴ Export").on_hover_text_at_pointer("Export content to file").clicked(){
+                match self.current_state {
+                    StateType::Title => self.popup_active = PopupActive::Export,
+                    _ => (),
+                }
+            }
             ui.separator();
             if ui.button("➕ Add Title").on_hover_text_at_pointer("Add a new title to this project").clicked() {
                 //Create new title files
