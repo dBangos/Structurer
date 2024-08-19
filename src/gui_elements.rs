@@ -509,86 +509,128 @@ impl Structurer {
                             _ => (),
                         }
                         ui.horizontal(|ui| {
-                            //Buttons
-                            ui.horizontal(|ui| {
-                                handle.ui(ui, |ui| {
-                                    ui.label("↕").on_hover_text_at_pointer(
-                                        "Click and drag to change the point's position",
-                                    );
-                                });
-                                ui.vertical(|ui| {
-                                    ui.menu_button("⏷ More", |ui| {
-                                        if ui.button("🖼 Add Images").clicked() {
-                                            ui.close_menu();
-                                            if let Some(files) = FileDialog::new()
-                                                .add_filter(
-                                                    "image",
-                                                    &["jpeg", "jpg", "png", "webp"],
-                                                )
-                                                .set_directory(self.project_directory.clone())
-                                                .pick_files()
-                                            {
-                                                for file in files {
-                                                    let mut new_image: ImageStruct =
-                                                        ImageStruct::default();
-                                                    new_image.path =
-                                                        file.to_string_lossy().to_string();
-                                                    self.points
-                                                        .get_mut(point_id)
-                                                        .unwrap()
-                                                        .images
-                                                        .push(new_image.clone());
-                                                    add_image_to_point(
+                            ui.vertical(|ui| {
+                                //Buttons
+                                ui.horizontal(|ui| {
+                                    handle.ui(ui, |ui| {
+                                        ui.label("↕").on_hover_text_at_pointer(
+                                            "Click and drag to change the point's position",
+                                        );
+                                    });
+                                    ui.vertical(|ui| {
+                                        ui.menu_button("⏷ More", |ui| {
+                                            if ui.button("🖼 Add Images").clicked() {
+                                                ui.close_menu();
+                                                if let Some(files) = FileDialog::new()
+                                                    .add_filter(
+                                                        "image",
+                                                        &["jpeg", "jpg", "png", "webp"],
+                                                    )
+                                                    .set_directory(self.project_directory.clone())
+                                                    .pick_files()
+                                                {
+                                                    for file in files {
+                                                        let mut new_image: ImageStruct =
+                                                            ImageStruct::default();
+                                                        new_image.path =
+                                                            file.to_string_lossy().to_string();
+                                                        self.points
+                                                            .get_mut(point_id)
+                                                            .unwrap()
+                                                            .images
+                                                            .push(new_image.clone());
+                                                        add_image_to_point(
+                                                            self.project_directory.clone(),
+                                                            point_id.clone(),
+                                                            new_image,
+                                                        );
+                                                    }
+                                                }
+                                            }
+                                            if ui.button("📆 Add Date").clicked() {
+                                                self.point_requesting_action_id =
+                                                    point_id.to_string();
+                                                if let Some(date) = self.points[point_id].date {
+                                                    self.point_popup_fields.0 = date.year();
+                                                    self.point_popup_fields.1 = date.month();
+                                                    self.point_popup_fields.2 = date.day();
+                                                }
+                                                if let Some(time) = self.points[point_id].time {
+                                                    self.point_popup_fields.3 = time.hour();
+                                                    self.point_popup_fields.4 = time.minute();
+                                                    self.point_popup_fields.5 = time.second();
+                                                }
+                                                self.popup_active = PopupActive::PointDateTime;
+                                            }
+                                            if ui.button("🔀 Share").clicked() {
+                                                self.titles_receiving_shared_point =
+                                                    point_is_shared_with(
                                                         self.project_directory.clone(),
                                                         point_id.clone(),
-                                                        new_image,
                                                     );
+                                                self.point_requesting_action_id =
+                                                    point_id.to_string();
+                                                self.popup_active = PopupActive::SharePoint;
+                                            }
+                                            if ui.button("ℹ Source").clicked() {
+                                                self.point_requesting_action_id =
+                                                    point_id.to_string();
+                                                self.popup_active = PopupActive::PointSource;
+                                            }
+                                            if ui.button("🗑 Delete").clicked() {
+                                                self.point_requesting_action_id =
+                                                    point_id.to_string();
+                                                self.popup_active =
+                                                    PopupActive::ConfirmPointDeletion;
+                                            }
+                                        });
+                                        match self.point_id_being_edited.clone() {
+                                            Some(p_id) if p_id == *point_id => {
+                                                if ui.button("✅ Ok").clicked() {
+                                                    self.point_id_being_edited = None;
+                                                }
+                                            }
+                                            _ => {
+                                                if ui.button("✏ Edit").clicked() {
+                                                    self.point_id_being_edited =
+                                                        Some(point_id.to_string());
                                                 }
                                             }
                                         }
-                                        if ui.button("📆 Add Date").clicked() {
-                                            self.point_requesting_action_id = point_id.to_string();
-                                            if let Some(date) = self.points[point_id].date {
-                                                self.point_popup_fields.0 = date.year();
-                                                self.point_popup_fields.1 = date.month();
-                                                self.point_popup_fields.2 = date.day();
-                                            }
-                                            if let Some(time) = self.points[point_id].time {
-                                                self.point_popup_fields.3 = time.hour();
-                                                self.point_popup_fields.4 = time.minute();
-                                                self.point_popup_fields.5 = time.second();
-                                            }
+                                    });
+                                });
+                                ui.horizontal(|ui| {
+                                    ui.add_space(30.0);
+                                    if let Some(_date) = self.points[point_id].date {
+                                        let image = egui::Image::new(egui::include_image!(
+                                            "../assets/calendar-checkmark-icon.png"
+                                        ))
+                                        .fit_to_exact_size([20.0, 20.0].into())
+                                        .sense(egui::Sense::click());
+                                        if ui
+                                            .add(image)
+                                            .on_hover_text_at_pointer(
+                                                "This point has a date, click to show",
+                                            )
+                                            .clicked()
+                                        {
                                             self.popup_active = PopupActive::PointDateTime;
                                         }
-                                        if ui.button("🔀 Share").clicked() {
-                                            self.titles_receiving_shared_point =
-                                                point_is_shared_with(
-                                                    self.project_directory.clone(),
-                                                    point_id.clone(),
-                                                );
-                                            self.point_requesting_action_id = point_id.to_string();
-                                            self.popup_active = PopupActive::SharePoint;
-                                        }
-                                        if ui.button("ℹ Source").clicked() {
-                                            self.point_requesting_action_id = point_id.to_string();
-                                            self.popup_active = PopupActive::PointSource;
-                                        }
-                                        if ui.button("🗑 Delete").clicked() {
-                                            self.point_requesting_action_id = point_id.to_string();
-                                            self.popup_active = PopupActive::ConfirmPointDeletion;
-                                        }
-                                    });
-                                    match self.point_id_being_edited.clone() {
-                                        Some(p_id) if p_id == *point_id => {
-                                            if ui.button("✅ Ok").clicked() {
-                                                self.point_id_being_edited = None;
-                                            }
-                                        }
-                                        _ => {
-                                            if ui.button("✏ Edit").clicked() {
-                                                self.point_id_being_edited =
-                                                    Some(point_id.to_string());
-                                            }
+                                    }
+                                    if self.points[point_id].source != "" {
+                                        let image = egui::Image::new(egui::include_image!(
+                                            "../assets/info-circle-icon.png"
+                                        ))
+                                        .fit_to_exact_size([20.0, 20.0].into())
+                                        .sense(egui::Sense::click());
+                                        if ui
+                                            .add(image)
+                                            .on_hover_text_at_pointer(
+                                                "This point has a source, click to show",
+                                            )
+                                            .clicked()
+                                        {
+                                            self.popup_active = PopupActive::PointDateTime;
                                         }
                                     }
                                 });
