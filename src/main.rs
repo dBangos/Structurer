@@ -290,7 +290,6 @@ impl eframe::App for Structurer {
                     StateType::Title => {
                         ui.vertical_centered(|ui| {
                             self.title_layout(ui);
-
                             self.points_layout(ui);
                         });
                     }

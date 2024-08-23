@@ -630,7 +630,7 @@ impl Structurer {
                                             )
                                             .clicked()
                                         {
-                                            self.popup_active = PopupActive::PointDateTime;
+                                            self.popup_active = PopupActive::PointSource;
                                         }
                                     }
                                 });
@@ -701,6 +701,26 @@ impl Structurer {
                     self.change_point_position(update.from, update.to);
                 }
             });
+            ui.separator();
+            if ui
+                .button("+ Add Point")
+                .on_hover_text_at_pointer("Add a new point to the current title")
+                .clicked()
+            {
+                match self.current_state {
+                    StateType::Title => {
+                        if let Some(p) = add_point(
+                            self.project_directory.clone(),
+                            &self.titles[self.current_title_index].id,
+                        ) {
+                            self.points.insert(p.id.clone(), p.clone());
+                            self.current_point_ids.push(p.id.clone());
+                            self.titles[self.current_title_index].point_ids.push(p.id);
+                        }
+                    }
+                    _ => (),
+                }
+            }
         });
     }
 }
