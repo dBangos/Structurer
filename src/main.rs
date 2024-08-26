@@ -1,3 +1,5 @@
+use crate::save_load::point::save_point;
+use crate::save_load::title::save_title;
 use chrono::{NaiveDate, NaiveTime};
 use core::ops::Range;
 use eframe::egui::{self};
@@ -319,6 +321,20 @@ impl eframe::App for Structurer {
             PopupActive::PointDateTime => self.point_datetime_popup(ctx),
             PopupActive::TitleEdit => self.title_edit_popup(ctx),
             PopupActive::Export => self.export_popup(ctx),
+        }
+    }
+
+    fn on_exit(&mut self, _gl: Option<&eframe::glow::Context>) {
+        if let Some(()) = save_title(
+            self.project_directory.clone(),
+            self.titles[self.current_title_index].clone(),
+        ) {
+            for point_id in self.current_point_ids.clone() {
+                save_point(
+                    self.project_directory.clone(),
+                    self.points[&point_id].clone(),
+                );
+            }
         }
     }
 }
