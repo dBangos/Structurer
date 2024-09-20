@@ -1,4 +1,4 @@
-## Structurer is a program to easily organize your notes and images.
+## Structurer is a program to easily organize notes and images.
 
 <p align="center">
   <img src="./img/example.png" alt="Size Limit CLI" width="738">
