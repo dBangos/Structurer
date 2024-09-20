@@ -29,7 +29,5 @@
 
 ## Removing the app:
     Delete the cloned repo
-    Delete the Structurer folder in your config directory. You can find the config directory based on your Operating System [here]
-
-
-[here]: https://docs.rs/dirs/latest/dirs/fn.config_dir.html
+    Delete the Structurer folder in your config directory. 
+    You can find the config directory based on your Operating System [here](https://docs.rs/dirs/latest/dirs/fn.config_dir.html).
