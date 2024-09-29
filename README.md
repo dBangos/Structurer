@@ -23,11 +23,14 @@
 
 
 ## Installation:
-    Clone the repository
-    Navigate to the Structurer folder and run: cargo build --release 
-    An executable is created in Structurer/target/release
+You can build this project with cargo and rust
+```bash
+git clone https://github.com/dBangos/Structurer.git
+cd Structurer
+cargo build --release 
+```
+An executable is created in Structurer/target/release
 
 ## Removing the app:
-    Delete the cloned repo
-    Delete the Structurer folder in your config directory. 
-    You can find the config directory based on your Operating System [here](https://docs.rs/dirs/latest/dirs/fn.config_dir.html).
+Delete the Structurer folder you downloaded
+Delete the Structurer folder in your config directory. You can find the config directory based on your Operating System [here](https://docs.rs/dirs/latest/dirs/fn.config_dir.html)
