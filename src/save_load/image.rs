@@ -20,7 +20,11 @@ pub fn add_image_to_point(project_dir: PathBuf, point_id: String, image: ImageSt
             if split_line[0] == "Image" {
                 continue;
             } else if image_added == false {
-                let new_image_line = "Image|--|".to_string() + &image.path + "|--|" + &image.description;
+                //If the image is placed in the project folder use the project_dir string
+                let proj_dir: String = project_dir.clone().into_os_string().into_string().unwrap();
+                let image_path = image.path.replace(&proj_dir, "__project_dir__");
+                let new_image_line =
+                    "Image|--|".to_string() + &image_path + "|--|" + &image.description;
                 content.push(new_image_line);
                 image_added = true;
             }
@@ -49,7 +53,10 @@ pub fn delete_image_from_point(project_dir: PathBuf, point_id: String, image: Im
             let split_line: Vec<String> = l.split("|--|").map(|s| s.to_string()).collect();
             //If the line contains the requested image, don't push it to content
             if split_line.len() == 3 {
-                if image_removed == false && split_line[0] == "Image" && split_line[1] == image.path
+                //If the image is placed in the project folder use the project_dir string
+                let proj_dir: String = project_dir.clone().into_os_string().into_string().unwrap();
+                let image_path = image.path.replace(&proj_dir, "__project_dir__");
+                if image_removed == false && split_line[0] == "Image" && split_line[1] == image_path
                 {
                     image_removed = true;
                 }
