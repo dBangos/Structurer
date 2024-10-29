@@ -1,5 +1,5 @@
 use crate::save_load::general::save_to_filename;
-use crate::Structurer;
+use crate::{NodeViewControls, Structurer};
 use egui::ViewportInfo;
 use serde::{Deserialize, Serialize};
 use serde_json::Result;
@@ -10,9 +10,7 @@ struct Config {
     project_directory: PathBuf,
     //title_loaded: bool,
     //current_title_index: usize,
-    center_current_node: bool,
-    node_view_start_stop_physics: bool,
-    stop_clicked_nodes: bool,
+    node_view_controls: NodeViewControls,
     window_state: ViewportInfo,
 }
 impl Default for Config {
@@ -21,9 +19,7 @@ impl Default for Config {
             project_directory: PathBuf::default(),
             //title_loaded: false,
             //current_title_index: 0,
-            center_current_node: true,
-            node_view_start_stop_physics: true,
-            stop_clicked_nodes: false,
+            node_view_controls: NodeViewControls::default(),
             window_state: ViewportInfo::default(),
         }
     }
@@ -48,10 +44,7 @@ impl Structurer {
         self.project_directory = new_config.project_directory;
         //self.title_loaded = new_config.title_loaded;
         //self.current_title_index = new_config.current_title_index;
-        self.center_current_node = new_config.center_current_node;
-        self.node_view_start_stop_physics = new_config.node_view_start_stop_physics;
-        self.stop_clicked_nodes = new_config.stop_clicked_nodes;
-
+        self.node_view_controls = new_config.node_view_controls;
         let window_state = new_config.window_state;
         if let Some(maximized) = window_state.maximized {
             if maximized {
@@ -68,9 +61,7 @@ impl Structurer {
             project_directory: self.project_directory.clone(),
             //title_loaded: self.title_loaded,
             //current_title_index: self.current_title_index,
-            center_current_node: self.center_current_node,
-            node_view_start_stop_physics: self.node_view_start_stop_physics,
-            stop_clicked_nodes: self.stop_clicked_nodes,
+            node_view_controls: self.node_view_controls.clone(),
             window_state: ctx.input(|i: &egui::InputState| i.viewport().clone()),
         };
         let dir_path: PathBuf = [

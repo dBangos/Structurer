@@ -35,7 +35,7 @@ impl Structurer {
                     //previous library
                     self.titles = Vec::new();
                     self.current_title_index = 0;
-                    self.view_scale = 0.85;
+                    self.node_view_controls.view_scale = 0.85;
                     self.project_directory = dir_path;
                     self.current_state = StateType::Empty;
                     self.current_point_ids = Vec::new();
@@ -91,10 +91,10 @@ impl Structurer {
                     }
                     _ => {
                         let last_idx = self.titles.len() - 1;
-                        if self.center_current_node {
-                            self.drag_distance = -1.0
+                        if self.node_view_controls.center_current_node {
+                            self.node_view_controls.drag_distance = -1.0
                                 * self.titles[self.titles.len() - 1].node_physics_position
-                                * self.view_scale;
+                                * self.node_view_controls.view_scale;
                         }
                         self.next_page_point_ids = self.titles[last_idx].point_ids.clone();
                         self.save_old_add_new_points();

@@ -15,7 +15,7 @@ impl Structurer {
             ui.set_clip_rect(response.rect);
             // Allow dragging the background
             if response.dragged() {
-                self.drag_distance += response.drag_delta();
+                self.node_view_controls.drag_distance += response.drag_delta();
             }
             //Translate points to screen coordinates
             let to_screen = RectTransform::from_to(
@@ -32,12 +32,15 @@ impl Structurer {
                 if response.hovered() {
                     let zoom_delta = ui.ctx().input(|i| i.zoom_delta());
                     if zoom_delta != 1.0 {
-                        self.view_scale = self.view_scale * (3.0 + zoom_delta) / 4.0;
+                        self.node_view_controls.view_scale =
+                            self.node_view_controls.view_scale * (3.0 + zoom_delta) / 4.0;
                         if zoom_delta < 1.0 {
-                            self.drag_distance -= (pointer - response.rect.center())
+                            self.node_view_controls.drag_distance -= (pointer
+                                - response.rect.center())
                                 * (1.0 - (3.0 + zoom_delta) / 4.0);
                         } else {
-                            self.drag_distance += (pointer - response.rect.center())
+                            self.node_view_controls.drag_distance += (pointer
+                                - response.rect.center())
                                 * (1.0 - (3.0 + zoom_delta) / 4.0);
                         }
                     }
@@ -55,8 +58,8 @@ impl Structurer {
                 title_lines.push(Shape::line_segment(temp_array, line_stroke.clone()));
             }
             painter.extend(title_lines);
-            let half_x: f32 = 50.0 * self.view_scale;
-            let half_y: f32 = 15.0 * self.view_scale;
+            let half_x: f32 = 50.0 * self.node_view_controls.view_scale;
+            let half_y: f32 = 15.0 * self.node_view_controls.view_scale;
             let mut title_node_shapes: Vec<Shape> = Vec::new();
             //Temp value to store current title in case a node is clicked and the title needs to be
             //changeed
@@ -90,9 +93,15 @@ impl Structurer {
                         let image_size = image
                             .load_and_calc_size(
                                 ui,
-                                Vec2::new(2.0 * half_x, 1000.0 * self.view_scale),
+                                Vec2::new(
+                                    2.0 * half_x,
+                                    1000.0 * self.node_view_controls.view_scale,
+                                ),
                             )
-                            .unwrap_or(Vec2::new(2.0 * half_x, 100.0 * self.view_scale));
+                            .unwrap_or(Vec2::new(
+                                2.0 * half_x,
+                                100.0 * self.node_view_controls.view_scale,
+                            ));
                         //Creating the area for the image
                         //+1.0 Removes a pixel gap
                         let first_point: Pos2 = (
@@ -116,7 +125,7 @@ impl Structurer {
                     if point_response_drag.dragged() {
                         title.node_currnetly_clicked = true;
                         title.node_physics_position +=
-                            point_response_drag.drag_delta() / self.view_scale;
+                            point_response_drag.drag_delta() / self.node_view_controls.view_scale;
                     }
                     let point_in_screen = to_screen.transform_pos(title.node_screen_position);
                     //Colouring the button
@@ -132,9 +141,10 @@ impl Structurer {
                             _ => (),
                         }
                         self.current_state = StateType::Title;
-                        if self.center_current_node {
-                            self.drag_distance =
-                                -1.0 * title.node_physics_position * self.view_scale;
+                        if self.node_view_controls.center_current_node {
+                            self.node_view_controls.drag_distance = -1.0
+                                * title.node_physics_position
+                                * self.node_view_controls.view_scale;
                         }
                         //Saving the title of the curent page before switching
                         for id in self.current_point_ids.clone() {
@@ -172,19 +182,21 @@ impl Structurer {
                             point_in_screen,
                             egui::Align2::CENTER_CENTER,
                             text_on_node,
-                            FontId::monospace(10.0 * self.view_scale),
+                            FontId::monospace(10.0 * self.node_view_controls.view_scale),
                             Color32::WHITE,
                         ))
                     })
                 }
             }
             //Calculate the new node positions
-            if self.node_view_start_stop_physics {
+            if self.node_view_controls.node_view_start_stop_physics {
                 self.node_physics();
             }
             for title in self.titles.iter_mut() {
-                title.node_screen_position =
-                    (title.node_physics_position * self.view_scale + self.drag_distance).to_pos2();
+                title.node_screen_position = (title.node_physics_position
+                    * self.node_view_controls.view_scale
+                    + self.node_view_controls.drag_distance)
+                    .to_pos2();
             }
             painter.extend(title_node_shapes);
         });

@@ -5,6 +5,7 @@ use core::ops::Range;
 use eframe::egui::{self};
 use egui::{FontFamily, FontId, TextStyle};
 use egui::{Pos2, Vec2};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::usize;
@@ -37,6 +38,32 @@ mod save_load {
     pub mod title;
 }
 mod markup;
+
+#[derive(Serialize, Deserialize, Clone)]
+struct NodeViewControls {
+    view_scale: f32,
+    drag_distance: Vec2,
+    stop_clicked_nodes: bool,
+    node_view_start_stop_physics: bool,
+    center_current_node: bool,
+    gravity: f32,
+    link_pull: f32,
+    node_repulsion: f32,
+}
+impl Default for NodeViewControls {
+    fn default() -> Self {
+        Self {
+            drag_distance: Vec2 { x: 0.0, y: 0.0 },
+            stop_clicked_nodes: false,
+            center_current_node: true,
+            node_view_start_stop_physics: true,
+            view_scale: 0.85,
+            gravity: 1.0,
+            link_pull: 1.0,
+            node_repulsion: 1.0,
+        }
+    }
+}
 
 #[derive(Clone)]
 struct ImageStruct {
@@ -137,16 +164,11 @@ struct Structurer {
     point_requesting_action_id: String,
     titles_receiving_shared_point: Vec<bool>,
     point_image_requesting_popup: usize,
-    drag_distance: Vec2,
     linked_pairs: Vec<(usize, usize)>,
     initialized: bool,
-    view_scale: f32,
-    stop_clicked_nodes: bool,
     all_tags: Vec<String>,
     current_title_tag_bools: Vec<bool>,
     possible_new_tag: String,
-    node_view_start_stop_physics: bool,
-    center_current_node: bool,
     show_node_view_popup: bool,
     tags_actively_filtering: Vec<bool>,
     tags_in_filter: Vec<String>,
@@ -159,6 +181,7 @@ struct Structurer {
     popup_active: PopupActive,
     export_directory: Option<PathBuf>,
     export_bools: [bool; 4],
+    node_view_controls: NodeViewControls,
 }
 
 impl Default for Structurer {
@@ -188,13 +211,9 @@ impl Default for Structurer {
             export_directory: None,
             export_bools: [false, false, false, false],
             //Node view
-            drag_distance: Vec2 { x: 0.0, y: 0.0 },
-            stop_clicked_nodes: false,
-            center_current_node: true,
-            node_view_start_stop_physics: true,
-            view_scale: 0.85,
             show_node_view_popup: false,
             popup_active: PopupActive::Empty,
+            node_view_controls: NodeViewControls::default(),
         }
     }
 }

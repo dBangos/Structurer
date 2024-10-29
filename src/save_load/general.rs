@@ -209,8 +209,10 @@ pub fn save_to_filename(project_dir: PathBuf, id: String, content: String) -> ()
 
 impl Structurer {
     pub fn change_title(&mut self, index: usize) {
-        if self.center_current_node {
-            self.drag_distance = -1.0 * self.titles[index].node_physics_position * self.view_scale;
+        if self.node_view_controls.center_current_node {
+            self.node_view_controls.drag_distance = -1.0
+                * self.titles[index].node_physics_position
+                * self.node_view_controls.view_scale;
         }
         save_title(
             self.project_directory.clone(),
