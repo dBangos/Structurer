@@ -185,7 +185,7 @@ impl Structurer {
                     //Filter and sort the points by date and time
                     self.current_point_ids = Vec::new();
                     for (key, val) in self.points.iter() {
-                        if val.content.contains(&self.searching_string) {
+                        if val.content.to_lowercase().contains(&self.searching_string.to_lowercase()) {
                             self.current_point_ids.push(key.to_string());
                         }
                     }
