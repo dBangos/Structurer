@@ -153,7 +153,10 @@ pub fn delete_title(project_dir: PathBuf, title_id: String) {
 pub fn save_title(project_dir: PathBuf, title: Title) -> Option<()> {
     if project_dir != PathBuf::new() && title.id != String::new() {
         //Updating the Image file
-        let image_string = title.image.path + "|--|" + &title.image.description;
+        //If the image is placed in the project folder use the project_dir string
+        let proj_dir: String = project_dir.clone().to_string_lossy().to_string();
+        let image_path = title.image.path.replace(&proj_dir, "__project_dir__");
+        let image_string = image_path + "|--|" + &title.image.description;
         replace_line(project_dir.clone(), &title.id, &image_string, "Images");
         //Updating the Tags file
         replace_line(

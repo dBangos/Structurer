@@ -111,7 +111,10 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
             } else if split_line[0] == "Image" {
                 if split_line.len() == 3 {
                     let mut new_image: ImageStruct = ImageStruct::default();
-                    new_image.path = split_line[1].clone();
+                    //If the image is placed in the project folder replace the proj_dir string
+                    let proj_dir: String = project_dir.clone().to_string_lossy().to_string();
+                    let image_path = split_line[1].clone().replace("__project_dir__", &proj_dir);
+                    new_image.path = image_path;
                     new_image.description = split_line[2].clone();
                     new_point.images.push(new_image);
                 }
@@ -158,8 +161,11 @@ pub fn get_point_content_from_file(project_dir: PathBuf, point_id: String) -> Po
 pub fn save_point(project_dir: PathBuf, point: Point) {
     let mut content: Vec<String> = Vec::new();
     for image in point.images {
+        //If the image is placed in the project folder use the project_dir string
+        let proj_dir: String = project_dir.clone().to_string_lossy().to_string();
+        let image_path = image.path.replace(&proj_dir, "__project_dir__");
         let new_string: String =
-            "Image|--|".to_string() + &image.path + "|--|" + &image.description;
+            "Image|--|".to_string() + &image_path + "|--|" + &image.description;
         content.push(new_string);
     }
     content.push("Source|--|".to_string() + &point.source);

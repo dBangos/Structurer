@@ -267,7 +267,12 @@ impl Structurer {
                         //If this is too slow replace it with a hashmap
                         for title in self.titles.iter_mut() {
                             if title.id == split_line[0] {
-                                title.image.path = split_line[1].clone();
+                                //If the image is placed in the project folder replace the project_dir string
+                                let proj_dir: String =
+                                    self.project_directory.clone().to_string_lossy().to_string();
+                                let image_path =
+                                    split_line[1].clone().replace("__project_dir__", &proj_dir);
+                                title.image.path = image_path;
                                 title.image.description = split_line[2].clone();
                                 break;
                             }
