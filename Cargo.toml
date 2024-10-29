@@ -4,16 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-egui = {version = "0.28.1"}
-eframe = {version ="0.28.1"}
-egui_extras = {version ="0.28.1", features=["all_loaders"]}
-egui_dnd = {version="0.9.0"}
-image = {version = "0.25.1", features = ["jpeg" , "png", "webp"]}
+egui = {version = "0.29.1", features = ["serde"]}
+eframe = {version ="0.29.1"}
+egui_extras = {version ="0.29.1", features=["all_loaders"]}
+egui_dnd = {version="0.10.0"}
+image = {version = "0.25.4", features = ["jpeg" , "png", "webp"]}
 env_logger = {version ="0.11.3"}
-rfd = {version ="0.14.1"}
-uuid = {version = "1.9.1", features =["v4", "fast-rng"]}
+rfd = {version ="0.15.0"}
+uuid = {version = "1.11.0", features =["v4", "fast-rng"]}
 dirs = {version = "5.0.1"}
-serde = {version ="1.0.203"}
-serde_json = {version = "1.0.120"}
+serde = {version ="1.0.214"}
+serde_json = {version = "1.0.132"}
 rand = {version = "0.8.5"}
 chrono = {version = "0.4.38"}
